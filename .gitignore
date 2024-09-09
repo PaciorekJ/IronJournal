@@ -1,0 +1,57 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Remix build output
+/build
+/public/build
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE files
+.vscode/
+.idea/
+.DS_Store
+
+# Remix cache
+/.cache
+
+# Coverage directory used by tools like istanbul
+coverage
+
+# Output of 'npm pack'
+*.tgz
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# SASS cache
+.sass-cache/
+
+# TypeScript declaration files
+**/*.d.ts
+
+# Parcel cache
+.cache/
+.parcel-cache/
+
+# Next.js build output
+.next
+
+# Remix-specific output directories
+.netlify/
+vercel/
