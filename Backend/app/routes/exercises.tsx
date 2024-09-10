@@ -1,15 +1,7 @@
 import { json, useLoaderData } from "@remix-run/react";
-// eslint-disable-next-line import/no-unresolved
-import IExercise from "~/Interfaces/Exercise";
-// eslint-disable-next-line import/no-unresolved
-import ExercisesService from "~/services/exercisesService";
-
+import { Exercise, IExercise } from "~/models/Exercise";
 export const loader = async () => {
-	const exercises = ExercisesService.get({
-		name: "bench",
-		limit: 0,
-		offset: 5,
-	});
+	const exercises = await Exercise.find();
 
 	return json(exercises);
 };
@@ -45,9 +37,7 @@ export default function Exercises() {
 					<div>
 						<h3>Images</h3>
 						{data.images.map((image: string, i: number) => {
-							const imageUrl = `https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/${image}`;
-
-							return <img key={i} src={imageUrl} alt={data.name} />;
+							return <img key={i} src={image} alt={data.name} />;
 						})}
 					</div>
 				</div>
