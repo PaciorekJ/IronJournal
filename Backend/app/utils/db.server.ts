@@ -1,16 +1,14 @@
 import mongoose, { Connection } from 'mongoose';
-if (!process.env.MONGODB_URI) {
-  throw new Error('Database connection URI is not defined in the environment variables.');
-}
 
 class Database {
   private static uri: string = process.env.MONGODB_URI!;
   private static connection: Connection | null = null;
 
   public static async connect(): Promise<Connection> {
+    console.log(this.uri);
     if (!this.uri) {
-      console.error('Database connection URI is not defined in the environment variables.');
-      throw new Error('Database connection URI is missing.');
+      console.error('Database connection MONGODB_URI is not defined in the environment variables.');
+      throw new Error('Database connection MONGODB_URI is missing.');
     }
 
     if (this.connection) {

@@ -4,6 +4,7 @@ import { IExercise } from './Exercise';
 // Base Prototype Set interface
 interface ISetPrototype extends Document {
   exercise: IExercise['_id']; // Reference to the Exercise model
+  alternatives?: IExercise['_id'][];
   weight: number;
   reps?: number;
   sets?: number;
@@ -16,6 +17,7 @@ const SetPrototypeSchema: Schema<ISetPrototype> = new Schema(
   {
     exercise: { type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', required: true }, // Reference to Exercise
     weight: { type: Number, required: true },
+    alternatives: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', default: [] }],
     reps: { type: Number },
     sets: { type: Number },
     restDuration: { type: String, default: '1:00' },
