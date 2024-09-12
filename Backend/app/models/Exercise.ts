@@ -28,9 +28,9 @@ const ExerciseSchema: Schema<IExercise> = new Schema({
   category: { type: String, enum: Object.values(CATEGORY), required: true },
   images: { type: [String], required: true },
   id: { type: String, required: true, unique: true },
-  force: { type: String, enum: Object.values(FORCE), required: false },
-  mechanic: { type: String, enum: Object.values(MECHANIC), required: false },
-  equipment: { type: String, enum: Object.values(EQUIPMENT), required: false },
+  force: { type: String, enum: Object.values(FORCE) },
+  mechanic: { type: String, enum: Object.values(MECHANIC) },
+  equipment: { type: String, enum: Object.values(EQUIPMENT) },
   secondaryMuscles: { type: [String], enum: Object.values(MUSCLE_GROUPS), default: [] },
 });
 

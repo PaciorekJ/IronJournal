@@ -1,7 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import { INTENSITY_LEVEL, IntensityLevelValue } from '~/constants/intensity-levels';
 
-// Prototype Workout Interface
 interface IWorkoutPrototype extends Document {
   name: string;
   warmup?: mongoose.Schema.Types.ObjectId;
@@ -10,12 +9,11 @@ interface IWorkoutPrototype extends Document {
   userId: mongoose.Schema.Types.ObjectId;
   createdAt: Date;
   description?: string;
-  duration?: number;
+  durationInMinutes?: number;
   intensityLevel?: IntensityLevelValue;
   notes?: string;
 }
 
-// Prototype Workout Schema
 const WorkoutPrototypeSchema: Schema<IWorkoutPrototype> = new Schema({
   name: { type: String, required: true },
   warmup: { type: mongoose.Schema.Types.ObjectId, ref: 'SetPrototype' },
@@ -23,7 +21,7 @@ const WorkoutPrototypeSchema: Schema<IWorkoutPrototype> = new Schema({
   coolDown: { type: mongoose.Schema.Types.ObjectId, ref: 'SetPrototype' },
   description: { type: String },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  duration: { type: Number },
+  durationInMinutes: { type: Number },
   intensityLevel: { type: String, enum: Object.values(INTENSITY_LEVEL) },
   createdAt: { type: Date, default: Date.now },
   notes: { type: String },

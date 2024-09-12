@@ -1,44 +1,73 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { SET_TYPES, SetTypeValue } from '~/constants/set-types';
+import { WEIGHT_SELECTION_METHOD, WeightSelectionMethodValue } from '~/constants/weight-selection';
 import { IExercise } from './exercise';
 
+
+export type NumberOrRange = number | [number, number];
+
 interface ISetPrototype extends Document {
-  exercise: IExercise['_id']; // Reference to the Exercise model
+  exercise: IExercise['_id'];
   alternatives?: IExercise['_id'][];
-  weight: number;
-  reps?: number;
-  sets?: number;
   restDuration?: string;
   createdAt: Date;
+  type: SetTypeValue;
 }
 
-// Base Prototype Set schema for planned sets in a program
 const SetPrototypeSchema: Schema<ISetPrototype> = new Schema(
   {
-    exercise: { type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', required: true }, // Reference to Exercise
-    weight: { type: Number, required: true },
+    exercise: { type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', required: true },
     alternatives: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', default: [] }],
-    reps: { type: Number },
-    sets: { type: Number },
     restDuration: { type: String, default: '1:00' },
     createdAt: { type: Date, default: Date.now },
+    type: { type: String, enum: Object.values(SET_TYPES), required: true },
   },
-  { discriminatorKey: 'prototypeSetType' }
+  { discriminatorKey: 'type' }
 );
 
 const SetPrototype = mongoose.model<ISetPrototype>('SetPrototype', SetPrototypeSchema);
 
-// Define specific prototype set types for the program template
-interface ISetPrototypeDrop extends ISetPrototype {
-  drops: { weight: number; reps: number }[];
+interface ISetPrototypeStraightSet extends ISetPrototype {
+  reps: NumberOrRange;
+  sets: NumberOrRange;
+  weightSelection: {
+    method: WeightSelectionMethodValue;
+    value: number;
+  };
 }
 
-const SetPrototypeDropSchema = SetPrototype.discriminator<ISetPrototypeDrop>(
-  'SetPrototypeDrop',
+const SetPrototypeStraightSetSchema = SetPrototype.discriminator<ISetPrototypeStraightSet>(
+  SET_TYPES.STRAIGHT_SET,
+  new Schema({
+    reps: { type: Schema.Types.Mixed, required: true },
+    sets: { type: Schema.Types.Mixed, required: true },
+    weightSelection: {
+      method: { type: String, enum: Object.values(WEIGHT_SELECTION_METHOD), required: true },
+      value: { type: Number, required: true },
+    },
+  })
+);
+
+interface ISetPrototypeDropSet extends ISetPrototype {
+  drops: {
+    weightSelection: {
+      method: WeightSelectionMethodValue;
+      value: number;
+    };
+    reps: NumberOrRange;
+  }[];
+}
+
+const SetPrototypeDropSetSchema = SetPrototype.discriminator<ISetPrototypeDropSet>(
+  SET_TYPES.DROP_SET,
   new Schema({
     drops: [
       {
-        weight: { type: Number, required: true },
-        reps: { type: Number, required: true },
+        weightSelection: {
+          method: { type: String, enum: Object.values(WEIGHT_SELECTION_METHOD), required: true },
+          value: { type: Number, required: true },
+        },
+        reps: { type: Schema.Types.Mixed, required: true },
       },
     ],
   })
@@ -46,27 +75,38 @@ const SetPrototypeDropSchema = SetPrototype.discriminator<ISetPrototypeDrop>(
 
 interface ISetPrototypeSuperset extends ISetPrototype {
   exercises: {
-    exercise: IExercise['_id']; // Reference to Exercise model for each exercise in the superset
-    reps: number;
-    weight?: number;
+    exercise: IExercise['_id'];
+    reps: NumberOrRange;
     restDuration?: string;
+    weightSelection: {
+      method: WeightSelectionMethodValue;
+      value: number;
+    };
   }[];
 }
 
 const SetPrototypeSupersetSchema = SetPrototype.discriminator<ISetPrototypeSuperset>(
-  'SetPrototypeSuperset',
+  SET_TYPES.SUPER_SET,
   new Schema({
     exercises: [
       {
-        exercise: { type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', required: true }, // Reference to Exercise
-        reps: { type: Number, required: true },
-        weight: { type: Number },
+        exercise: { type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', required: true },
+        reps: { type: Schema.Types.Mixed, required: true },
         restDuration: { type: String, default: '0:30' },
+        weightSelection: {
+          method: { type: String, enum: Object.values(WEIGHT_SELECTION_METHOD), required: true },
+          value: { type: Number, required: true },
+        },
       },
     ],
   })
 );
 
-export { SetPrototype, SetPrototypeDropSchema, SetPrototypeSupersetSchema };
-export type { ISetPrototype, ISetPrototypeDrop, ISetPrototypeSuperset };
+export {
+  SetPrototype,
+  SetPrototypeDropSetSchema,
+  SetPrototypeStraightSetSchema,
+  SetPrototypeSupersetSchema
+};
+export type { ISetPrototype, ISetPrototypeDropSet, ISetPrototypeStraightSet, ISetPrototypeSuperset };
 

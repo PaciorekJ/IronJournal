@@ -17,7 +17,6 @@ UserSchema.pre<IUser>('save', function (next) {
   next();
 });
 
-// Create the User model using the schema
 const User = mongoose.model<IUser>('User', UserSchema);
 
 export { User };
