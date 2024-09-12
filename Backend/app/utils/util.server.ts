@@ -40,8 +40,13 @@ export const buildQueryFromRequest = <T>(
   const query: IQuery<T> = {};
 
   Object.entries(config).forEach(([key, fieldConfig]) => {
+    
+    if (['limit', 'offset', 'sortBy', 'sortOrder'].includes(key)) {
+      return;
+    }
+
     const { isArray = false, constructor = (value: string) => value, regex = null } =
-      fieldConfig || {}; // Default constructor is an identity function
+      fieldConfig || {}; 
     const paramValue = searchParams.get(key);
 
     if (paramValue) {
@@ -69,8 +74,11 @@ export const buildQueryFromRequest = <T>(
   const sortBy = searchParams.get('sortBy') as string;
   const sortOrder = searchParams.get('sortOrder') === 'desc' ? -1 : 1;
 
+  console.log({query, limit, offset, sortBy, sortOrder});
+
   return { query, limit, offset, sortBy, sortOrder };
 };
+
 
 export function buildPopulateOptions(searchParams: URLSearchParams, key: string): any[] {
   const populate = searchParams.get(key);
@@ -93,6 +101,17 @@ export function buildPopulateOptions(searchParams: URLSearchParams, key: string)
         : undefined,
     };
   });
+}
+
+export function convertKeysToCamelCase(obj: Record<string, any>): Record<string, any> {
+  const newObj: Record<string, any> = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const camelCaseKey = key.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+      newObj[camelCaseKey] = obj[key];
+    }
+  }
+  return newObj;
 }
 
 export type { IBuildQueryConfig, IFieldConfig, IQuery, IQueryField };

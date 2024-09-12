@@ -1,7 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import { IExercise } from './Exercise';
+import { IExercise } from './exercise';
 
-// Base Prototype Set interface
 interface ISetPrototype extends Document {
   exercise: IExercise['_id']; // Reference to the Exercise model
   alternatives?: IExercise['_id'][];
