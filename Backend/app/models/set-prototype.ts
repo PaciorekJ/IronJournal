@@ -1,8 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import { SET_TYPES, SetTypeValue } from '~/constants/set-types';
 import { WEIGHT_SELECTION_METHOD, WeightSelectionMethodValue } from '~/constants/weight-selection';
-import { IExercise } from './exercise';
-
+import { IExercise } from './Exercise';
 
 export type NumberOrRange = number | [number, number];
 
@@ -36,16 +35,18 @@ interface ISetPrototypeStraightSet extends ISetPrototype {
   };
 }
 
-const SetPrototypeStraightSetSchema = SetPrototype.discriminator<ISetPrototypeStraightSet>(
+const SetPrototypeStraightSetSchema = new Schema({
+  reps: { type: Schema.Types.Mixed, required: true },
+  sets: { type: Schema.Types.Mixed, required: true },
+  weightSelection: {
+    method: { type: String, enum: Object.values(WEIGHT_SELECTION_METHOD), required: true },
+    value: { type: Number, required: true },
+  },
+});
+
+const SetPrototypeStraightSet = mongoose.model<ISetPrototypeStraightSet>(
   SET_TYPES.STRAIGHT_SET,
-  new Schema({
-    reps: { type: Schema.Types.Mixed, required: true },
-    sets: { type: Schema.Types.Mixed, required: true },
-    weightSelection: {
-      method: { type: String, enum: Object.values(WEIGHT_SELECTION_METHOD), required: true },
-      value: { type: Number, required: true },
-    },
-  })
+  SetPrototypeStraightSetSchema
 );
 
 interface ISetPrototypeDropSet extends ISetPrototype {
@@ -58,19 +59,21 @@ interface ISetPrototypeDropSet extends ISetPrototype {
   }[];
 }
 
-const SetPrototypeDropSetSchema = SetPrototype.discriminator<ISetPrototypeDropSet>(
-  SET_TYPES.DROP_SET,
-  new Schema({
-    drops: [
-      {
-        weightSelection: {
-          method: { type: String, enum: Object.values(WEIGHT_SELECTION_METHOD), required: true },
-          value: { type: Number, required: true },
-        },
-        reps: { type: Schema.Types.Mixed, required: true },
+const SetPrototypeDropSetSchema = new Schema({
+  drops: [
+    {
+      weightSelection: {
+        method: { type: String, enum: Object.values(WEIGHT_SELECTION_METHOD), required: true },
+        value: { type: Number, required: true },
       },
-    ],
-  })
+      reps: { type: Schema.Types.Mixed, required: true },
+    },
+  ],
+});
+
+const SetPrototypeDropSet = mongoose.model<ISetPrototypeDropSet>(
+  SET_TYPES.DROP_SET,
+  SetPrototypeDropSetSchema
 );
 
 interface ISetPrototypeSuperset extends ISetPrototype {
@@ -85,28 +88,30 @@ interface ISetPrototypeSuperset extends ISetPrototype {
   }[];
 }
 
-const SetPrototypeSupersetSchema = SetPrototype.discriminator<ISetPrototypeSuperset>(
-  SET_TYPES.SUPER_SET,
-  new Schema({
-    exercises: [
-      {
-        exercise: { type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', required: true },
-        reps: { type: Schema.Types.Mixed, required: true },
-        restDuration: { type: String, default: '0:30' },
-        weightSelection: {
-          method: { type: String, enum: Object.values(WEIGHT_SELECTION_METHOD), required: true },
-          value: { type: Number, required: true },
-        },
+const SetPrototypeSupersetSchema = new Schema({
+  exercises: [
+    {
+      exercise: { type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', required: true },
+      reps: { type: Schema.Types.Mixed, required: true },
+      restDuration: { type: String, default: '0:30' },
+      weightSelection: {
+        method: { type: String, enum: Object.values(WEIGHT_SELECTION_METHOD), required: true },
+        value: { type: Number, required: true },
       },
-    ],
-  })
+    },
+  ],
+});
+
+const SetPrototypeSuperset = mongoose.model<ISetPrototypeSuperset>(
+  SET_TYPES.SUPER_SET,
+  SetPrototypeSupersetSchema
 );
 
 export {
   SetPrototype,
-  SetPrototypeDropSetSchema,
-  SetPrototypeStraightSetSchema,
-  SetPrototypeSupersetSchema
+  SetPrototypeDropSet,
+  SetPrototypeStraightSet,
+  SetPrototypeSuperset
 };
 export type { ISetPrototype, ISetPrototypeDropSet, ISetPrototypeStraightSet, ISetPrototypeSuperset };
 
