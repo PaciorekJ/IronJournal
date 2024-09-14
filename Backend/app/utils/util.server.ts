@@ -45,8 +45,7 @@ export const buildQueryFromRequest = <T>(
       return;
     }
 
-    const { isArray = false, constructor = (value: string) => value, regex = null } =
-      fieldConfig || {}; 
+    const { isArray = false, constructor = (value: string) => value, regex = null } = fieldConfig || {}; 
     const paramValue = searchParams.get(key);
 
     if (paramValue) {
@@ -61,7 +60,8 @@ export const buildQueryFromRequest = <T>(
       } else {
         const value = constructor(paramValue.trim());
         if (regex && typeof value === 'string') {
-          query[key as keyof T] = { $regex: regex(value) } as IQueryField<T[keyof T]>;
+          // Ensure regex is applied correctly for substring matching
+          query[key as keyof T] = { $regex: regex(value), $options: 'i' } as IQueryField<T[keyof T]>;
         } else {
           query[key as keyof T] = value as IQueryField<T[keyof T]>;
         }
@@ -74,10 +74,11 @@ export const buildQueryFromRequest = <T>(
   const sortBy = searchParams.get('sortBy') as string;
   const sortOrder = searchParams.get('sortOrder') === 'desc' ? -1 : 1;
 
-  console.log({query, limit, offset, sortBy, sortOrder});
+  console.log({ query, limit, offset, sortBy, sortOrder });
 
   return { query, limit, offset, sortBy, sortOrder };
 };
+
 
 
 export function buildPopulateOptions(searchParams: URLSearchParams, key: string): any[] {

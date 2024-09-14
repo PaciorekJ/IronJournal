@@ -1,23 +1,25 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import { SET_TYPES, SetTypeValue } from '~/constants/set-types';
 import { WEIGHT_SELECTION_METHOD, WeightSelectionMethodValue } from '~/constants/weight-selection';
-import { IExercise } from './Exercise';
+import { IExercise } from './exercise';
 
 export type NumberOrRange = number | [number, number];
 
 interface ISetPrototype extends Document {
+  workoutId: mongoose.Schema.Types.ObjectId;
   exercise: IExercise['_id'];
   alternatives?: IExercise['_id'][];
-  restDuration?: string;
+  restDurationInSeconds?: number;
   createdAt: Date;
   type: SetTypeValue;
 }
 
 const SetPrototypeSchema: Schema<ISetPrototype> = new Schema(
   {
+    workoutId: { type: mongoose.Schema.Types.ObjectId, ref: 'WorkoutPrototype', required: true },
     exercise: { type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', required: true },
     alternatives: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', default: [] }],
-    restDuration: { type: String, default: '1:00' },
+    restDurationInSeconds: { type: Number },
     createdAt: { type: Date, default: Date.now },
     type: { type: String, enum: Object.values(SET_TYPES), required: true },
   },

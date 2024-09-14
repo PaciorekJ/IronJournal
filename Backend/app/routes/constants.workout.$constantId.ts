@@ -1,17 +1,20 @@
 
 import { json, LoaderFunction } from '@remix-run/node';
+import { requireAuth } from '~/utils/auth.server';
 import { WORKOUT_CONSTANTS_MAP, WorkoutConstantId } from './constants';
 
-export const loader: LoaderFunction = async ({ params }) => {
-    const { constantId } = params;
+export const loader: LoaderFunction = async ({ request, params }) => {
+  await requireAuth(request);
   
-    if (!constantId) {
-        return json({ error: 'Constant not found' }, { status: 404 });
-      }
-    
-      if (!WORKOUT_CONSTANTS_MAP[constantId as WorkoutConstantId]) {
-        return json({ error: 'Constant not found' }, { status: 404 });
-      }
-  
-    return json(WORKOUT_CONSTANTS_MAP[constantId as WorkoutConstantId], { status: 200 });
-  };
+  const { constantId } = params;
+
+  if (!constantId) {
+      return json({ error: 'Constant not found' }, { status: 404 });
+    }
+
+    if (!WORKOUT_CONSTANTS_MAP[constantId as WorkoutConstantId]) {
+      return json({ error: 'Constant not found' }, { status: 404 });
+    }
+
+  return json(WORKOUT_CONSTANTS_MAP[constantId as WorkoutConstantId], { status: 200 });
+};

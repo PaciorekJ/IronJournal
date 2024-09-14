@@ -38,8 +38,8 @@ const ProgramSchema: Schema<IProgram> = new Schema({
   description: { type: String },
   workoutSchedule: [
     {
-      day: { type: Schema.Types.Mixed, required: true }, // Assigns workout to day of week or number day for cycle
-      workoutId: { type: mongoose.Schema.Types.ObjectId, ref: 'WorkoutPrototype' }, // Either workoutId or isRestDay must be valid
+      day: { type: Schema.Types.Mixed, required: true }, 
+      workoutId: { type: mongoose.Schema.Types.ObjectId, ref: 'WorkoutPrototype' },
       isRestDay: { type: Boolean, default: false },
     },
   ],

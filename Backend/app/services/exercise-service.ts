@@ -4,18 +4,20 @@ import { ServiceResult } from '~/types/service-result';
 import { buildQueryFromRequest, IBuildQueryConfig } from '~/utils/util.server';
 
 const queryConfig: IBuildQueryConfig = {
-  id: {},
+  _id: {},
   name: {
-    regex: (value: string) => new RegExp(value, 'i'),
+    isArray: false,
+    constructor: String,
+    regex: (value: string) => new RegExp(value),
   },
   level: { isArray: false, constructor: String },
   category: { isArray: false, constructor: String },
   force: {
     isArray: false,
     constructor: String,
-    regex: (value: string) => new RegExp(value, 'i'),
+    regex: (value: string) => new RegExp(value),
   },
-  equipment: { isArray: true, constructor: String },
+  equipment: { isArray: true, constructor: String, regex: (value: string) => new RegExp(value) },
   primaryMuscles: { isArray: true, constructor: String },
   secondaryMuscles: { isArray: true, constructor: String },
   limit: { isArray: false, constructor: Number },

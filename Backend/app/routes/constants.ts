@@ -1,4 +1,4 @@
-import { json } from "@remix-run/node";
+import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { CATEGORY } from "~/constants/category";
 import { DAYS_OF_WEEK } from "~/constants/days-of-week";
 import { EQUIPMENT } from "~/constants/equipment";
@@ -12,6 +12,7 @@ import { SCHEDULE_TYPE } from "~/constants/schedule-types";
 import { SET_TYPES } from "~/constants/set-types";
 import { TARGET_AUDIENCE } from "~/constants/target-audiences";
 import { WEIGHT_SELECTION_METHOD } from "~/constants/weight-selection";
+import { requireAuth } from "~/utils/auth.server";
 import { convertKeysToCamelCase } from "~/utils/util.server";
 
 export type ProgramConstantId = // slugs to access program constants on the route level
@@ -56,7 +57,9 @@ export const SET_CONSTANTS_MAP: Record<SetConstantId, any> = {
   'weight-selection-methods': Object.values(WEIGHT_SELECTION_METHOD),
 };
 
-export const loader = () => {
+export const loader = async ({request}: LoaderFunctionArgs) => {
+  await requireAuth(request);
+  
 	return json({
 		...convertKeysToCamelCase(EXERCISE_CONSTANTS_MAP),
 		...convertKeysToCamelCase(PROGRAM_CONSTANTS_MAP),

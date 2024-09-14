@@ -1,7 +1,10 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { readExerciseById } from "~/services/exercise-service";
+import { requireAuth } from "~/utils/auth.server";
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+	await requireAuth(request);
+	
 	const id = params.id;
 
 	if (!id) {
