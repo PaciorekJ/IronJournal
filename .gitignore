@@ -55,3 +55,6 @@ coverage
 # Remix-specific output directories
 .netlify/
 vercel/
+
+# Firebase
+serviceAccountKey.json
