@@ -84,7 +84,7 @@ interface ISetPrototypeSuperset extends ISetPrototype {
   exercises: {
     exercise: IExercise['_id'];
     reps: NumberOrRange;
-    restDuration?: string;
+    restDurationInSeconds?: number;
     weightSelection: {
       method: WeightSelectionMethodValue;
       value: number;
@@ -97,7 +97,7 @@ const SetPrototypeSupersetSchema = new Schema({
     {
       exercise: { type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', required: true },
       reps: { type: Schema.Types.Mixed, required: true },
-      restDuration: { type: String, default: '0:30' },
+      restDurationInSeconds: { type: Number },
       weightSelection: {
         method: { type: String, enum: Object.values(WEIGHT_SELECTION_METHOD), required: true },
         value: { type: Number, required: true },
