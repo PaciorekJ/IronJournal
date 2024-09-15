@@ -1,85 +1,33 @@
 // app/services/program-service.ts
+
 import mongoose from 'mongoose';
-import { FocusAreasValue } from '~/constants/focus-area';
-import { ScheduleTypeValue } from '~/constants/schedule-types';
-import { TargetAudienceValue } from '~/constants/target-audiences';
+import { ServiceResult } from '~/interfaces/service-result';
 import { IProgram, Program } from '~/models/program';
 import { SetPrototype } from '~/models/set-prototype';
-import { User } from '~/models/user';
+import { IUser } from '~/models/user';
 import { WorkoutPrototype } from '~/models/workout-prototype';
-import { ServiceResult } from '~/types/service-result';
-import { buildPopulateOptions, buildQueryFromRequest, IBuildQueryConfig } from '~/utils/util.server';
+import { IBuildQueryConfig, buildPopulateOptions, buildQueryFromSearchParams } from '~/utils/util.server';
+import { CreateProgramInput, UpdateProgramInput } from '~/validation/program.server';
 
-interface ICreateProgramBody extends Omit<IProgram, 'userId'> {
-  userId: string; // Override userId to ensure it's a string
-}
-
-interface IUpdateProgramBody {
-  programId: string;
-  updateData: Partial<IProgram>;
-}
-
-interface IDeleteProgramBody {
-  programId: string;
-}
-
-// Query configuration for building queries
-const queryConfig: IBuildQueryConfig = {
-  name: {
-    isArray: false,
-    constructor: String,
-    regex: (value: string) => new RegExp(value, 'i'),
-  },
-  userId: {
-    isArray: false,
-    constructor: mongoose.Types.ObjectId,
-    regex: (value: string) => new RegExp(value, 'i'),
-  },
-  scheduleType: {
-    isArray: false,
-    constructor: String,
-    regex: (value: string) => new RegExp(value, 'i'),
-  },
-  focusAreas: {
-    isArray: true,
-    constructor: String,
-    regex: (value: string) => new RegExp(value, 'i'),
-  },
-  targetAudience: {
-    isArray: false,
-    constructor: String,
-    regex: (value: string) => new RegExp(value, 'i'),
-  },
-  isPublic: {
-    isArray: false,
-    constructor: (value: string) => value === 'true',
-  },
-};
-
-export const createProgram = async (body: ICreateProgramBody): Promise<ServiceResult<{ programId: string }>> => {
+export const createProgram = async (
+  user: IUser,
+  data: CreateProgramInput
+): Promise<ServiceResult<{ programId: string }>> => {
   try {
-    const { userId, name, scheduleType } = body;
 
-    if (!userId || !mongoose.isValidObjectId(userId)) {
-      return { status: 400, error: 'User ID is required and must be a valid ID' };
-    }
+    const { workoutSchedule } = data;
 
-    const user = await User.findById(userId).select('_id').lean();
-    if (!user) {
-      return { status: 404, error: 'User not found' };
-    }
-
-    if (!name || !scheduleType) {
-      return { status: 400, error: 'Name and schedule type are required' };
-    }
-
-    const { workoutSchedule } = body;
-
-    // Ensure all workout IDs are valid
     const workoutIds: string[] = workoutSchedule
-      .map((workoutScheduleItem) => workoutScheduleItem.workoutId?.toString())
+      .map((item) => item.workoutId?.toString())
       .filter((id): id is string => !!id);
-    const validWorkouts = await WorkoutPrototype.find({ _id: { $in: workoutIds } }).select('_id').lean();
+
+    const validWorkouts = await WorkoutPrototype.find({
+      _id: { $in: workoutIds },
+      userId: user._id,
+    })
+      .select('_id')
+      .lean();
+
     const validWorkoutIds = validWorkouts.map((workout) => workout._id.toString());
 
     const invalidWorkouts = workoutIds.filter((id) => !validWorkoutIds.includes(id));
@@ -87,92 +35,86 @@ export const createProgram = async (body: ICreateProgramBody): Promise<ServiceRe
       return { status: 400, error: 'Invalid workout IDs provided', invalidWorkouts };
     }
 
-    const newProgram = await Program.create({
-      name,
-      description: body.description,
-      workoutSchedule,
+    const newProgram: IProgram = await Program.create({
+      ...data,
       userId: user._id,
-      notes: body.notes,
-      isPublic: body.isPublic,
-      scheduleType: scheduleType as ScheduleTypeValue,
-      focusAreas: body.focusAreas as FocusAreasValue[],
-      targetAudience: body.targetAudience as TargetAudienceValue,
-      cardioRecommendations: body.cardioRecommendations,
-      progressionStrategy: body.progressionStrategy,
     });
 
-    return { status: 200, message: 'Program created successfully', programId: newProgram._id };
+    return { status: 201, message: 'Program created successfully', programId: newProgram._id };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
   }
 };
 
-export const updateProgram = async (body: IUpdateProgramBody): Promise<ServiceResult<{ programId: string }>> => {
-  const { programId, updateData } = body;
-
-  if (!programId || !mongoose.isValidObjectId(programId)) {
-    return { status: 400, error: 'Program ID is required and must be a valid ID' };
+export const updateProgram = async (
+  user: IUser,
+  programId: string,
+  updateData: UpdateProgramInput
+): Promise<ServiceResult<{ programId: string }>> => {
+  if (!mongoose.isValidObjectId(programId)) {
+    return { status: 400, error: 'Program ID is invalid' };
   }
 
   try {
-    const updatedProgram = await Program.findByIdAndUpdate(programId, updateData, { new: true });
-    if (!updatedProgram) {
+    // Find the program and ensure it belongs to the user
+    const program = await Program.findOne({ _id: programId, userId: user._id });
+
+    if (!program) {
       return { status: 404, error: 'Program not found' };
     }
 
-    return { status: 200, message: 'Program updated successfully', programId: updatedProgram._id };
+    // Update the program
+    Object.assign(program, updateData);
+    await program.save();
+
+    return { status: 200, message: 'Program updated successfully', programId: program._id };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
   }
 };
 
-export const deleteProgram = async (body: IDeleteProgramBody): Promise<ServiceResult<{ programId: string }>> => {
-  const { programId } = body;
-
-  if (!programId || !mongoose.isValidObjectId(programId)) {
-    return { status: 400, error: 'Program ID is required and must be a valid ID' };
+export const deleteProgram = async (
+  user: IUser,
+  programId: string
+): Promise<ServiceResult<{ programId: string }>> => {
+  if (!mongoose.isValidObjectId(programId)) {
+    return { status: 400, error: 'Program ID is invalid' };
   }
 
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const deletedProgram = await Program.findByIdAndDelete(programId).session(session);
-    if (!deletedProgram) {
+    // Find the program and ensure it belongs to the user
+    const program = await Program.findOne({ _id: programId, userId: user._id }).session(session);
+
+    if (!program) {
       await session.abortTransaction();
       session.endSession();
       return { status: 404, error: 'Program not found' };
     }
 
-    const workoutsToDelete = await WorkoutPrototype.find({ programId: deletedProgram._id })
+    // Delete associated workouts
+    const workoutsToDelete = await WorkoutPrototype.find({ programId: program._id, userId: user._id })
       .select('_id')
-      .lean()
       .session(session);
-    
-    const deletedWorkoutIds = workoutsToDelete.map((workout) => workout._id);
 
-    const workoutDeleteResult = await WorkoutPrototype.deleteMany({ programId: deletedProgram._id }).session(session);
-    if (workoutDeleteResult.deletedCount !== workoutsToDelete.length) {
-      await session.abortTransaction();
-      session.endSession();
-      return { status: 500, error: 'Failed to delete all associated workouts' };
-    }
+    const workoutIds = workoutsToDelete.map((workout) => workout._id);
 
-    
-    const setDeleteResult = await SetPrototype.deleteMany({ workoutId: { $in: deletedWorkoutIds } }).session(session);
-    if (setDeleteResult.deletedCount !== deletedWorkoutIds.length) {
-      await session.abortTransaction();
-      session.endSession();
-      return { status: 500, error: 'Failed to delete all associated sets' };
-    }
+    await WorkoutPrototype.deleteMany({ _id: { $in: workoutIds } }).session(session);
+
+    // Delete associated sets
+    await SetPrototype.deleteMany({ workoutId: { $in: workoutIds } }).session(session);
+
+    // Delete the program
+    await program.deleteOne({ session });
 
     await session.commitTransaction();
     session.endSession();
 
-    return { status: 200, message: 'Program deleted successfully', programId: deletedProgram._id };
-
+    return { status: 200, message: 'Program deleted successfully', programId: program._id };
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -182,12 +124,42 @@ export const deleteProgram = async (body: IDeleteProgramBody): Promise<ServiceRe
   }
 };
 
-export const readPrograms = async (request: Request): Promise<ServiceResult<IProgram[]>> => {
+export const readPrograms = async (
+  user: IUser,
+  searchParams: URLSearchParams
+): Promise<ServiceResult<IProgram[]>> => {
   try {
-    const url = new URL(request.url);
-    const searchParams = new URLSearchParams(url.search);
+    const queryConfig: IBuildQueryConfig = {
+      name: {
+        isArray: false,
+        constructor: String,
+        regex: (value: string) => new RegExp(value, 'i'),
+      },
+      scheduleType: {
+        isArray: false,
+        constructor: String,
+        regex: (value: string) => new RegExp(value, 'i'),
+      },
+      focusAreas: {
+        isArray: true,
+        constructor: String,
+        regex: (value: string) => new RegExp(value, 'i'),
+      },
+      targetAudience: {
+        isArray: false,
+        constructor: String,
+        regex: (value: string) => new RegExp(value, 'i'),
+      },
+      isPublic: {
+        isArray: false,
+        constructor: (value: string) => value === 'true',
+      },
+    };
 
-    const { query, limit, offset, sortBy, sortOrder } = buildQueryFromRequest(request, queryConfig);
+    const { query, limit, offset, sortBy, sortOrder } = buildQueryFromSearchParams(searchParams, queryConfig) as any;
+
+    // Ensure the user can only see their own programs or public programs
+    query.$or = [{ userId: user._id }, { isPublic: true }];
 
     const sortOption: Record<string, 1 | -1> | null = sortBy ? { [sortBy]: sortOrder as 1 | -1 } : null;
 
@@ -207,13 +179,18 @@ export const readPrograms = async (request: Request): Promise<ServiceResult<IPro
   }
 };
 
-export const readProgramById = async (id: string, searchParams: URLSearchParams): Promise<ServiceResult<IProgram>> => {
+export const readProgramById = async (
+  user: IUser,
+  id: string,
+  searchParams: URLSearchParams
+): Promise<ServiceResult<IProgram>> => {
   if (!id || !mongoose.isValidObjectId(id)) {
     return { status: 400, error: 'Invalid or missing program ID' };
   }
 
   try {
     let query = Program.findById(id);
+
     const populateOptions = buildPopulateOptions(searchParams, 'populate');
     populateOptions.forEach((option) => {
       query = query.populate(option);
@@ -223,6 +200,11 @@ export const readProgramById = async (id: string, searchParams: URLSearchParams)
 
     if (!program) {
       return { status: 404, error: 'Program not found' };
+    }
+
+    // Check if the user has access to the program
+    if (!program.isPublic && program.userId.toString() !== user._id) {
+      return { status: 403, error: 'Forbidden: You do not have access to this program' };
     }
 
     return { status: 200, data: program };

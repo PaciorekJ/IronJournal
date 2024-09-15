@@ -1,10 +1,10 @@
 
 import { json, LoaderFunction } from '@remix-run/node';
-import { requireAuth } from '~/utils/auth.server';
+import { isLoginValid } from '~/utils/auth.server';
 import { EXERCISE_CONSTANTS_MAP, ExerciseConstantId } from './constants';
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  await requireAuth(request);
+  await isLoginValid(request);
 
   const { constantId } = params;
 

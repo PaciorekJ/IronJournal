@@ -1,136 +1,136 @@
 // app/services/set-service.ts
+
 import mongoose from 'mongoose';
-import { SET_TYPES, SetTypeValue } from '~/constants/set-types';
+import { SET_TYPES } from '~/constants/set-types';
 import SetFactory from '~/factories/set-factory';
+import { ServiceResult } from '~/interfaces/service-result';
 import {
     ISetPrototype,
-    ISetPrototypeDropSet,
-    ISetPrototypeStraightSet,
-    ISetPrototypeSuperset,
     SetPrototype,
-    SetPrototypeDropSet,
-    SetPrototypeStraightSet,
-    SetPrototypeSuperset,
 } from '~/models/set-prototype';
-import { ServiceResult } from '~/types/service-result';
-import { buildPopulateOptions, buildQueryFromRequest, IBuildQueryConfig } from '~/utils/util.server';
+import { IUser } from '~/models/user';
+import {
+    buildPopulateOptions,
+    buildQueryFromSearchParams,
+    IBuildQueryConfig,
+} from '~/utils/util.server';
+import { CreateSetPrototypeInput, createSetPrototypeSchema, UpdateSetPrototypeInput } from '~/validation/set-prototype.server';
 
-interface ICreateSetBody {
-  setType: SetTypeValue;
-  data: Partial<ISetPrototypeStraightSet | ISetPrototypeDropSet | ISetPrototypeSuperset>;
-}
-
-interface IUpdateSetBody {
-  setId: string;
-  setType: SetTypeValue;
-  updateData: Partial<ISetPrototypeStraightSet | ISetPrototypeDropSet | ISetPrototypeSuperset>;
-}
-
-interface IDeleteSetBody {
-  setId: string;
-}
-
-// Query configuration for building queries
-const queryConfig: IBuildQueryConfig = {
-  exercise: {
-    isArray: false,
-    constructor: mongoose.Types.ObjectId,
-    regex: (value: string) => new RegExp(value, 'i'),
-  },
-  type: {
-    isArray: false,
-    constructor: String,
-    regex: (value: string) => new RegExp(value, 'i'),
-  },
-  restDuration: {
-    isArray: false,
-    constructor: String,
-    regex: (value: string) => new RegExp(value, 'i'),
-  },
-};
-
-export const createSet = async (body: ICreateSetBody): Promise<ServiceResult<{ setId: string }>> => {
+export const createSet = async (
+  user: IUser,
+  data: CreateSetPrototypeInput
+): Promise<ServiceResult<{ setId: string }>> => {
   try {
-    const { setType, data } = body;
+    const { type, ...restData } = data;
 
-    if (!Object.values(SET_TYPES).includes(setType)) {
+    // Ensure valid set type
+    if (!Object.values(SET_TYPES).includes(type)) {
       return { status: 400, error: 'Invalid set type' };
     }
 
-    if (!data.exercise || !mongoose.isValidObjectId(data.exercise)) {
-      return { status: 400, error: 'Exercise ID is required and must be valid' };
-    }
+    // Assign userId to the data
+    const newData = { ...restData, userId: user._id };
 
-    const newSet = await SetFactory.create(setType, data);
-    return { status: 200, message: 'Set created successfully', setId: newSet._id };
+    const validatedData = createSetPrototypeSchema.parse(newData);
+
+    // Create the set using the factory
+    const newSet = await SetFactory.create(type, validatedData);
+
+    return { status: 201, message: 'Set created successfully', setId: newSet._id};
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
   }
 };
 
-export const updateSet = async (body: IUpdateSetBody): Promise<ServiceResult<{ setId: string }>> => {
-  const { setId, setType, updateData } = body;
-
-  if (!setId || !mongoose.isValidObjectId(setId)) {
-    return { status: 400, error: 'Set ID is required and must be a valid ID' };
+export const updateSet = async (
+  user: IUser,
+  setId: string,
+  updateData: UpdateSetPrototypeInput
+): Promise<ServiceResult<{ setId: string }>> => {
+  if (!mongoose.isValidObjectId(setId)) {
+    return { status: 400, error: 'Set ID is invalid' };
   }
 
   try {
-    let updatedSet;
-    switch (setType) {
-      case SET_TYPES.STRAIGHT_SET:
-        updatedSet = await SetPrototypeStraightSet.findByIdAndUpdate(setId, updateData, { new: true });
-        break;
-      case SET_TYPES.DROP_SET:
-        updatedSet = await SetPrototypeDropSet.findByIdAndUpdate(setId, updateData, { new: true });
-        break;
-      case SET_TYPES.SUPER_SET:
-        updatedSet = await SetPrototypeSuperset.findByIdAndUpdate(setId, updateData, { new: true });
-        break;
-      default:
-        return { status: 400, error: 'Invalid set type' };
-    }
+    // Find the set and ensure it belongs to the user
+    const set = await SetPrototype.findOne({ _id: setId, userId: user._id });
 
-    if (!updatedSet) {
+    if (!set) {
       return { status: 404, error: 'Set not found' };
     }
 
-    return { status: 200, message: 'Set updated successfully', setId: updatedSet._id };
+    // Update the set
+    Object.assign(set, updateData);
+    await set.save();
+
+    return { status: 200, message: 'Set updated successfully', setId: set._id };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
   }
 };
 
-export const deleteSet = async (body: IDeleteSetBody): Promise<ServiceResult<{ setId: string }>> => {
-  const { setId } = body;
-
-  if (!setId || !mongoose.isValidObjectId(setId)) {
-    return { status: 400, error: 'Set ID is required and must be a valid ID' };
+export const deleteSet = async (
+  user: IUser,
+  setId: string
+): Promise<ServiceResult<{ setId: string }>> => {
+  if (!mongoose.isValidObjectId(setId)) {
+    return { status: 400, error: 'Set ID is invalid' };
   }
 
   try {
-    const deletedSet = await SetPrototype.findByIdAndDelete(setId);
-    if (!deletedSet) {
+    // Find the set and ensure it belongs to the user
+    const set = await SetPrototype.findOne({ _id: setId, userId: user._id });
+
+    if (!set) {
       return { status: 404, error: 'Set not found' };
     }
 
-    return { status: 200, message: 'Set deleted successfully', setId: deletedSet._id };
+    // Delete the set
+    await set.deleteOne();
+
+    return { status: 200, message: 'Set deleted successfully', setId: set._id};
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
   }
 };
 
-export const readSets = async (request: Request): Promise<ServiceResult<ISetPrototype[]>> => {
+export const readSets = async (
+  user: IUser,
+  searchParams: URLSearchParams
+): Promise<ServiceResult<ISetPrototype[]>> => {
   try {
-    const url = new URL(request.url);
-    const searchParams = new URLSearchParams(url.search);
+    const queryConfig: IBuildQueryConfig = {
+      exercise: {
+        isArray: false,
+        constructor: mongoose.Types.ObjectId,
+      },
+      type: {
+        isArray: false,
+        constructor: String,
+      },
+      restDurationInSeconds: {
+        isArray: false,
+        constructor: Number,
+      },
+    };
 
-    const { query, limit, offset, sortBy, sortOrder } = buildQueryFromRequest(request, queryConfig);
+    const { query, limit, offset, sortBy, sortOrder } = buildQueryFromSearchParams(
+      searchParams,
+      queryConfig
+    ) as any;
 
-    const sortOption: Record<string, 1 | -1> | null = sortBy ? { [sortBy]: sortOrder as 1 | -1 } : null;
+    // Ensure the user can only see their own sets
+    query.userId = user._id;
+
+    const sortOption: Record<string, 1 | -1> | null = sortBy
+      ? { [sortBy]: sortOrder as 1 | -1 }
+      : null;
 
     let queryObj = SetPrototype.find(query).sort(sortOption).skip(offset).limit(limit);
 
@@ -143,18 +143,24 @@ export const readSets = async (request: Request): Promise<ServiceResult<ISetProt
 
     return { status: 200, data: sets };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
   }
 };
 
-export const readSetById = async (id: string, searchParams: URLSearchParams): Promise<ServiceResult<ISetPrototype>> => {
+export const readSetById = async (
+  user: IUser,
+  id: string,
+  searchParams: URLSearchParams
+): Promise<ServiceResult<ISetPrototype>> => {
   if (!id || !mongoose.isValidObjectId(id)) {
     return { status: 400, error: 'Invalid or missing set ID' };
   }
 
   try {
     let query = SetPrototype.findById(id);
+
     const populateOptions = buildPopulateOptions(searchParams, 'populate');
     populateOptions.forEach((option) => {
       query = query.populate(option);
@@ -166,9 +172,15 @@ export const readSetById = async (id: string, searchParams: URLSearchParams): Pr
       return { status: 404, error: 'Set not found' };
     }
 
+    // Check if the user has access to the set
+    if (set.userId.toString() !== user._id) {
+      return { status: 403, error: 'Forbidden: You do not have access to this set' };
+    }
+
     return { status: 200, data: set };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
   }
 };

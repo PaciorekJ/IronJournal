@@ -21,7 +21,7 @@ interface IProgram extends Document {
   description?: string;
   workoutSchedule: IWorkoutSchedule[];
   userId: mongoose.Schema.Types.ObjectId; 
-  durationInDays?: number; // Program Duration in days
+  durationInDays?: number;
   createdAt: Date;
   updatedAt: Date;
   notes?: string;

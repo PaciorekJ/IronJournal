@@ -25,18 +25,11 @@ type IQuery<T> = {
 
 type IBuildQueryConfig = Record<string, IFieldConfig>
 
-/**
- * Builds a query object from a Request object based on a configuration of keys and their corresponding types.
- * @param {Request} request The request object to build the query from.
- * @param {IBuildQueryConfig} config A configuration object that maps keys to their corresponding types.
- * @returns {{ query: IQuery<T>, limit: number, offset: number, sortBy: string | undefined, sortOrder: number }} An object containing the query object, limit, offset, sortBy, and sortOrder.
- */
-export const buildQueryFromRequest = <T>(
-  request: Request,
+
+export const buildQueryFromSearchParams = <T>(
+  searchParams: URLSearchParams,
   config: Record<string, IFieldConfig>
 ) => {
-  const url = new URL(request.url);
-  const searchParams = url.searchParams;
   const query: IQuery<T> = {};
 
   Object.entries(config).forEach(([key, fieldConfig]) => {

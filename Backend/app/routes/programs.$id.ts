@@ -1,58 +1,81 @@
-import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { deleteProgram, readProgramById, updateProgram } from "~/services/program-service";
-import { requireAuth } from "~/utils/auth.server";
+import { json, LoaderFunctionArgs } from '@remix-run/node';
+import { z } from 'zod';
+import { deleteProgram, readProgramById, updateProgram } from '~/services/program-service';
+import { requirePredicate } from '~/utils/auth.server';
+import { updateProgramSchema } from '~/validation/program.server';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	await requireAuth(request);
+	const { user } = await requirePredicate(request, {
+		user: true,
+	})
+
+	if (!user) {
+		return json({ error: 'User not found' }, { status: 404 });
+	}
 	
-	const url = new URL(request.url);
-	const searchParams = new URLSearchParams(url.search);
 	const id = params.id;
 
 	if (!id) {
-		return json({ error: "No id provided" }, { status: 400 });
+	return json({ error: 'No id provided' }, { status: 400 });
 	}
 
-	const result = await readProgramById(id, searchParams);
+	const url = new URL(request.url);
+	const searchParams = new URLSearchParams(url.search);
+
+	const result = await readProgramById(user, id, searchParams);
 
 	if (result.status !== 200) {
-		return json({ error: result.error }, { status: result.status });
+	return json({ error: result.error }, { status: result.status });
 	}
 
 	return json(result.data, { status: 200 });
 };
 
 export const action = async ({ request, params }: LoaderFunctionArgs) => {
-	await requireAuth(request);
+	const { user } = await requirePredicate(request, {
+		user: true,
+	})
 
+	if (!user) {
+	return json({ error: 'User not found' }, { status: 404 });
+	}
+	
 	const id = params.id;
 	const method = request.method.toUpperCase();
 
 	if (!id) {
-		return json({ error: "No id provided" }, { status: 400 });
+	return json({ error: 'No id provided' }, { status: 400 });
 	}
 
+	if (method === 'PATCH') {
 	try {
-		const body = await request.json();
+		const requestData = await request.json();
 
-		switch (method) {
-			case "PATCH": {
-				const updateResult = await updateProgram(body);
-				return json(updateResult, { status: updateResult.status });
-			}
+		// Validate the request data
+		const validatedData = updateProgramSchema.parse(requestData);
 
-			case "DELETE": {
-				const deleteResult = await deleteProgram(body);
-				return json(deleteResult, { status: deleteResult.status });
-			}
+		const result = await updateProgram(user, id, validatedData);
 
-			default: {
-				return json({ error: "Method not allowed" }, { status: 405 });
-			}
-		}
+		return json(result, { status: result.status });
 	} catch (error) {
-		const errorMessage =
-			error instanceof Error ? error.message : "An unexpected error occurred";
+		if (error instanceof z.ZodError) {
+		return json({ error: 'Validation failed', details: error.errors }, { status: 400 });
+		}
+		const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
 		return json({ error: errorMessage }, { status: 500 });
 	}
-}
+	}
+
+	if (method === 'DELETE') {
+	try {
+		const result = await deleteProgram(user, id);
+
+		return json(result, { status: result.status });
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+		return json({ error: errorMessage }, { status: 500 });
+	}
+	}
+
+	return json({ error: 'Method not allowed' }, { status: 405 });
+};

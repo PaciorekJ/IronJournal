@@ -5,7 +5,6 @@ class Database {
   private static connection: Connection | null = null;
 
   public static async connect(): Promise<Connection> {
-    console.log(this.uri);
     if (!this.uri) {
       console.error('Database connection MONGODB_URI is not defined in the environment variables.');
       throw new Error('Database connection MONGODB_URI is missing.');

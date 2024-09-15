@@ -16,7 +16,9 @@ export const createWorkoutPrototypeSchema = z.object({
     .enum(Object.values(INTENSITY_LEVEL) as [IntensityLevelValue, ...IntensityLevelValue[]])
     .optional(),
   notes: z.string().optional(),
-});
-
-// Update Schema for WorkoutPrototype (all fields optional)
+}).strict();
 export const updateWorkoutPrototypeSchema = createWorkoutPrototypeSchema.partial();
+
+// TYPES for expected inputs to CRUD Operations
+export type CreateWorkoutPrototypeInput = z.infer<typeof createWorkoutPrototypeSchema>;
+export interface UpdateWorkoutPrototypeInput extends Partial<CreateWorkoutPrototypeInput> {}

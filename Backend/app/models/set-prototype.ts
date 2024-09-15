@@ -7,6 +7,7 @@ export type NumberOrRange = number | [number, number];
 
 interface ISetPrototype extends Document {
   workoutId: mongoose.Schema.Types.ObjectId;
+  userId: mongoose.Schema.Types.ObjectId;
   exercise: IExercise['_id'];
   alternatives?: IExercise['_id'][];
   restDurationInSeconds?: number;
@@ -17,6 +18,7 @@ interface ISetPrototype extends Document {
 const SetPrototypeSchema: Schema<ISetPrototype> = new Schema(
   {
     workoutId: { type: mongoose.Schema.Types.ObjectId, ref: 'WorkoutPrototype', required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     exercise: { type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', required: true },
     alternatives: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', default: [] }],
     restDurationInSeconds: { type: Number },

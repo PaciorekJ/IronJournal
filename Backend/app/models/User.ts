@@ -11,8 +11,8 @@ interface IUser extends Document {
 
 const UserSchema: Schema<IUser> = new Schema({
   username: { type: String, required: true, unique: true, trim: true }, 
-  role: { type: String, enum: Object.values(ROLE), default: ROLE.USER },
   firebaseId: { type: String, required: true, unique: true, trim: true },
+  role: { type: String, enum: Object.values(ROLE), default: ROLE.USER },
   createdAt: { type: Date, default: Date.now }, 
   updatedAt: { type: Date, default: Date.now }, 
 });

@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { LEVEL, LevelValue } from '~/constants/level';
-import { MUSCLE_GROUPS, MuscleGroupValue } from '~/constants/muscle-groups';
 import { CATEGORY, CategoryValue } from '~/constants/category';
-import { FORCE, ForceValue } from '~/constants/force';
-import { MECHANIC, MechanicValue } from '~/constants/mechanic';
 import { EQUIPMENT, EquipmentValue } from '~/constants/equipment';
+import { FORCE, ForceValue } from '~/constants/force';
+import { LEVEL, LevelValue } from '~/constants/level';
+import { MECHANIC, MechanicValue } from '~/constants/mechanic';
+import { MUSCLE_GROUPS, MuscleGroupValue } from '~/constants/muscle-groups';
 
 // Creation Schema for Exercise
 export const createExerciseSchema = z.object({
@@ -24,6 +24,6 @@ export const createExerciseSchema = z.object({
     .array(z.enum(Object.values(MUSCLE_GROUPS) as [MuscleGroupValue, ...MuscleGroupValue[]]))
     .optional()
     .default([]),
-});
+}).strict();
 
 export const updateExerciseSchema = createExerciseSchema.partial();

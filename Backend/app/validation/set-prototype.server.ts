@@ -5,7 +5,22 @@ import { WEIGHT_SELECTION_METHOD, WeightSelectionMethodValue } from '~/constants
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 const objectIdSchema = z.string().regex(objectIdRegex, 'Invalid ObjectId');
 
-const numberOrRangeSchema = z.union([z.number(), z.tuple([z.number(), z.number()])]);
+const numberOrRangeSchema = z
+  .union([z.number(), z.tuple([z.number(), z.number()])])
+  .refine(
+    (val) => {
+      if (typeof val === 'number') {
+        return val > 0;
+      } else if (Array.isArray(val)) {
+        return val[0] > 0 && val[1] > 0 && val[0] <= val[1];
+      }
+      return false;
+    },
+    {
+      message:
+        'Value must be a positive number or a range of positive numbers where the first is less than or equal to the second',
+    }
+  );
 
 const weightSelectionSchema = z.object({
   method: z.enum(
@@ -14,8 +29,8 @@ const weightSelectionSchema = z.object({
       ...WeightSelectionMethodValue[]
     ]
   ),
-  value: z.number(),
-});
+  value: z.number().positive(),
+}).strict();
 
 const baseSetPrototypeSchema = z.object({
   workoutId: objectIdSchema,
@@ -23,14 +38,14 @@ const baseSetPrototypeSchema = z.object({
   alternatives: z.array(objectIdSchema).optional().default([]),
   restDurationInSeconds: z.number().optional(),
   type: z.enum(Object.values(SET_TYPES) as [SetTypeValue, ...SetTypeValue[]]),
-});
+}).strict();
 
 const straightSetSchema = baseSetPrototypeSchema.extend({
   type: z.literal(SET_TYPES.STRAIGHT_SET),
   reps: numberOrRangeSchema,
   sets: numberOrRangeSchema,
   weightSelection: weightSelectionSchema,
-});
+}).strict();
 
 const dropSetSchema = baseSetPrototypeSchema.extend({
   type: z.literal(SET_TYPES.DROP_SET),
@@ -40,7 +55,7 @@ const dropSetSchema = baseSetPrototypeSchema.extend({
       reps: numberOrRangeSchema,
     })
   ),
-});
+}).strict();
 
 const supersetSchema = baseSetPrototypeSchema.extend({
   type: z.literal(SET_TYPES.SUPER_SET),
@@ -48,55 +63,24 @@ const supersetSchema = baseSetPrototypeSchema.extend({
     z.object({
       exercise: objectIdSchema,
       reps: numberOrRangeSchema,
-      restDuration: z.string().optional().default('0:30'),
+      restDurationInSeconds: z.string().optional().default('0:30'),
       weightSelection: weightSelectionSchema,
     })
   ),
-});
+}).strict();
 
-export const createSetPrototypeSchema = z.discriminatedUnion('type', [
-  straightSetSchema,
-  dropSetSchema,
-  supersetSchema,
+export const createSetPrototypeSchema = z
+  .discriminatedUnion('type', [
+    straightSetSchema, 
+    dropSetSchema, 
+    supersetSchema
 ]);
 
-const baseSetPrototypeSchemaPartial = baseSetPrototypeSchema.partial();
-
-const partialStraightSetSchema = baseSetPrototypeSchemaPartial.extend({
-  type: z.literal(SET_TYPES.STRAIGHT_SET).optional(),
-  reps: numberOrRangeSchema.optional(),
-  sets: numberOrRangeSchema.optional(),
-  weightSelection: weightSelectionSchema.partial().optional(),
-});
-
-const partialDropSetSchema = baseSetPrototypeSchemaPartial.extend({
-  type: z.literal(SET_TYPES.DROP_SET).optional(),
-  drops: z
-    .array(
-      z.object({
-        weightSelection: weightSelectionSchema.partial().optional(),
-        reps: numberOrRangeSchema.optional(),
-      })
-    )
-    .optional(),
-});
-
-const partialSupersetSchema = baseSetPrototypeSchemaPartial.extend({
-  type: z.literal(SET_TYPES.SUPER_SET).optional(),
-  exercises: z
-    .array(
-      z.object({
-        exercise: objectIdSchema.optional(),
-        reps: numberOrRangeSchema.optional(),
-        restDuration: z.string().optional(),
-        weightSelection: weightSelectionSchema.partial().optional(),
-      })
-    )
-    .optional(),
-});
-
-export const updateSetPrototypeSchema = z.union([
-  partialStraightSetSchema,
-  partialDropSetSchema,
-  partialSupersetSchema,
+export const updateSetPrototypeSchema = z.discriminatedUnion('type', [
+  straightSetSchema.partial().required({type: true}),
+  dropSetSchema.partial().required({type: true}),
+  supersetSchema.partial().required({type: true}),
 ]);
+
+export type CreateSetPrototypeInput = z.infer<typeof createSetPrototypeSchema>;
+export type UpdateSetPrototypeInput = z.infer<typeof updateSetPrototypeSchema>;

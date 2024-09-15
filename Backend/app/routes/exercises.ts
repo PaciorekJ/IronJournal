@@ -1,10 +1,10 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/react";
 import { readExercises } from "~/services/exercise-service";
-import { requireAuth } from "~/utils/auth.server";
+import { isLoginValid } from "~/utils/auth.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	await requireAuth(request);
+	await isLoginValid(request);
 	
 	const result = await readExercises(request);
 

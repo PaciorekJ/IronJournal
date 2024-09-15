@@ -1,52 +1,28 @@
-// app/services/user-service.ts
 import mongoose from 'mongoose';
+import { ROLE } from '~/constants/role';
+import { ServiceResult } from '~/interfaces/service-result';
 import { IUser, User } from '~/models/user';
-import { ServiceResult } from '~/types/service-result';
-import { requireAuth } from '~/utils/auth.server';
-import { buildQueryFromRequest, IBuildQueryConfig } from '~/utils/util.server';
+import { IBuildQueryConfig, buildQueryFromSearchParams } from '~/utils/util.server';
+import { CreateUserInput, UpdateUserInput } from '~/validation/user.server';
 
-interface ICreateUserBody {
-  username: string;
-}
-
-interface IUpdateUserBody {
-  userId: string;
-  updateData: Partial<IUser>;
-}
-
-interface IDeleteUserBody {
-  userId: string;
-}
-
-// Query configuration for building queries
-const queryConfig: IBuildQueryConfig = {
-  username: {
-    isArray: false,
-    constructor: String,
-    regex: (value: string) => new RegExp(value, 'i'),
-  },
-};
-
+// Function to create a new user
 export const createUser = async (
-  body: ICreateUserBody,
-  request: Request
+  currentUser: IUser,
+  data: CreateUserInput
 ): Promise<ServiceResult<IUser>> => {
   try {
-    const { username } = body;
-    const { uid: firebaseId } = await requireAuth(request);
+    const { username, firebaseId } = data;
 
     if (!username || !firebaseId) {
       return { status: 400, error: 'Username and Firebase ID are required' };
     }
 
-    // Check if a user with the same Firebase ID already exists
     const existingUser = await User.findOne({ firebaseId }).select('_id').lean();
     if (existingUser) {
       return { status: 409, error: 'User already exists' };
     }
 
-    // Create a new user in MongoDB
-    const newUser = await User.create({ username, firebaseId });
+    const newUser = await User.create({ username, firebaseId, role: data.role ?? ROLE.USER });
 
     return { status: 200, message: 'User created successfully', data: newUser };
   } catch (error) {
@@ -55,8 +31,9 @@ export const createUser = async (
   }
 };
 
+// Function to update the authenticated user's information
 export const updateUser = async (
-  body: IUpdateUserBody
+  body: { userId: string; updateData: UpdateUserInput }
 ): Promise<ServiceResult<IUser>> => {
   const { userId, updateData } = body;
 
@@ -77,8 +54,9 @@ export const updateUser = async (
   }
 };
 
+// Function to delete the authenticated user's information
 export const deleteUser = async (
-  body: IDeleteUserBody
+  body: { userId: string }
 ): Promise<ServiceResult<IUser>> => {
   const { userId } = body;
 
@@ -99,9 +77,29 @@ export const deleteUser = async (
   }
 };
 
+// Function to read user by Firebase ID
+export const readUserByFirebaseId = async (firebaseId: string): Promise<ServiceResult<IUser>> => {
+  try {
+    const user = await User.findOne({ firebaseId }).lean();
+
+    if (!user) {
+      return { status: 404, error: 'User not found' };
+    }
+
+    return { status: 200, data: user };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { status: 500, error: errorMessage };
+  }
+};
+
+// Function to read all users based on search parameters
 export const readUsers = async (request: Request): Promise<ServiceResult<IUser[]>> => {
   try {
-    const { query, limit, offset } = buildQueryFromRequest(request, queryConfig);
+    const url = new URL(request.url);
+    const searchParams = new URLSearchParams(url.search);
+
+    const { query, limit, offset } = buildQueryFromSearchParams(searchParams, queryConfig);
 
     const users = await User.find(query).skip(offset).limit(limit).lean();
 
@@ -112,6 +110,7 @@ export const readUsers = async (request: Request): Promise<ServiceResult<IUser[]
   }
 };
 
+// Function to read user by ID
 export const readUserById = async (id: string): Promise<ServiceResult<IUser>> => {
   if (!id || !mongoose.isValidObjectId(id)) {
     return { status: 400, error: 'Invalid or missing user ID' };
@@ -131,18 +130,11 @@ export const readUserById = async (id: string): Promise<ServiceResult<IUser>> =>
   }
 };
 
-export const readUserByFirebaseId = async (firebaseId: string): Promise<ServiceResult<IUser>> => {
-    try {
-      const user = await User.findOne({ firebaseId }).lean();
-  
-      if (!user) {
-        return { status: 404, error: 'User not found' };
-      }
-  
-      return { status: 200, data: user };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-      return { status: 500, error: errorMessage };
-    }
-  };
-  
+// Query configuration for building queries
+const queryConfig: IBuildQueryConfig = {
+  username: {
+    isArray: false,
+    constructor: String,
+    regex: (value: string) => new RegExp(value, 'i'),
+  },
+};

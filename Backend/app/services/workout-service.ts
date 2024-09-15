@@ -1,52 +1,32 @@
 import mongoose from 'mongoose';
-import { ROLE } from '~/constants/role';
+import { ServiceResult } from '~/interfaces/service-result';
 import { SetPrototype } from '~/models/set-prototype';
+import { IUser } from '~/models/user';
 import { IWorkoutPrototype, WorkoutPrototype } from '~/models/workout-prototype';
-import { ServiceResult } from '~/types/service-result';
-import { requireRole } from '~/utils/auth.server';
-import { buildPopulateOptions, buildQueryFromRequest, IBuildQueryConfig } from '~/utils/util.server';
+import {
+    buildPopulateOptions,
+    buildQueryFromSearchParams,
+    IBuildQueryConfig,
+} from '~/utils/util.server';
+import { CreateWorkoutPrototypeInput, UpdateWorkoutPrototypeInput } from '~/validation/workout-prototype';
 
-interface IUpdateWorkoutBody {
-  workoutId: string;
-  updateData: Partial<IWorkoutPrototype>;
-}
-
-interface IDeleteWorkoutBody {
-  workoutId: string;
-}
-
-// Query configuration for building queries
-const queryConfig: IBuildQueryConfig = {
-  name: {
-    isArray: false,
-    constructor: String,
-    regex: (value: string) => new RegExp(value, 'i'),
-  },
-  userId: {
-    isArray: false,
-    constructor: mongoose.Types.ObjectId,
-    regex: (value: string) => new RegExp(value, 'i'),
-  },
-  intensityLevel: {
-    isArray: false,
-    constructor: String,
-    regex: (value: string) => new RegExp(value, 'i'),
-  },
-};
-
-export const createWorkout = async (request : Request & {body: Partial<IWorkoutPrototype>}): Promise<ServiceResult<{ workoutId: string }>> => {
+export const createWorkout = async (
+  user: IUser,
+  data: CreateWorkoutPrototypeInput
+): Promise<ServiceResult<{ workoutId: string }>> => {
   try {
-    const { name, sets, ...body } = request.body;
+    const { sets } = data;
 
-    const { _id: userId } = await requireRole(request, ROLE.USER);
+    // Ensure all set IDs are valid and belong to the user
+    const setIds: string[] = sets.map((setId: string) => setId.toString());
 
-    if (!name || !sets || sets.length === 0) {
-      return { status: 400, error: 'Name and at least one set are required' };
-    }
+    const validSets = await SetPrototype.find({
+      _id: { $in: setIds },
+      userId: user._id,
+    })
+      .select('_id')
+      .lean();
 
-    // Check if all sets exist
-    const setIds: string[] = sets.map((setId) => setId.toString());
-    const validSets = await SetPrototype.find({ _id: { $in: setIds } }).select('_id').lean();
     const validSetIds = validSets.map((set) => set._id.toString());
 
     const invalidSets = setIds.filter((id) => !validSetIds.includes(id));
@@ -55,72 +35,114 @@ export const createWorkout = async (request : Request & {body: Partial<IWorkoutP
     }
 
     const newWorkout = await WorkoutPrototype.create({
-      name,
-      warmup: body.warmup,
-      coolDown: body.coolDown,
-      sets,
-      userId,
-      description: body.description,
-      durationInMinutes: body.durationInMinutes,
-      intensityLevel: body.intensityLevel,
-      notes: body.notes,
+      ...data,
+      userId: user._id,
     });
 
-    return { status: 200, message: 'Workout created successfully', workoutId: newWorkout._id };
+    return {
+      status: 201,
+      message: 'Workout created successfully',
+      workoutId: newWorkout._id,
+    };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
   }
 };
 
-export const updateWorkout = async (body: IUpdateWorkoutBody): Promise<ServiceResult<{ workoutId: string }>> => {
-  const { workoutId, updateData } = body;
-
-  if (!workoutId || !mongoose.isValidObjectId(workoutId)) {
-    return { status: 400, error: 'Workout ID is required and must be a valid ID' };
+export const updateWorkout = async (
+  user: IUser,
+  workoutId: string,
+  updateData: UpdateWorkoutPrototypeInput
+): Promise<ServiceResult<{ workoutId: string }>> => {
+  if (!mongoose.isValidObjectId(workoutId)) {
+    return { status: 400, error: 'Workout ID is invalid' };
   }
 
   try {
-    const updatedWorkout = await WorkoutPrototype.findByIdAndUpdate(workoutId, updateData, { new: true });
-    if (!updatedWorkout) {
+    // Find the workout and ensure it belongs to the user
+    const workout = await WorkoutPrototype.findOne({ _id: workoutId, userId: user._id });
+
+    if (!workout) {
       return { status: 404, error: 'Workout not found' };
     }
 
-    return { status: 200, message: 'Workout updated successfully', workoutId: updatedWorkout._id };
+    // Update the workout
+    Object.assign(workout, updateData);
+    await workout.save();
+
+    return {
+      status: 200,
+      message: 'Workout updated successfully',
+      workoutId: workout._id,
+    };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
   }
 };
 
-export const deleteWorkout = async (body: IDeleteWorkoutBody): Promise<ServiceResult<{ workoutId: string }>> => {
-  const { workoutId } = body;
-
-  if (!workoutId || !mongoose.isValidObjectId(workoutId)) {
-    return { status: 400, error: 'Workout ID is required and must be a valid ID' };
+export const deleteWorkout = async (
+  user: IUser,
+  workoutId: string
+): Promise<ServiceResult<{ workoutId: string }>> => {
+  if (!mongoose.isValidObjectId(workoutId)) {
+    return { status: 400, error: 'Workout ID is invalid' };
   }
 
   try {
-    const deletedWorkout = await WorkoutPrototype.findByIdAndDelete(workoutId);
-    if (!deletedWorkout) {
+    // Find the workout and ensure it belongs to the user
+    const workout = await WorkoutPrototype.findOne({ _id: workoutId, userId: user._id });
+
+    if (!workout) {
       return { status: 404, error: 'Workout not found' };
     }
 
-    return { status: 200, message: 'Workout deleted successfully', workoutId: deletedWorkout._id };
+    // Delete the workout
+    await workout.deleteOne();
+
+    return {
+      status: 200,
+      message: 'Workout deleted successfully',
+      workoutId: workout._id,
+    };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
   }
 };
 
-export const readWorkouts = async (request: Request): Promise<ServiceResult<IWorkoutPrototype[]>> => {
+export const readWorkouts = async (
+  user: IUser,
+  searchParams: URLSearchParams
+): Promise<ServiceResult<IWorkoutPrototype[]>> => {
   try {
-    const url = new URL(request.url);
-    const searchParams = new URLSearchParams(url.search);
+    const queryConfig: IBuildQueryConfig = {
+      name: {
+        isArray: false,
+        constructor: String,
+        regex: (value: string) => new RegExp(value, 'i'),
+      },
+      intensityLevel: {
+        isArray: false,
+        constructor: String,
+        regex: (value: string) => new RegExp(value, 'i'),
+      },
+    };
 
-    const { query, limit, offset, sortBy, sortOrder } = buildQueryFromRequest(request, queryConfig);
+    const { query, limit, offset, sortBy, sortOrder } = buildQueryFromSearchParams(
+      searchParams,
+      queryConfig
+    ) as any;
 
-    const sortOption: Record<string, 1 | -1> | null = sortBy ? { [sortBy]: sortOrder as 1 | -1 } : null;
+    query.userId = user._id;
+
+    const sortOption: Record<string, 1 | -1> | null = sortBy
+      ? { [sortBy]: sortOrder as 1 | -1 }
+      : null;
 
     let queryObj = WorkoutPrototype.find(query).sort(sortOption).skip(offset).limit(limit);
 
@@ -133,18 +155,24 @@ export const readWorkouts = async (request: Request): Promise<ServiceResult<IWor
 
     return { status: 200, data: workouts };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
   }
 };
 
-export const readWorkoutById = async (id: string, searchParams: URLSearchParams): Promise<ServiceResult<IWorkoutPrototype>> => {
+export const readWorkoutById = async (
+  user: IUser,
+  id: string,
+  searchParams: URLSearchParams
+): Promise<ServiceResult<IWorkoutPrototype>> => {
   if (!id || !mongoose.isValidObjectId(id)) {
     return { status: 400, error: 'Invalid or missing workout ID' };
   }
 
   try {
     let query = WorkoutPrototype.findById(id);
+
     const populateOptions = buildPopulateOptions(searchParams, 'populate');
     populateOptions.forEach((option) => {
       query = query.populate(option);
@@ -156,9 +184,15 @@ export const readWorkoutById = async (id: string, searchParams: URLSearchParams)
       return { status: 404, error: 'Workout not found' };
     }
 
+    // Check if the user has access to the workout
+    if (workout.userId.toString() !== user._id) {
+      return { status: 403, error: 'Forbidden: You do not have access to this workout' };
+    }
+
     return { status: 200, data: workout };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
   }
 };

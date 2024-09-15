@@ -1,7 +1,7 @@
 import mongoose, { RootFilterQuery } from 'mongoose';
+import { ServiceResult } from '~/interfaces/service-result';
 import { Exercise, IExercise } from '~/models/exercise';
-import { ServiceResult } from '~/types/service-result';
-import { buildQueryFromRequest, IBuildQueryConfig } from '~/utils/util.server';
+import { buildQueryFromSearchParams, IBuildQueryConfig } from '~/utils/util.server';
 
 const queryConfig: IBuildQueryConfig = {
   _id: {},
@@ -28,7 +28,10 @@ const queryConfig: IBuildQueryConfig = {
 
 export const readExercises = async (request: Request): Promise<ServiceResult<IExercise[]>> => {
   try {
-    const { query, limit, offset, sortBy, sortOrder } = buildQueryFromRequest<IExercise>(request, queryConfig);
+    const url = new URL(request.url);
+    const searchParams = new URLSearchParams(url.search);
+
+    const { query, limit, offset, sortBy, sortOrder } = buildQueryFromSearchParams<IExercise>(searchParams, queryConfig);
 
     const sortOption: Record<string, 1 | -1> | undefined = sortBy
       ? { [sortBy]: sortOrder as 1 | -1 }

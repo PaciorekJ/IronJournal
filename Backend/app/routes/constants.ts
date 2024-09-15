@@ -12,7 +12,7 @@ import { SCHEDULE_TYPE } from "~/constants/schedule-types";
 import { SET_TYPES } from "~/constants/set-types";
 import { TARGET_AUDIENCE } from "~/constants/target-audiences";
 import { WEIGHT_SELECTION_METHOD } from "~/constants/weight-selection";
-import { requireAuth } from "~/utils/auth.server";
+import { isLoginValid } from "~/utils/auth.server";
 import { convertKeysToCamelCase } from "~/utils/util.server";
 
 export type ProgramConstantId = // slugs to access program constants on the route level
@@ -58,7 +58,7 @@ export const SET_CONSTANTS_MAP: Record<SetConstantId, any> = {
 };
 
 export const loader = async ({request}: LoaderFunctionArgs) => {
-  await requireAuth(request);
+  await isLoginValid(request);
   
 	return json({
 		...convertKeysToCamelCase(EXERCISE_CONSTANTS_MAP),

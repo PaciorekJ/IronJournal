@@ -1,8 +1,7 @@
 
 import { json } from "@remix-run/node";
 import admin from "firebase-admin";
-import { RoleTypeValue } from "~/constants/role";
-import { User } from "~/models/user";
+import { IUser, User } from "~/models/user";
 
 import serviceAccount from "~/serviceAccountKey.json";
 
@@ -10,16 +9,14 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount as admin.ServiceAccount)
 });
 
-/**
- * Verify the Firebase ID token in the Authorization header of the given request.
- *
- * If the token is invalid or missing, throw a 401 response with an appropriate error message.
- *
- * @param request The request object containing the Authorization header.
- * @throws {Response} A 401 response with an error message if the token is invalid or missing.
- * @returns The decoded Firebase ID token.
- */
-export async function requireAuth(request: Request) {
+
+  /**
+   * Verifies the Firebase Authentication idToken in the Authorization header of the request.
+   * If the token is invalid or missing, throws a 401 error.
+   * @param request The request object.
+   * @returns The decoded token if the token is valid.
+   */
+export async function isLoginValid(request: Request) {
     const authHeader = request.headers.get("Authorization");
   
     if (!authHeader) {
@@ -36,27 +33,55 @@ export async function requireAuth(request: Request) {
     }
 }
 
-  /**
-   * Verifies that the user is authenticated and has the required role
-   * 
-   * @param request The request object
-   * @param requiredRole The role that the user must have
-   * @returns The user document if the user is authenticated and has the required role
-   * @throws {Response} A 401 response if the user is not authenticated
-   * @throws {Response} A 403 response if the user does not have the required role
-   * @throws {Response} A 404 response if the user document is not found
-   */
-export const requireRole = async (request: Request, requiredRole: RoleTypeValue) => {
-    const { uid: firebaseId } = await requireAuth(request);
-    const user = await User.findOne({ firebaseId }).lean(); 
+
+/**
+ * Verifies that the user is authenticated and optionally checks a predicate.
+ * Optionally returns the Firebase token info, the user info, or both.
+ *
+ * @param request The request object.
+ * @param config Optional configuration object:
+ *  - predicate: A function that takes a user and returns a boolean.
+ *               If it returns false, access is denied with a 403 error.
+ *  - firebaseToken: Whether to include the Firebase token info in the return value.
+ *  - user: Whether to include the user info in the return value.
+ * @returns An object containing the requested information based on the config.
+ * @throws {Response} A 401 response if the user is not authenticated.
+ * @throws {Response} A 403 response if the predicate check fails.
+ * @throws {Response} A 404 response if the user document is not found.
+ */
+export const requirePredicate = async (
+    request: Request,
+    config?: {
+      predicate?: (user: IUser) => boolean;
+      firebaseToken?: boolean;
+      user?: boolean;
+    }
+  ): Promise<{ firebaseToken?: admin.auth.DecodedIdToken; user?: IUser }> => {
+    // Get the Firebase token info
+    const firebaseToken = await isLoginValid(request);
+  
+    // Find the user in your database
+    const user = await User.findOne({ firebaseId: firebaseToken.uid }).lean();
   
     if (!user) {
-      throw json({ error: "User not found" }, { status: 404 });
+      throw json({ error: 'User not found' }, { status: 404 });
     }
   
-    if (user.role !== requiredRole) {
-      throw json({ error: "Forbidden: Insufficient permissions" }, { status: 403 });
+    // If a predicate is provided, check it
+    if (config?.predicate && !config.predicate(user)) {
+      throw json({ error: 'Forbidden: Insufficient permissions' }, { status: 403 });
     }
   
-    return user;
+    // Build the return object based on the config options
+    const result: { firebaseToken?: admin.auth.DecodedIdToken; user?: IUser } = {};
+  
+    if (config?.firebaseToken) {
+      result.firebaseToken = firebaseToken;
+    }
+  
+    if (config?.user) {
+      result.user = user;
+    }
+  
+    return result;
   };

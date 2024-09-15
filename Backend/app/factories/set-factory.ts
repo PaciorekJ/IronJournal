@@ -1,10 +1,15 @@
-import { SET_TYPES, SetTypeValue } from '~/constants/set-types';
-import { ISetPrototypeDropSet, ISetPrototypeStraightSet, ISetPrototypeSuperset, SetPrototypeDropSet, SetPrototypeStraightSet, SetPrototypeSuperset } from '~/models/set-prototype';
+// app/factories/SetFactory.ts
 
-type SetInstance = ISetPrototypeStraightSet | ISetPrototypeDropSet | ISetPrototypeSuperset;
+import { SET_TYPES, SetTypeValue } from '~/constants/set-types';
+import {
+  SetPrototypeDropSet,
+  SetPrototypeStraightSet,
+  SetPrototypeSuperset,
+} from '~/models/set-prototype';
+import { CreateSetPrototypeInput } from '~/validation/set-prototype.server';
 
 class SetFactory {
-  public static async create(setType: SetTypeValue, data: Partial<SetInstance>): Promise<SetInstance> {
+  public static async create(setType: SetTypeValue, data: CreateSetPrototypeInput) {
     switch (setType) {
       case SET_TYPES.STRAIGHT_SET:
         return await SetPrototypeStraightSet.create(data);

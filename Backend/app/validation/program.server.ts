@@ -11,7 +11,7 @@ const cardioRecommendationSchema = z.object({
   frequency: z.string(),
   durationMinutes: z.number(),
   type: z.string(),
-});
+}).strict();
 
 const workoutScheduleItemSchema = z.object({
   day: z.union([
@@ -20,9 +20,14 @@ const workoutScheduleItemSchema = z.object({
   ]),
   workoutId: objectIdSchema.optional(),
   isRestDay: z.boolean().optional(),
-});
+}).strict().refine(
+  (data) => (data.workoutId && !data.isRestDay) || (!data.workoutId && data.isRestDay),
+  {
+    message: 'Either workoutId or isRestDay must be set, but not both.',
+  }
+);
 
-export const createProgramSchema = z.object({
+const tempCreateProgramSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   workoutSchedule: z.array(workoutScheduleItemSchema),
@@ -40,7 +45,11 @@ export const createProgramSchema = z.object({
     .optional(),
   cardioRecommendations: cardioRecommendationSchema.optional(),
   progressionStrategy: z.string().optional(),
-});
+}).strict();
 
-// Update Schema for Program (all fields optional)
-export const updateProgramSchema = createProgramSchema.partial();
+export const createProgramSchema = tempCreateProgramSchema.strict();
+export const updateProgramSchema = tempCreateProgramSchema.partial();
+
+// TYPES for expected inputs to CRUD Operations
+export interface CreateProgramInput extends Omit<z.infer<typeof createProgramSchema>, 'userId' | 'createdAt' | 'updatedAt'> {}
+export interface UpdateProgramInput extends Partial<CreateProgramInput> {}
