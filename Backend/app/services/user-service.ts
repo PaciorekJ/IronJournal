@@ -150,4 +150,6 @@ const queryConfig: IBuildQueryConfig = {
     constructor: String,
     regex: (value: string) => new RegExp(value),
   },
+  limit: { isArray: false, constructor: Number },
+  offset: { isArray: false, constructor: Number },
 };
