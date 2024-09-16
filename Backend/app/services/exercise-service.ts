@@ -4,7 +4,6 @@ import { Exercise, IExercise } from '~/models/exercise';
 import { buildQueryFromSearchParams, IBuildQueryConfig } from '~/utils/util.server';
 
 const queryConfig: IBuildQueryConfig = {
-  _id: {},
   name: {
     isArray: false,
     constructor: String,
@@ -44,7 +43,10 @@ export const readExercises = async (request: Request): Promise<ServiceResult<IEx
       .lean()
       .exec();
 
-    return { status: 200, data: exercises };
+    const totalCount = await Exercise.countDocuments(query as RootFilterQuery<IExercise>).exec();
+    const hasMore = offset + exercises.length < totalCount;
+
+    return { status: 200, data: exercises, hasMore };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };

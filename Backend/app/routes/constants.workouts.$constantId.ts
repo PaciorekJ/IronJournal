@@ -16,5 +16,5 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       return json({ error: 'Constant not found' }, { status: 404 });
     }
 
-  return json(WORKOUT_CONSTANTS_MAP[constantId as WorkoutConstantId], { status: 200 });
+  return json({data: WORKOUT_CONSTANTS_MAP[constantId as WorkoutConstantId]}, { status: 200 });
 };

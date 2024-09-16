@@ -19,24 +19,47 @@ const password = process.env.FIREBASE_PASSWORD;
 // Define your API endpoints to test
 const endpoints = [
   {
-    name: 'POST Me',
+    name: 'GET User Profile - Fail',
+    method: 'GET',
+    url: 'users/me',
+  },
+  {
+    name: 'POST Create User - Success',
     method: 'POST',
     url: 'users/',
     body: {
-      "username": "Jason",
+      "username": "Paul"
     },
   },
   {
-    name: 'GET Me',
-    method: 'GET',
-    url: 'users/me',
-    body: null
+    name: 'POST Create User - Bad Request',
+    method: 'POST',
+    url: 'users/',
+    body: {},
   },
   {
-    name: 'Get Exercises',
+    name: 'GET User Profile - Unauthorized',
     method: 'GET',
-    url: 'exercises/',
-    body: null
+    url: 'users/me',
+    headers: { Authorization: `` },
+  },
+  {
+    name: 'GET Non-existent Endpoint - Not Found',
+    method: 'GET',
+    url: 'invalid/endpoint',
+  },
+  {
+    name: 'PUT User Profile - Method Not Allowed',
+    method: 'PUT',
+    url: 'users/me',
+  },
+  {
+    name: 'POST Create User - Conflict',
+    method: 'POST',
+    url: 'users/me',
+    body: {
+      "username": "Jason"
+    },
   },
 ];
 
@@ -67,6 +90,8 @@ async function main() {
       },
     });
 
+    console.log(`${idToken}`)
+
     // Loop through the endpoints and make requests
     for (const endpoint of endpoints) {
       try {
@@ -75,27 +100,26 @@ async function main() {
 
         switch (endpoint.method) {
           case 'GET':
-            response = await axiosInstance.get(endpoint.url);
+            response = await axiosInstance.get(endpoint.url, { headers: endpoint.headers });
             break;
           case 'POST':
-            response = await axiosInstance.post(endpoint.url, endpoint.body);
+            response = await axiosInstance.post(endpoint.url, endpoint.body, { headers: endpoint.headers });
             break;
           case 'PATCH':
-            response = await axiosInstance.patch(endpoint.url, endpoint.body);
+            response = await axiosInstance.patch(endpoint.url, endpoint.body, { headers: endpoint.headers });
             break;
           case 'DELETE':
-            response = await axiosInstance.delete(endpoint.url);
+            response = await axiosInstance.delete(endpoint.url, { headers: endpoint.headers });
             break;
           default:
             console.log(`Unsupported method: ${endpoint.method}`);
             continue;
         }
 
-        console.log('Response data:', response);
+        console.log('Response data:', response.data);
       } catch (error) {
         console.error(
-          `Error testing endpoint ${endpoint.name}:`,
-          error.response ? error.response : error.message
+          `Error testing endpoint ${endpoint.name}:`, error.message
         );
       }
     }

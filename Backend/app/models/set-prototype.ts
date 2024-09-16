@@ -17,7 +17,6 @@ interface ISetPrototype extends Document {
 
 const SetPrototypeSchema: Schema<ISetPrototype> = new Schema(
   {
-    workoutId: { type: mongoose.Schema.Types.ObjectId, ref: 'WorkoutPrototype', required: true },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     exercise: { type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', required: true },
     alternatives: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', default: [] }],

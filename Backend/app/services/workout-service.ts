@@ -4,9 +4,9 @@ import { SetPrototype } from '~/models/set-prototype';
 import { IUser } from '~/models/user';
 import { IWorkoutPrototype, WorkoutPrototype } from '~/models/workout-prototype';
 import {
-    buildPopulateOptions,
-    buildQueryFromSearchParams,
-    IBuildQueryConfig,
+  buildPopulateOptions,
+  buildQueryFromSearchParams,
+  IBuildQueryConfig,
 } from '~/utils/util.server';
 import { CreateWorkoutPrototypeInput, UpdateWorkoutPrototypeInput } from '~/validation/workout-prototype';
 
@@ -100,6 +100,11 @@ export const deleteWorkout = async (
       return { status: 404, error: 'Workout not found' };
     }
 
+    // Delete all sets
+    const setsToDelete = [...workout.sets, workout.coolDown, workout.warmup];
+    const workoutSetsValid = setsToDelete.filter((set) => set);
+    await SetPrototype.deleteMany({ _id: { $in: workoutSetsValid } });
+
     // Delete the workout
     await workout.deleteOne();
 
@@ -138,6 +143,7 @@ export const readWorkouts = async (
       queryConfig
     ) as any;
 
+    // Ensure the user can only see their own workouts
     query.userId = user._id;
 
     const sortOption: Record<string, 1 | -1> | null = sortBy
@@ -153,13 +159,17 @@ export const readWorkouts = async (
 
     const workouts = await queryObj.lean();
 
-    return { status: 200, data: workouts };
+    const totalCount = await WorkoutPrototype.countDocuments(query).exec();
+    const hasMore = offset + workouts.length < totalCount;
+
+    return { status: 200, data: workouts, hasMore };
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
   }
 };
+
 
 export const readWorkoutById = async (
   user: IUser,

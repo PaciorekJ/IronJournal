@@ -3,7 +3,6 @@
 import mongoose from 'mongoose';
 import { ServiceResult } from '~/interfaces/service-result';
 import { IProgram, Program } from '~/models/program';
-import { SetPrototype } from '~/models/set-prototype';
 import { IUser } from '~/models/user';
 import { WorkoutPrototype } from '~/models/workout-prototype';
 import { IBuildQueryConfig, buildPopulateOptions, buildQueryFromSearchParams } from '~/utils/util.server';
@@ -17,7 +16,7 @@ export const createProgram = async (
 
     const { workoutSchedule } = data;
 
-    const workoutIds: string[] = workoutSchedule
+    const workoutIds: string[] = (workoutSchedule || [])
       .map((item) => item.workoutId?.toString())
       .filter((id): id is string => !!id);
 
@@ -83,42 +82,17 @@ export const deleteProgram = async (
     return { status: 400, error: 'Program ID is invalid' };
   }
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
-    // Find the program and ensure it belongs to the user
-    const program = await Program.findOne({ _id: programId, userId: user._id }).session(session);
+    const program = await Program.findOne({ _id: programId, userId: user._id }).lean();
 
     if (!program) {
-      await session.abortTransaction();
-      session.endSession();
       return { status: 404, error: 'Program not found' };
     }
 
-    // Delete associated workouts
-    const workoutsToDelete = await WorkoutPrototype.find({ programId: program._id, userId: user._id })
-      .select('_id')
-      .session(session);
-
-    const workoutIds = workoutsToDelete.map((workout) => workout._id);
-
-    await WorkoutPrototype.deleteMany({ _id: { $in: workoutIds } }).session(session);
-
-    // Delete associated sets
-    await SetPrototype.deleteMany({ workoutId: { $in: workoutIds } }).session(session);
-
-    // Delete the program
-    await program.deleteOne({ session });
-
-    await session.commitTransaction();
-    session.endSession();
+    await program.deleteOne({ _id: programId });
 
     return { status: 200, message: 'Program deleted successfully', programId: program._id };
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
   }
@@ -158,7 +132,6 @@ export const readPrograms = async (
 
     const { query, limit, offset, sortBy, sortOrder } = buildQueryFromSearchParams(searchParams, queryConfig) as any;
 
-    // Ensure the user can only see their own programs or public programs
     query.$or = [{ userId: user._id }, { isPublic: true }];
 
     const sortOption: Record<string, 1 | -1> | null = sortBy ? { [sortBy]: sortOrder as 1 | -1 } : null;
@@ -171,13 +144,18 @@ export const readPrograms = async (
     });
 
     const programs = await queryObj.lean();
+    const totalCount = await Program.countDocuments(query).exec();
 
-    return { status: 200, data: programs };
+    // Determine if there are more records available
+    const hasMore = offset + programs.length < totalCount;
+
+    return { status: 200, data: programs, hasMore };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
   }
 };
+
 
 export const readProgramById = async (
   user: IUser,

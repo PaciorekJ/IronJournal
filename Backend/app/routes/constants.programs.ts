@@ -5,5 +5,5 @@ import { PROGRAM_CONSTANTS_MAP } from "./constants";
 
 export const loader = async ({request}: LoaderFunctionArgs) => {
 	await isLoginValid(request);
-	return json(convertKeysToCamelCase(PROGRAM_CONSTANTS_MAP));
+	return json({ data: convertKeysToCamelCase(PROGRAM_CONSTANTS_MAP)});
 };

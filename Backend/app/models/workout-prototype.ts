@@ -3,7 +3,6 @@ import { INTENSITY_LEVEL, IntensityLevelValue } from '~/constants/intensity-leve
 
 interface IWorkoutPrototype extends Document {
   name: string;
-  programId?: mongoose.Schema.Types.ObjectId;
   warmup?: mongoose.Schema.Types.ObjectId;
   coolDown?: mongoose.Schema.Types.ObjectId;
   sets: mongoose.Schema.Types.ObjectId[];
@@ -17,7 +16,6 @@ interface IWorkoutPrototype extends Document {
 
 const WorkoutPrototypeSchema: Schema<IWorkoutPrototype> = new Schema({
   name: { type: String, required: true },
-  programId: { type: mongoose.Schema.Types.ObjectId, ref: 'Program' },
   warmup: { type: mongoose.Schema.Types.ObjectId, ref: 'SetPrototype' },
   sets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'SetPrototype', required: true }],
   coolDown: { type: mongoose.Schema.Types.ObjectId, ref: 'SetPrototype' },

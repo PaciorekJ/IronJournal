@@ -16,5 +16,5 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       return json({ error: 'Constant not found' }, { status: 404 });
     }
 
-  return json(SET_CONSTANTS_MAP[constantId as SetConstantId], { status: 200 });
+  return json({ data: SET_CONSTANTS_MAP[constantId as SetConstantId]}, { status: 200 });
   };

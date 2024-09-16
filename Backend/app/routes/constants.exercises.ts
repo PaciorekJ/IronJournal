@@ -6,5 +6,5 @@ import { EXERCISE_CONSTANTS_MAP } from "./constants";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await isLoginValid(request);
   
-  return json(convertKeysToCamelCase(EXERCISE_CONSTANTS_MAP));
+  return json({ data: convertKeysToCamelCase(EXERCISE_CONSTANTS_MAP)});
 }

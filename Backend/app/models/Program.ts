@@ -12,14 +12,14 @@ interface IWorkoutSchedule {
 
 interface ICardioRecommendation {
   frequency: string;
-  durationMinutes: number;
+  durationInMinutes: number;
   type: string;
 }
 
 interface IProgram extends Document {
   name: string;
   description?: string;
-  workoutSchedule: IWorkoutSchedule[];
+  workoutSchedule?: IWorkoutSchedule[];
   userId: mongoose.Schema.Types.ObjectId; 
   durationInDays?: number;
   createdAt: Date;
@@ -36,13 +36,13 @@ interface IProgram extends Document {
 const ProgramSchema: Schema<IProgram> = new Schema({
   name: { type: String, required: true },
   description: { type: String },
-  workoutSchedule: [
+  workoutSchedule: { type: [
     {
       day: { type: Schema.Types.Mixed, required: true }, 
       workoutId: { type: mongoose.Schema.Types.ObjectId, ref: 'WorkoutPrototype' },
       isRestDay: { type: Boolean, default: false },
     },
-  ],
+  ], default: [] },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   durationInDays: { type: Number },
   createdAt: { type: Date, default: Date.now },
@@ -54,7 +54,7 @@ const ProgramSchema: Schema<IProgram> = new Schema({
   targetAudience: { type: String, enum: Object.values(TARGET_AUDIENCE) },
   cardioRecommendations: {
     frequency: { type: String },
-    durationMinutes: { type: Number },
+    durationInMinutes: { type: Number },
     type: { type: String },
   },
   progressionStrategy: { type: String },

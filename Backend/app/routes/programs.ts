@@ -22,10 +22,8 @@ export const action: ActionFunction = async ({ request }) => {
   try {
     const requestData = await request.json();
 
-    // Validate the request data
     const validatedData = createProgramSchema.parse(requestData);
 
-    // Call the service function, passing the user and validated data
     const result = await createProgram(user, validatedData);
 
     return json(result, { status: result.status });

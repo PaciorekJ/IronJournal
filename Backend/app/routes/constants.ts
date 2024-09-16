@@ -60,10 +60,10 @@ export const SET_CONSTANTS_MAP: Record<SetConstantId, any> = {
 export const loader = async ({request}: LoaderFunctionArgs) => {
   await isLoginValid(request);
   
-	return json({
+	return json({data: {
 		...convertKeysToCamelCase(EXERCISE_CONSTANTS_MAP),
 		...convertKeysToCamelCase(PROGRAM_CONSTANTS_MAP),
 		...convertKeysToCamelCase(WORKOUT_CONSTANTS_MAP),
 		...convertKeysToCamelCase(SET_CONSTANTS_MAP),
-	});
+	}});
 };

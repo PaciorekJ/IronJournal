@@ -17,5 +17,5 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		return json({ error: result.error }, { status: result.status });
 	}
 
-	return json(result.data, { status: 200 });
+	return json(result, { status: 200 });
 };

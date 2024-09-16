@@ -5,10 +5,12 @@ import { IUser, User } from "~/models/user";
 
 import serviceAccount from "~/serviceAccountKey.json";
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount as admin.ServiceAccount)
-});
-
+const App =
+    admin.apps.length === 0 || admin.apps[0] === undefined
+    ? admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount as admin.ServiceAccount)
+    }, "Iron-Journal-API")
+    : admin.apps[0];
 
   /**
    * Verifies the Firebase Authentication idToken in the Authorization header of the request.
@@ -17,7 +19,7 @@ admin.initializeApp({
    * @returns The decoded token if the token is valid.
    */
 export async function isLoginValid(request: Request) {
-    const authHeader = request.headers.get("Authorization");
+  const authHeader = request.headers.get("Authorization");
   
     if (!authHeader) {
       throw json({ error: "Unauthorized" }, { status: 401 });
@@ -26,7 +28,7 @@ export async function isLoginValid(request: Request) {
     const idToken = authHeader.split("Bearer ")[1];
   
     try {
-      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      const decodedToken = await admin.auth(App as any).verifyIdToken(idToken);
       return decodedToken;
     } catch (error) {
       throw json({ error: "Invalid token" }, { status: 401 });
@@ -67,12 +69,10 @@ export const requirePredicate = async (
       throw json({ error: 'User not found' }, { status: 404 });
     }
   
-    // If a predicate is provided, check it
     if (config?.predicate && !config.predicate(user)) {
       throw json({ error: 'Forbidden: Insufficient permissions' }, { status: 403 });
     }
   
-    // Build the return object based on the config options
     const result: { firebaseToken?: admin.auth.DecodedIdToken; user?: IUser } = {};
   
     if (config?.firebaseToken) {

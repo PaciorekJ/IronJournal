@@ -1,10 +1,15 @@
 import { z } from 'zod';
-import { ROLE, RoleTypeValue } from '~/constants/role';
+
+const safeUsernamePattern = /^[a-zA-Z0-9_]+$/;
 
 export const createUserSchema = z.object({
-  username: z.string().min(1, 'Username is required').trim(),
+  username: z
+      .string()
+      .min(1, 'Username is required')
+      .max(30, 'Username should not exceed 30 characters')
+      .regex(safeUsernamePattern, 'Username can only contain letters, numbers, and underscores')
+      .trim(),
   firebaseId: z.string().min(1, 'Firebase ID is required').trim(),
-  role: z.enum(Object.values(ROLE) as [RoleTypeValue, ...RoleTypeValue[]]).optional().default(ROLE.USER),
 }).strict();
 
 export const updateUserSchema = createUserSchema

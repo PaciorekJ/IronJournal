@@ -9,7 +9,7 @@ const objectIdSchema = z.string().regex(objectIdRegex, 'Invalid ObjectId');
 
 const cardioRecommendationSchema = z.object({
   frequency: z.string(),
-  durationMinutes: z.number(),
+  durationInMinutes: z.number(),
   type: z.string(),
 }).strict();
 
@@ -30,7 +30,7 @@ const workoutScheduleItemSchema = z.object({
 const tempCreateProgramSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
-  workoutSchedule: z.array(workoutScheduleItemSchema),
+  workoutSchedule: z.array(workoutScheduleItemSchema).optional(),
   durationInDays: z.number().optional(),
   notes: z.string().optional(),
   isPublic: z.boolean().optional().default(false),
