@@ -17,7 +17,7 @@ import { config } from "dotenv";
 config();
 
 import Database from "~/utils/db.server";
-await Database.connect();
+Database.connect().then;
 
 const ABORT_DELAY = 5_000;
 

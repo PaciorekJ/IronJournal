@@ -5,14 +5,14 @@ import { SET_TYPES } from '~/constants/set-types';
 import SetFactory from '~/factories/set-factory';
 import { ServiceResult } from '~/interfaces/service-result';
 import {
-    ISetPrototype,
-    SetPrototype,
+  ISetPrototype,
+  SetPrototype,
 } from '~/models/set-prototype';
 import { IUser } from '~/models/user';
 import {
-    buildPopulateOptions,
-    buildQueryFromSearchParams,
-    IBuildQueryConfig,
+  buildPopulateOptions,
+  buildQueryFromSearchParams,
+  IBuildQueryConfig,
 } from '~/utils/util.server';
 import { CreateSetPrototypeInput, createSetPrototypeSchema, UpdateSetPrototypeInput } from '~/validation/set-prototype.server';
 
