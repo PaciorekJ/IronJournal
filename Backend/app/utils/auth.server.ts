@@ -58,7 +58,7 @@ export const requirePredicate = async (
       firebaseToken?: boolean;
       user?: boolean;
     }
-  ): Promise<{ firebaseToken?: admin.auth.DecodedIdToken; user?: IUser | null }> => {
+  ): Promise<{ firebaseToken?: admin.auth.DecodedIdToken; user?: IUser }> => {
     // Get the Firebase token info
     const firebaseToken = await isLoginValid(request);
   
@@ -69,14 +69,18 @@ export const requirePredicate = async (
       throw json({ error: 'Forbidden: Insufficient permissions' }, { status: 403 });
     }
   
-    const result: { firebaseToken?: admin.auth.DecodedIdToken; user?: IUser | null } = {};
+    const result: { firebaseToken?: admin.auth.DecodedIdToken; user?: IUser } = {};
   
     if (config?.firebaseToken) {
       result.firebaseToken = firebaseToken;
     }
   
+    if (!user) {
+      throw json({ error: 'User doesn\'t have an account yet' }, { status: 404 });
+    }
+
     if (config?.user) {
-      result.user = user || null;
+      result.user = user;
     }
   
     return result;

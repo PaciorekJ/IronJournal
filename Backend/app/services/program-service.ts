@@ -11,7 +11,7 @@ import { CreateProgramInput, UpdateProgramInput } from '~/validation/program.ser
 export const createProgram = async (
   user: IUser,
   data: CreateProgramInput
-): Promise<ServiceResult<{ programId: string }>> => {
+): Promise<ServiceResult<IProgram>> => {
   try {
 
     const { workoutSchedule } = data;
@@ -39,7 +39,7 @@ export const createProgram = async (
       userId: user._id,
     });
 
-    return { status: 201, message: 'Program created successfully', programId: newProgram._id };
+    return { status: 201, message: 'Program created successfully', data: newProgram };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
@@ -50,24 +50,28 @@ export const updateProgram = async (
   user: IUser,
   programId: string,
   updateData: UpdateProgramInput
-): Promise<ServiceResult<{ programId: string }>> => {
+): Promise<ServiceResult<IProgram>> => {
   if (!mongoose.isValidObjectId(programId)) {
     return { status: 400, error: 'Program ID is invalid' };
   }
 
   try {
     // Find the program and ensure it belongs to the user
-    const program = await Program.findOne({ _id: programId, userId: user._id });
+    const program = await Program.findOne({ _id: programId });
 
     if (!program) {
       return { status: 404, error: 'Program not found' };
+    }
+
+    if (program.userId.toString() !== (user._id as mongoose.Types.ObjectId).toString()) {
+      return { status: 403, error: 'You are not authorized to update this program' };
     }
 
     // Update the program
     Object.assign(program, updateData);
     await program.save();
 
-    return { status: 200, message: 'Program updated successfully', programId: program._id };
+    return { status: 200, message: 'Program updated successfully', data: program};
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
@@ -77,21 +81,25 @@ export const updateProgram = async (
 export const deleteProgram = async (
   user: IUser,
   programId: string
-): Promise<ServiceResult<{ programId: string }>> => {
+): Promise<ServiceResult<IProgram>> => {
   if (!mongoose.isValidObjectId(programId)) {
     return { status: 400, error: 'Program ID is invalid' };
   }
 
   try {
-    const program = await Program.findOne({ _id: programId, userId: user._id }).lean();
+    const program = await Program.findOne({ _id: programId }).lean();
 
     if (!program) {
       return { status: 404, error: 'Program not found' };
     }
 
-    await program.deleteOne({ _id: programId });
+    if (program.userId.toString() !== (user._id as mongoose.Types.ObjectId).toString()) {
+      return { status: 403, error: 'You are not authorized to update this program' };
+    }
+    
+    await Program.deleteOne({ _id: programId });
 
-    return { status: 200, message: 'Program deleted successfully', programId: program._id };
+    return { status: 200, message: 'Program deleted successfully', data: program };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
     return { status: 500, error: errorMessage };
@@ -192,7 +200,6 @@ export const readProgramById = async (
       return { status: 404, error: 'Program not found' };
     }
 
-    // Check if the user has access to the program
     if (!program.isPublic && program.userId.toString() !== user._id) {
       return { status: 403, error: 'Forbidden: You do not have access to this program' };
     }
