@@ -124,15 +124,27 @@ export const readPrograms = async (
         constructor: String,
         regex: (value: string) => new RegExp(value, 'i'),
       },
-      isPublic: {
+      userId: {
         isArray: false,
-        constructor: (value: string) => value === 'true',
-      },
+        constructor: String,
+      }
     };
 
+    // Build the initial query from search parameters
     const { query, limit, offset, sortBy, sortOrder } = buildQueryFromSearchParams(searchParams, queryConfig) as any;
 
-    query.$or = [{ userId: user._id }, { isPublic: true }];
+    // Check if the `mine` parameter is set to "true"
+    const mine = searchParams.get('mine') === 'true';
+    const userId = searchParams.get('userId');
+
+    if (mine) {
+      query.userId = user._id;
+    } else if (userId) {
+      query.userId = userId;
+      query.isPublic = true;
+    } else {
+      query.isPublic = true;
+    }
 
     const sortOption: Record<string, 1 | -1> | null = sortBy ? { [sortBy]: sortOrder as 1 | -1 } : null;
 
@@ -143,6 +155,7 @@ export const readPrograms = async (
       queryObj = queryObj.populate(option);
     });
 
+    // Fetch the programs with the specified limit and offset
     const programs = await queryObj.lean();
     const totalCount = await Program.countDocuments(query).exec();
 
@@ -155,7 +168,6 @@ export const readPrograms = async (
     return { status: 500, error: errorMessage };
   }
 };
-
 
 export const readProgramById = async (
   user: IUser,

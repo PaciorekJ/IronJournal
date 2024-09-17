@@ -4,13 +4,34 @@ import { createProgram, readPrograms } from '~/services/program-service';
 import { requirePredicate } from '~/utils/auth.server';
 import { createProgramSchema } from '~/validation/program.server';
 
+export const loader: LoaderFunction = async ({ request }) => {
+  const { user } = await requirePredicate(request, {
+    user: true,
+  })
+
+  if (!user) {
+    return json({ error: 'User doesn\'t have an account yet' }, { status: 404 });
+  }
+
+  const url = new URL(request.url);
+  const searchParams = new URLSearchParams(url.search);
+
+  const result = await readPrograms(user, searchParams);
+
+  if (result.status !== 200) {
+    return json({ error: result.error }, { status: result.status });
+  }
+
+  return json(result.data, { status: 200 });
+};
+
 export const action: ActionFunction = async ({ request }) => {
   const { user } = await requirePredicate(request, {
     user: true,
   })
 
   if (!user) {
-    return json({ error: 'User not found' }, { status: 404 });
+    return json({ error: 'User doesn\'t have an account yet' }, { status: 404 });
   }
 
   const method = request.method.toUpperCase();
@@ -36,23 +57,3 @@ export const action: ActionFunction = async ({ request }) => {
   }
 };
 
-export const loader: LoaderFunction = async ({ request }) => {
-  const { user } = await requirePredicate(request, {
-    user: true,
-  })
-
-  if (!user) {
-    return json({ error: 'User not found' }, { status: 404 });
-  }
-
-  const url = new URL(request.url);
-  const searchParams = new URLSearchParams(url.search);
-
-  const result = await readPrograms(user, searchParams);
-
-  if (result.status !== 200) {
-    return json({ error: result.error }, { status: result.status });
-  }
-
-  return json(result.data, { status: 200 });
-};

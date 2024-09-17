@@ -58,29 +58,25 @@ export const requirePredicate = async (
       firebaseToken?: boolean;
       user?: boolean;
     }
-  ): Promise<{ firebaseToken?: admin.auth.DecodedIdToken; user?: IUser }> => {
+  ): Promise<{ firebaseToken?: admin.auth.DecodedIdToken; user?: IUser | null }> => {
     // Get the Firebase token info
     const firebaseToken = await isLoginValid(request);
   
     // Find the user in your database
     const user = await User.findOne({ firebaseId: firebaseToken.uid }).lean();
-  
-    if (!user) {
-      throw json({ error: 'User not found' }, { status: 404 });
-    }
-  
-    if (config?.predicate && !config.predicate(user)) {
+
+    if (config?.predicate && user && !config.predicate(user)) {
       throw json({ error: 'Forbidden: Insufficient permissions' }, { status: 403 });
     }
   
-    const result: { firebaseToken?: admin.auth.DecodedIdToken; user?: IUser } = {};
+    const result: { firebaseToken?: admin.auth.DecodedIdToken; user?: IUser | null } = {};
   
     if (config?.firebaseToken) {
       result.firebaseToken = firebaseToken;
     }
   
     if (config?.user) {
-      result.user = user;
+      result.user = user || null;
     }
   
     return result;
