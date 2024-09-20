@@ -113,7 +113,7 @@ export function convertKeysToCamelCase(obj: Record<string, any>): Record<string,
  * @returns {Promise<Object>} The validated request body.
  * @throws {Response} A 400 response if the request body is invalid.
  */
-export async function validationRequestBody(request: Request) {
+export async function validateRequestBody(request: Request) {
   const contentType = request.headers.get('content-type');
     if (!contentType || contentType !== 'application/json') {
       throw json(

@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 import { z } from 'zod';
 import { deleteWorkout, readWorkoutById, updateWorkout } from '~/services/workout-service';
 import { requirePredicate } from '~/utils/auth.server';
-import { validationRequestBody } from '~/utils/util.server';
+import { validateRequestBody } from '~/utils/util.server';
 import { updateWorkoutPrototypeSchema } from '~/validation/workout-prototype';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -47,8 +47,8 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
 
   if (method === 'PATCH') {
     try {
-      
-      const requestData = validationRequestBody(request);
+
+      const requestData = validateRequestBody(request);
 
       // Validate the request data
       const validatedData = updateWorkoutPrototypeSchema.parse(requestData);

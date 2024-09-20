@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { IUser } from '~/models/user';
 import { deleteProgram, readProgramById, updateProgram } from '~/services/program-service';
 import { requirePredicate } from '~/utils/auth.server';
-import { validationRequestBody } from '~/utils/util.server';
+import { validateRequestBody } from '~/utils/util.server';
 import { updateProgramSchema } from '~/validation/program.server';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -49,7 +49,7 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
 	if (method === 'PATCH') {
 		try {
 
-			const requestData = validationRequestBody(request);
+			const requestData = validateRequestBody(request);
 
 			const validatedData = updateProgramSchema.parse(requestData);
 

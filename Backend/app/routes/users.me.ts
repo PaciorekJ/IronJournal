@@ -2,7 +2,7 @@ import { ActionFunctionArgs, json, LoaderFunctionArgs } from '@remix-run/node';
 import { z } from 'zod';
 import { createUser, deleteUser, readUserByFirebaseId, updateUser } from '~/services/user-service';
 import { isLoginValid, requirePredicate } from '~/utils/auth.server';
-import { validationRequestBody } from '~/utils/util.server';
+import { validateRequestBody } from '~/utils/util.server';
 import { createUserSchema, updateUserSchema } from '~/validation/user.server';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -28,7 +28,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return json({ error: 'Firebase token not found' }, { status: 404 });
       }
 
-      const requestData = validationRequestBody(request);
+      const requestData = validateRequestBody(request);
 
       const validatedData = createUserSchema.parse({...requestData, firebaseId: firebaseToken.uid});
 
@@ -56,7 +56,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (method === 'PATCH') {
     try {
 
-      const requestData = validationRequestBody(request);
+      const requestData = validateRequestBody(request);
 
       const validatedData = updateUserSchema.parse(requestData);
 
