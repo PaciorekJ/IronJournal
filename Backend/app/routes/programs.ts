@@ -2,6 +2,7 @@ import { ActionFunction, json, LoaderFunction } from '@remix-run/node';
 import { z } from 'zod';
 import { createProgram, readPrograms } from '~/services/program-service';
 import { requirePredicate } from '~/utils/auth.server';
+import { validationRequestBody } from '~/utils/util.server';
 import { createProgramSchema } from '~/validation/program.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -41,7 +42,8 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   try {
-    const requestData = await request.json();
+    
+    const requestData = validationRequestBody(request);
 
     const validatedData = createProgramSchema.parse(requestData);
 

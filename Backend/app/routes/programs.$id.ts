@@ -1,8 +1,10 @@
 import { json, LoaderFunctionArgs } from '@remix-run/node';
+import mongoose from 'mongoose';
 import { z } from 'zod';
 import { IUser } from '~/models/user';
 import { deleteProgram, readProgramById, updateProgram } from '~/services/program-service';
 import { requirePredicate } from '~/utils/auth.server';
+import { validationRequestBody } from '~/utils/util.server';
 import { updateProgramSchema } from '~/validation/program.server';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -12,7 +14,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	
 	const id = params.id;
 
-	if (!id) {
+	if (!id || !mongoose.isValidObjectId(id)) {
 	return json({ error: 'No id provided' }, { status: 400 });
 	}
 
@@ -40,26 +42,27 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
 	const id = params.id;
 	const method = request.method.toUpperCase();
 
-	if (!id) {
+	if (!id || !mongoose.isValidObjectId(id)) {
 	return json({ error: 'No id provided' }, { status: 400 });
 	}
 
 	if (method === 'PATCH') {
 		try {
-			const requestData = await request.json();
 
-			// Validate the request data
+			const requestData = validationRequestBody(request);
+
 			const validatedData = updateProgramSchema.parse(requestData);
 
 			const result = await updateProgram(user, id, validatedData);
 
 			return json(result, { status: result.status });
+			
 		} catch (error) {
-			if (error instanceof z.ZodError) {
+		  if (error instanceof z.ZodError) {
 			return json({ error: 'Validation failed', details: error.errors }, { status: 400 });
-			}
-			const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-			return json({ error: errorMessage }, { status: 500 });
+		  }
+		  const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+		  return json({ error: errorMessage }, { status: 500 });
 		}
 	}
 

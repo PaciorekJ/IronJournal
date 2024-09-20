@@ -2,13 +2,14 @@ import { ActionFunctionArgs, json, LoaderFunctionArgs } from '@remix-run/node';
 import { z } from 'zod';
 import { createUser, deleteUser, readUserByFirebaseId, updateUser } from '~/services/user-service';
 import { isLoginValid, requirePredicate } from '~/utils/auth.server';
+import { validationRequestBody } from '~/utils/util.server';
 import { createUserSchema, updateUserSchema } from '~/validation/user.server';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const { firebaseToken } = await requirePredicate(request, { firebaseToken: true });
 
-    if (!firebaseToken) {
+  if (!firebaseToken) {
     return json({ error: 'User not found' }, { status: 404 });
   }
 
@@ -21,31 +22,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const method = request.method.toUpperCase();
   if (method === 'POST') {
     try {
-        const firebaseToken = await isLoginValid(request);
-      
-        if (!firebaseToken) {
-          return json({ error: 'Firebase token not found' }, { status: 404 });
-        }
+      const firebaseToken = await isLoginValid(request);
     
-        const bodyText = await request.text();
-      
-        if (!bodyText) {
-            return json({ error: 'Bad request, empty body' }, { status: 400 });
-        }
-  
-        const requestData = JSON.parse(bodyText);
+      if (!firebaseToken) {
+        return json({ error: 'Firebase token not found' }, { status: 404 });
+      }
 
-        const validatedData = createUserSchema.parse({...requestData, firebaseId: firebaseToken.uid});
+      const requestData = validationRequestBody(request);
 
-        const result = await createUser(validatedData);
+      const validatedData = createUserSchema.parse({...requestData, firebaseId: firebaseToken.uid});
 
-        return json(result, { status: result.status });
+      const result = await createUser(validatedData);
+
+      return json(result, { status: result.status });
     } catch (error) {
-        if (error instanceof z.ZodError) {
-        return json({ error: 'Validation failed', details: error.errors }, { status: 400 });
-        }
-        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-        return json({ error: errorMessage }, { status: 500 });
+      if (error instanceof z.ZodError) {
+      return json({ error: 'Validation failed', details: error.errors }, { status: 400 });
+      }
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      return json({ error: errorMessage }, { status: 500 });
     }
   }
 
@@ -61,13 +56,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (method === 'PATCH') {
     try {
 
-      const bodyText = await request.text();
-    
-      if (!bodyText) {
-          return json({ error: 'Bad request, empty body' }, { status: 400 });
-      }
-
-      const requestData = JSON.parse(bodyText);
+      const requestData = validationRequestBody(request);
 
       const validatedData = updateUserSchema.parse(requestData);
 

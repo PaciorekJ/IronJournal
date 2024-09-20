@@ -2,6 +2,7 @@ import { ActionFunction, json, LoaderFunctionArgs } from '@remix-run/node';
 import { z } from 'zod';
 import { createWorkout, readWorkouts } from '~/services/workout-service';
 import { requirePredicate } from '~/utils/auth.server';
+import { validationRequestBody } from '~/utils/util.server';
 import { createWorkoutPrototypeSchema } from '~/validation/workout-prototype';
 
 export const action: ActionFunction = async ({ request }) => {
@@ -17,7 +18,8 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   try {
-    const requestData = await request.json();
+    
+    const requestData = validationRequestBody(request);
 
     // Validate the request data
     const validatedData = createWorkoutPrototypeSchema.parse(requestData);

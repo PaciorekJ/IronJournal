@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import { z } from 'zod';
 import { deleteSet, readSetById, updateSet } from '~/services/set-service';
 import { requirePredicate } from '~/utils/auth.server';
+import { validationRequestBody } from '~/utils/util.server';
 import { updateSetPrototypeSchema } from '~/validation/set-prototype.server';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -48,7 +49,7 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
 
   if (method === 'PATCH') {
     try {
-      const requestData = await request.json();
+      const requestData = validationRequestBody(request);
 
       // Validate the request data
       const validatedData = updateSetPrototypeSchema.parse(requestData);

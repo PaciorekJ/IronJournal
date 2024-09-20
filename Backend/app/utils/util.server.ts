@@ -1,3 +1,4 @@
+import { json } from "@remix-run/node";
 
 type AllCombinations<T> = T extends object
   ? Record<string, any> | { [K in keyof T]: T[K] } & { [K in keyof T]?: AllCombinations<Omit<T, K>> }
@@ -67,8 +68,6 @@ export const buildQueryFromSearchParams = <T>(
   const sortBy = searchParams.get('sortBy') as string;
   const sortOrder = searchParams.get('sortOrder') === 'desc' ? -1 : 1;
 
-  console.log({ query, limit, offset, sortBy, sortOrder });
-
   return { query, limit, offset, sortBy, sortOrder };
 };
 
@@ -106,6 +105,33 @@ export function convertKeysToCamelCase(obj: Record<string, any>): Record<string,
     }
   }
   return newObj;
+}
+
+/**
+ * Validates that the request body is a non-empty JSON object.
+ * @param {Request} request - The request object.
+ * @returns {Promise<Object>} The validated request body.
+ * @throws {Response} A 400 response if the request body is invalid.
+ */
+export async function validationRequestBody(request: Request) {
+  const contentType = request.headers.get('content-type');
+    if (!contentType || contentType !== 'application/json') {
+      throw json(
+        { error: 'Invalid content type. Expecting application/json' },
+        { status: 400 }
+      );
+    }
+    
+    const requestData = await request.json();
+
+    if (!requestData || Object.keys(requestData).length === 0) {
+      throw json(
+        { error: 'Request body is empty. Request body is required to update a program' },
+        { status: 400 }
+      );
+    }
+
+      return requestData;
 }
 
 export type { IBuildQueryConfig, IFieldConfig, IQuery, IQueryField };

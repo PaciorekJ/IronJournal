@@ -75,11 +75,11 @@ export const requirePredicate = async (
       result.firebaseToken = firebaseToken;
     }
   
-    if (!user) {
+    if (config?.user && !user) {
       throw json({ error: 'User doesn\'t have an account yet' }, { status: 404 });
     }
 
-    if (config?.user) {
+    if (config?.user && user) {
       result.user = user;
     }
   
