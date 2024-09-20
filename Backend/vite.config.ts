@@ -4,19 +4,19 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import path from "path"; // Import the 'path' module
 
 export default defineConfig({
-  plugins: [
-    remix({
-      future: {
-        v3_fetcherPersist: true,
-        v3_relativeSplatPath: true,
-        v3_throwAbortReason: true,
-      },
-    }),
-    tsconfigPaths(),
-  ],
-  resolve: {
-    alias: {
-      '~': path.resolve(__dirname, 'app'), // Explicitly define alias for '~'
+    plugins: [
+        remix({
+            future: {
+                v3_fetcherPersist: true,
+                v3_relativeSplatPath: true,
+                v3_throwAbortReason: true,
+            },
+        }),
+        tsconfigPaths(),
+    ],
+    resolve: {
+        alias: {
+            "~": path.resolve(__dirname, "app"), // Explicitly define alias for '~'
+        },
     },
-  },
 });

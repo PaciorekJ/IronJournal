@@ -4,13 +4,13 @@ import { readExercises } from "~/services/exercise-service";
 import { isLoginValid } from "~/utils/auth.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	await isLoginValid(request);
-	
-	const result = await readExercises(request);
+    await isLoginValid(request);
 
-	if (result.status !== 200) {
-		return json({ error: result.error }, { status: result.status });
-	}
+    const result = await readExercises(request);
 
-	return json(result, { status: 200 });
+    if (result.status !== 200) {
+        return json({ error: result.error }, { status: result.status });
+    }
+
+    return json(result, { status: 200 });
 };
