@@ -20,6 +20,7 @@ interface ICardioRecommendation {
 }
 
 interface IProgram extends Document {
+    _id: mongoose.Schema.Types.ObjectId;
     name: string;
     description?: string;
     workoutSchedule?: IWorkoutSchedule[];

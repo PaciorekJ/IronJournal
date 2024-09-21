@@ -1,6 +1,6 @@
 export interface ServiceResult<T = any> {
-    status: number; // HTTP status code (e.g., 200, 400, 404, 500)
     data?: T; // Optional data for successful responses
+    hasMore?: boolean; // Optional flag indicating if there are more results
     error?: string; // Optional error message for error responses
     [key: string]: any; // Additional properties (flexible to accommodate any additional fields)
 }

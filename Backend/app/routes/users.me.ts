@@ -1,97 +1,66 @@
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
-import { z } from "zod";
 import {
     createUser,
     deleteUser,
-    readUserByFirebaseId,
+    readUserById,
     updateUser,
 } from "~/services/user-service";
 import { requirePredicate } from "~/utils/auth.server";
-import { validateRequestBody } from "~/utils/util.server";
+import { handleError, validateRequestBody } from "~/utils/util.server";
 import { createUserSchema, updateUserSchema } from "~/validation/user.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-    const { firebaseToken } = await requirePredicate(request, {
-        firebaseToken: true,
-    });
-
-    const result = await readUserByFirebaseId(firebaseToken.uid);
-
-    return json(result, { status: result.status });
+    const { user } = await requirePredicate(request, { user: true });
+    const result = await readUserById(user._id.toString());
+    return json(result, { status: 200 });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
     const method = request.method.toUpperCase();
+    let result = null;
 
-    if (method === "POST") {
-        try {
-            const { firebaseToken } = await requirePredicate(request, {
-                firebaseToken: true,
-            });
+    try {
+        switch (method) {
+            case "POST":
+                const { firebaseToken } = await requirePredicate(request, {
+                    firebaseToken: true,
+                });
 
-            const requestData = validateRequestBody(request);
+                const requestData = await validateRequestBody(request);
+                const validatedData = createUserSchema.parse({
+                    ...requestData,
+                    firebaseId: firebaseToken.uid,
+                });
 
-            const validatedData = createUserSchema.parse({
-                ...requestData,
-                firebaseId: firebaseToken.uid,
-            });
+                result = await createUser(validatedData);
+                return json(result, { status: 201 });
 
-            const result = await createUser(validatedData);
-
-            return json(result, { status: result.status });
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                return json(
-                    { error: "Validation failed", details: error.errors },
-                    { status: 400 },
+            case "PATCH":
+                const { user: patchUser } = await requirePredicate(request, {
+                    user: true,
+                });
+                const patchRequestData = await validateRequestBody(request);
+                const validatedPatchData =
+                    updateUserSchema.parse(patchRequestData);
+                result = await updateUser(
+                    patchUser._id.toString(),
+                    validatedPatchData,
                 );
-            }
 
-            const errorMessage =
-                error instanceof Error
-                    ? error.message
-                    : "An unexpected error occurred";
+                return json(result, { status: 200 });
 
-            return json({ error: errorMessage }, { status: 500 });
-        }
-    }
-
-    const { user } = await requirePredicate(request, { user: true });
-
-    if (method === "PATCH") {
-        try {
-            const requestData = validateRequestBody(request);
-
-            const validatedData = updateUserSchema.parse(requestData);
-
-            const result = await updateUser({
-                userId: user._id as string,
-                updateData: validatedData,
-            });
-
-            return json(result, { status: result.status });
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                return json(
-                    { error: "Validation failed", details: error.errors },
-                    { status: 400 },
+            case "DELETE":
+                const { user: deleteUserAccount } = await requirePredicate(
+                    request,
+                    { user: true },
                 );
-            }
+                result = await deleteUser(deleteUserAccount._id.toString());
+                return json(result, { status: 200 });
 
-            const errorMessage =
-                error instanceof Error
-                    ? error.message
-                    : "An unexpected error occurred";
-
-            return json({ error: errorMessage }, { status: 500 });
+            default:
+                return json({ error: "Method not allowed" }, { status: 405 });
         }
+    } catch (error) {
+        return handleError(error);
     }
-
-    if (method === "DELETE") {
-        const result = await deleteUser({ userId: user._id as string });
-
-        return json(result, { status: result.status });
-    }
-
-    return json({ error: "Method not allowed", status: 405 }, { status: 405 });
 };

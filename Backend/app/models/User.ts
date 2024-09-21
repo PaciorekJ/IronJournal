@@ -2,6 +2,7 @@ import mongoose, { Document, Schema } from "mongoose";
 import { ROLE, RoleTypeValue } from "~/constants/role";
 
 interface IUser extends Document {
+    _id: mongoose.Schema.Types.ObjectId;
     username: string;
     role: RoleTypeValue;
     firebaseId: string;

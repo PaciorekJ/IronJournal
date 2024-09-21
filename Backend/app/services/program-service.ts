@@ -1,12 +1,18 @@
-// app/services/program-service.ts
-
-import mongoose from "mongoose";
+import { json } from "@remix-run/node";
+import { z } from "zod";
+import { FOCUS_AREAS, FocusAreasValue } from "~/constants/focus-area";
+import { SCHEDULE_TYPE, ScheduleTypeValue } from "~/constants/schedule-types";
+import {
+    TARGET_AUDIENCE,
+    TargetAudienceValue,
+} from "~/constants/target-audiences";
 import { ServiceResult } from "~/interfaces/service-result";
 import { IProgram, Program } from "~/models/program";
 import { IUser } from "~/models/user";
 import { WorkoutPrototype } from "~/models/workout-prototype";
 import {
     IBuildQueryConfig,
+    addPaginationAndSorting,
     buildPopulateOptions,
     buildQueryFromSearchParams,
 } from "~/utils/util.server";
@@ -15,12 +21,55 @@ import {
     UpdateProgramInput,
 } from "~/validation/program.server";
 
+// Defined search Params usable by Program Services + Populate Options where applicable
+const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
+    name: {
+        isArray: false,
+        constructor: String,
+        regex: (value: string) => new RegExp(value),
+        validationSchema: z.string().min(1),
+    },
+    scheduleType: {
+        isArray: false,
+        constructor: String,
+        regex: (value: string) => new RegExp(value),
+        validationSchema: z.enum(
+            Object.values(SCHEDULE_TYPE) as [
+                ScheduleTypeValue,
+                ...ScheduleTypeValue[],
+            ],
+        ),
+    },
+    focusAreas: {
+        isArray: true,
+        constructor: String,
+        regex: (value: string) => new RegExp(value),
+        validationSchema: z.enum(
+            Object.values(FOCUS_AREAS) as [
+                FocusAreasValue,
+                ...FocusAreasValue[],
+            ],
+        ),
+    },
+    targetAudience: {
+        isArray: false,
+        constructor: String,
+        regex: (value: string) => new RegExp(value),
+        validationSchema: z.enum(
+            Object.values(TARGET_AUDIENCE) as [
+                TargetAudienceValue,
+                ...TargetAudienceValue[],
+            ],
+        ),
+    },
+});
+
 export const createProgram = async (
     user: IUser,
-    data: CreateProgramInput,
+    createData: CreateProgramInput,
 ): Promise<ServiceResult<IProgram>> => {
     try {
-        const { workoutSchedule } = data;
+        const { workoutSchedule } = createData;
 
         const workoutIds: string[] = (workoutSchedule || [])
             .map((item) => item.workoutId?.toString())
@@ -40,30 +89,30 @@ export const createProgram = async (
         const invalidWorkouts = workoutIds.filter(
             (id) => !validWorkoutIds.includes(id),
         );
+
         if (invalidWorkouts.length > 0) {
-            return {
-                status: 400,
-                error: "Invalid workout IDs provided",
-                invalidWorkouts,
-            };
+            throw json(
+                {
+                    error: "Invalid workout IDs provided",
+                    invalidWorkouts,
+                },
+                {
+                    status: 400,
+                },
+            );
         }
 
         const newProgram: IProgram = await Program.create({
-            ...data,
+            ...createData,
             userId: user._id,
         });
 
         return {
-            status: 201,
             message: "Program created successfully",
             data: newProgram,
         };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ status: 500, error: "An unexpected error occurred" });
     }
 };
 
@@ -72,29 +121,29 @@ export const updateProgram = async (
     programId: string,
     updateData: UpdateProgramInput,
 ): Promise<ServiceResult<IProgram>> => {
-    if (!mongoose.isValidObjectId(programId)) {
-        return { status: 400, error: "Program ID is invalid" };
-    }
-
     try {
-        // Find the program and ensure it belongs to the user
         const program = await Program.findOne({ _id: programId });
 
         if (!program) {
-            return { status: 404, error: "Program not found" };
+            throw json(
+                { error: "Program not found" },
+                {
+                    status: 404,
+                },
+            );
         }
 
-        if (
-            program.userId.toString() !==
-            (user._id as mongoose.Types.ObjectId).toString()
-        ) {
-            return {
-                status: 403,
-                error: "You are not authorized to update this program",
-            };
+        if (program.userId.toString() !== user._id.toString()) {
+            throw json(
+                {
+                    error: "You are not authorized to update this program",
+                },
+                {
+                    status: 403,
+                },
+            );
         }
 
-        // Update the program
         Object.assign(program, updateData);
         await program.save();
 
@@ -104,52 +153,35 @@ export const updateProgram = async (
             data: program,
         };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ status: 500, error: "An unexpected error occurred" });
     }
 };
 
 export const deleteProgram = async (
     user: IUser,
     programId: string,
-): Promise<ServiceResult<IProgram>> => {
-    if (!mongoose.isValidObjectId(programId)) {
-        return { status: 400, error: "Program ID is invalid" };
-    }
-
+): Promise<ServiceResult<undefined>> => {
     try {
         const program = await Program.findOne({ _id: programId }).lean();
 
         if (!program) {
-            return { status: 404, error: "Program not found" };
+            throw json({ error: "Program not found" }, { status: 404 });
         }
 
-        if (
-            program.userId.toString() !==
-            (user._id as mongoose.Types.ObjectId).toString()
-        ) {
-            return {
+        if (program.userId.toString() !== user._id.toString()) {
+            throw json({
                 status: 403,
-                error: "You are not authorized to update this program",
-            };
+                error: "You are not authorized to delete this program",
+            });
         }
 
         await Program.deleteOne({ _id: programId });
 
         return {
-            status: 200,
             message: "Program deleted successfully",
-            data: program,
         };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ status: 500, error: "An unexpected error occurred" });
     }
 };
 
@@ -158,38 +190,9 @@ export const readPrograms = async (
     searchParams: URLSearchParams,
 ): Promise<ServiceResult<IProgram[]>> => {
     try {
-        const queryConfig: IBuildQueryConfig = {
-            name: {
-                isArray: false,
-                constructor: String,
-                regex: (value: string) => new RegExp(value, "i"),
-            },
-            scheduleType: {
-                isArray: false,
-                constructor: String,
-                regex: (value: string) => new RegExp(value, "i"),
-            },
-            focusAreas: {
-                isArray: true,
-                constructor: String,
-                regex: (value: string) => new RegExp(value, "i"),
-            },
-            targetAudience: {
-                isArray: false,
-                constructor: String,
-                regex: (value: string) => new RegExp(value, "i"),
-            },
-            userId: {
-                isArray: false,
-                constructor: String,
-            },
-        };
-
-        // Build the initial query from search parameters
         const { query, limit, offset, sortBy, sortOrder } =
             buildQueryFromSearchParams(searchParams, queryConfig) as any;
 
-        // Check if the `mine` parameter is set to "true"
         const mine = searchParams.get("mine") === "true";
         const userId = searchParams.get("userId");
 
@@ -216,34 +219,24 @@ export const readPrograms = async (
             queryObj = queryObj.populate(option);
         });
 
-        // Fetch the programs with the specified limit and offset
         const programs = await queryObj.lean();
         const totalCount = await Program.countDocuments(query).exec();
 
-        // Determine if there are more records available
         const hasMore = offset + programs.length < totalCount;
 
         return { status: 200, data: programs, hasMore };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ status: 500, error: "An unexpected error occurred" });
     }
 };
 
 export const readProgramById = async (
     user: IUser,
-    id: string,
+    programId: string,
     searchParams: URLSearchParams,
 ): Promise<ServiceResult<IProgram>> => {
-    if (!id || !mongoose.isValidObjectId(id)) {
-        return { status: 400, error: "Invalid or missing program ID" };
-    }
-
     try {
-        let query = Program.findById(id);
+        let query = Program.findById(programId);
 
         const populateOptions = buildPopulateOptions(searchParams, "populate");
         populateOptions.forEach((option) => {
@@ -253,22 +246,26 @@ export const readProgramById = async (
         const program = await query.lean();
 
         if (!program) {
-            return { status: 404, error: "Program not found" };
+            throw json(
+                { error: "Program not found" },
+                {
+                    status: 404,
+                },
+            );
         }
 
-        if (!program.isPublic && program.userId.toString() !== user._id) {
-            return {
+        if (
+            !program.isPublic &&
+            program.userId.toString() !== user._id.toString()
+        ) {
+            throw json({
                 status: 403,
                 error: "Forbidden: You do not have access to this program",
-            };
+            });
         }
 
-        return { status: 200, data: program };
+        return { data: program };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ status: 500, error: "An unexpected error occurred" });
     }
 };

@@ -5,6 +5,7 @@ import {
 } from "~/constants/intensity-levels";
 
 interface IWorkoutPrototype extends Document {
+    _id: mongoose.Schema.Types.ObjectId;
     name: string;
     warmup?: mongoose.Schema.Types.ObjectId;
     coolDown?: mongoose.Schema.Types.ObjectId;

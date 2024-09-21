@@ -1,24 +1,35 @@
-import mongoose from "mongoose";
+import { json } from "@remix-run/node";
+import { z } from "zod";
 import { ServiceResult } from "~/interfaces/service-result";
 import { IUser, User } from "~/models/user";
 import {
     IBuildQueryConfig,
+    addPaginationAndSorting,
     buildQueryFromSearchParams,
 } from "~/utils/util.server";
 import { CreateUserInput, UpdateUserInput } from "~/validation/user.server";
 
-// Function to create a new user
+// Defined search Params usable by User Services + Populate Options where applicable
+const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
+    username: {
+        isArray: false,
+        constructor: String,
+        regex: (value: string) => new RegExp(value),
+        validationSchema: z.string().min(1),
+    },
+});
+
 export const createUser = async (
-    data: CreateUserInput,
+    createData: CreateUserInput,
 ): Promise<ServiceResult<IUser>> => {
     try {
-        const { username, firebaseId } = data;
+        const { username, firebaseId } = createData;
 
         if (!username || !firebaseId) {
-            return {
-                status: 400,
-                error: "Username and Firebase ID are required",
-            };
+            throw json(
+                { error: "Username and Firebase ID are required" },
+                { status: 400 },
+            );
         }
 
         const existingUser = await User.findOne({
@@ -26,45 +37,31 @@ export const createUser = async (
         })
             .select("_id username firebaseId")
             .lean();
+
         if (existingUser?.firebaseId === firebaseId) {
-            return { status: 409, error: "User already exists" };
+            throw json({ error: "User already exists" }, { status: 409 });
         }
+
         if (existingUser?.username === username) {
-            return { status: 409, error: "Username is already taken" };
+            throw json({ error: "Username is already taken" }, { status: 409 });
         }
 
-        const newUser = await User.create(data);
-
+        const newUser = await User.create(createData);
         const { firebaseId: _, ...user } = newUser.toJSON();
 
         return {
-            status: 200,
             message: "User created successfully",
             data: user as IUser,
         };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ error: "An unexpected error occurred" }, { status: 500 });
     }
 };
 
-// Function to update the authenticated user's information
-export const updateUser = async (body: {
-    userId: string;
-    updateData: UpdateUserInput;
-}): Promise<ServiceResult<IUser>> => {
-    const { userId, updateData } = body;
-
-    if (!userId || !mongoose.isValidObjectId(userId)) {
-        return {
-            status: 400,
-            error: "User ID is required and must be a valid ID",
-        };
-    }
-
+export const updateUser = async (
+    userId: string,
+    updateData: UpdateUserInput,
+): Promise<ServiceResult<IUser>> => {
     try {
         const updateUsername = updateData.username;
         const existingUser =
@@ -74,7 +71,7 @@ export const updateUser = async (body: {
                 .lean());
 
         if (existingUser && existingUser._id.toString() !== userId) {
-            return { status: 409, error: "Username is already taken" };
+            throw json({ error: "Username is already taken" }, { status: 409 });
         }
 
         const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
@@ -83,85 +80,39 @@ export const updateUser = async (body: {
             .select("-firebaseId")
             .lean();
         if (!updatedUser) {
-            return { status: 404, error: "User not found" };
+            throw json({ error: "User not found" }, { status: 404 });
         }
 
         return {
-            status: 200,
             message: "User updated successfully",
             data: updatedUser,
         };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ error: "An unexpected error occurred" }, { status: 500 });
     }
 };
 
-// Function to delete the authenticated user's information
-export const deleteUser = async (body: {
-    userId: string;
-}): Promise<ServiceResult<IUser>> => {
-    const { userId } = body;
-
-    if (!userId || !mongoose.isValidObjectId(userId)) {
-        return {
-            status: 400,
-            error: "User ID is required and must be a valid ID",
-        };
-    }
-
+export const deleteUser = async (
+    userId: string,
+): Promise<ServiceResult<undefined>> => {
     try {
         const deletedUser = await User.findByIdAndDelete(userId)
-            .select("-firebaseId")
+            .select("_id")
             .lean();
         if (!deletedUser) {
-            return { status: 404, error: "User not found" };
+            throw json({ error: "User not found" }, { status: 404 });
         }
 
-        return { status: 200, data: deletedUser };
+        return { message: "User deleted successfully" };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ error: "An unexpected error occurred" }, { status: 500 });
     }
 };
 
-// Function to read user by Firebase ID
-export const readUserByFirebaseId = async (
-    firebaseId: string,
-): Promise<ServiceResult<IUser>> => {
-    try {
-        const user = await User.findOne({ firebaseId })
-            .select("-firebaseId")
-            .lean();
-
-        if (!user) {
-            return { status: 404, error: "User not found" };
-        }
-
-        return { status: 200, data: user };
-    } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
-    }
-};
-
-// Function to read all users based on search parameters
 export const readUsers = async (
-    request: Request,
+    searchParams: URLSearchParams,
 ): Promise<ServiceResult<IUser[]>> => {
     try {
-        const url = new URL(request.url);
-        const searchParams = new URLSearchParams(url.search);
-
         const { query, limit, offset } = buildQueryFromSearchParams(
             searchParams,
             queryConfig,
@@ -176,48 +127,24 @@ export const readUsers = async (
         const totalCount = await User.countDocuments(query).exec();
         const hasMore = offset + users.length < totalCount;
 
-        return { status: 200, data: users, hasMore };
+        return { data: users, hasMore };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ error: "An unexpected error occurred" }, { status: 500 });
     }
 };
 
-// Function to read user by ID
 export const readUserById = async (
-    id: string,
+    userId: string,
 ): Promise<ServiceResult<IUser>> => {
-    if (!id || !mongoose.isValidObjectId(id)) {
-        return { status: 400, error: "Invalid or missing user ID" };
-    }
-
     try {
-        const user = await User.findById(id).select("-firebaseId").lean();
+        const user = await User.findById(userId).select("-firebaseId").lean();
 
         if (!user) {
-            return { status: 404, error: "User not found" };
+            throw json({ error: "User not found" }, { status: 404 });
         }
 
-        return { status: 200, data: user };
+        return { data: user };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ error: "An unexpected error occurred" }, { status: 500 });
     }
-};
-
-// Query configuration for building queries
-const queryConfig: IBuildQueryConfig = {
-    username: {
-        isArray: false,
-        constructor: String,
-        regex: (value: string) => new RegExp(value),
-    },
-    limit: { isArray: false, constructor: Number },
-    offset: { isArray: false, constructor: Number },
 };

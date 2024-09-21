@@ -1,4 +1,9 @@
-import mongoose from "mongoose";
+import { json } from "@remix-run/node";
+import { z } from "zod";
+import {
+    INTENSITY_LEVEL,
+    IntensityLevelValue,
+} from "~/constants/intensity-levels";
 import { ServiceResult } from "~/interfaces/service-result";
 import { SetPrototype } from "~/models/set-prototype";
 import { IUser } from "~/models/user";
@@ -7,6 +12,7 @@ import {
     WorkoutPrototype,
 } from "~/models/workout-prototype";
 import {
+    addPaginationAndSorting,
     buildPopulateOptions,
     buildQueryFromSearchParams,
     IBuildQueryConfig,
@@ -16,14 +22,34 @@ import {
     UpdateWorkoutPrototypeInput,
 } from "~/validation/workout-prototype";
 
-export const createWorkout = async (
+// Defined search Params usable by WorkoutPrototype Services + Populate Options where applicable
+const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
+    name: {
+        isArray: false,
+        constructor: String,
+        regex: (value: string) => new RegExp(value),
+        validationSchema: z.string().min(1),
+    },
+    intensityLevel: {
+        isArray: false,
+        constructor: String,
+        regex: (value: string) => new RegExp(value),
+        validationSchema: z.enum(
+            Object.values(INTENSITY_LEVEL) as [
+                IntensityLevelValue,
+                ...IntensityLevelValue[],
+            ],
+        ),
+    },
+});
+
+export const createWorkoutPrototype = async (
     user: IUser,
     data: CreateWorkoutPrototypeInput,
-): Promise<ServiceResult<{ workoutId: string }>> => {
+): Promise<ServiceResult<IWorkoutPrototype>> => {
     try {
         const { sets } = data;
 
-        // Ensure all set IDs are valid and belong to the user
         const setIds: string[] = sets.map((setId: string) => setId.toString());
 
         const validSets = await SetPrototype.find({
@@ -37,11 +63,13 @@ export const createWorkout = async (
 
         const invalidSets = setIds.filter((id) => !validSetIds.includes(id));
         if (invalidSets.length > 0) {
-            return {
-                status: 400,
-                error: "Invalid set IDs provided",
-                invalidSets,
-            };
+            throw json(
+                {
+                    error: "Invalid set IDs provided",
+                    invalidSets,
+                },
+                { status: 400 },
+            );
         }
 
         const newWorkout = await WorkoutPrototype.create({
@@ -50,77 +78,55 @@ export const createWorkout = async (
         });
 
         return {
-            status: 201,
             message: "Workout created successfully",
-            workoutId: newWorkout._id,
+            data: newWorkout,
         };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ error: "An unexpected error occurred" }, { status: 500 });
     }
 };
 
-export const updateWorkout = async (
+export const updateWorkoutPrototype = async (
     user: IUser,
     workoutId: string,
     updateData: UpdateWorkoutPrototypeInput,
-): Promise<ServiceResult<{ workoutId: string }>> => {
-    if (!mongoose.isValidObjectId(workoutId)) {
-        return { status: 400, error: "Workout ID is invalid" };
-    }
-
+): Promise<ServiceResult<IWorkoutPrototype>> => {
     try {
-        // Find the workout and ensure it belongs to the user
         const workout = await WorkoutPrototype.findOne({
             _id: workoutId,
             userId: user._id,
         });
 
         if (!workout) {
-            return { status: 404, error: "Workout not found" };
+            throw json({ error: "Workout not found" }, { status: 404 });
         }
 
-        // Update the workout
         Object.assign(workout, updateData);
         await workout.save();
 
         return {
-            status: 200,
             message: "Workout updated successfully",
-            workoutId: workout._id,
+            data: workout,
         };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ error: "An unexpected error occurred" }, { status: 500 });
     }
 };
 
-export const deleteWorkout = async (
+export const deleteWorkoutPrototype = async (
     user: IUser,
     workoutId: string,
-): Promise<ServiceResult<{ workoutId: string }>> => {
-    if (!mongoose.isValidObjectId(workoutId)) {
-        return { status: 400, error: "Workout ID is invalid" };
-    }
-
+): Promise<ServiceResult<undefined>> => {
     try {
-        // Find the workout and ensure it belongs to the user
         const workout = await WorkoutPrototype.findOne({
             _id: workoutId,
             userId: user._id,
         });
 
         if (!workout) {
-            return { status: 404, error: "Workout not found" };
+            throw json({ error: "Workout not found" }, { status: 404 });
         }
 
-        // Delete all sets
         const setsToDelete = [
             ...workout.sets,
             workout.coolDown,
@@ -129,45 +135,24 @@ export const deleteWorkout = async (
         const workoutSetsValid = setsToDelete.filter((set) => set);
         await SetPrototype.deleteMany({ _id: { $in: workoutSetsValid } });
 
-        // Delete the workout
         await workout.deleteOne();
 
         return {
-            status: 200,
             message: "Workout deleted successfully",
-            workoutId: workout._id,
         };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ error: "An unexpected error occurred" }, { status: 500 });
     }
 };
 
-export const readWorkouts = async (
+export const readWorkoutPrototypes = async (
     user: IUser,
     searchParams: URLSearchParams,
 ): Promise<ServiceResult<IWorkoutPrototype[]>> => {
     try {
-        const queryConfig: IBuildQueryConfig = {
-            name: {
-                isArray: false,
-                constructor: String,
-                regex: (value: string) => new RegExp(value, "i"),
-            },
-            intensityLevel: {
-                isArray: false,
-                constructor: String,
-                regex: (value: string) => new RegExp(value, "i"),
-            },
-        };
-
         const { query, limit, offset, sortBy, sortOrder } =
             buildQueryFromSearchParams(searchParams, queryConfig) as any;
 
-        // Ensure the user can only see their own workouts
         query.userId = user._id;
 
         const sortOption: Record<string, 1 | -1> | null = sortBy
@@ -189,27 +174,19 @@ export const readWorkouts = async (
         const totalCount = await WorkoutPrototype.countDocuments(query).exec();
         const hasMore = offset + workouts.length < totalCount;
 
-        return { status: 200, data: workouts, hasMore };
+        return { data: workouts, hasMore };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ error: "An unexpected error occurred" }, { status: 500 });
     }
 };
 
-export const readWorkoutById = async (
+export const readWorkoutPrototypeById = async (
     user: IUser,
-    id: string,
+    workoutId: string,
     searchParams: URLSearchParams,
 ): Promise<ServiceResult<IWorkoutPrototype>> => {
-    if (!id || !mongoose.isValidObjectId(id)) {
-        return { status: 400, error: "Invalid or missing workout ID" };
-    }
-
     try {
-        let query = WorkoutPrototype.findById(id);
+        let query = WorkoutPrototype.findById(workoutId);
 
         const populateOptions = buildPopulateOptions(searchParams, "populate");
         populateOptions.forEach((option) => {
@@ -219,23 +196,20 @@ export const readWorkoutById = async (
         const workout = await query.lean();
 
         if (!workout) {
-            return { status: 404, error: "Workout not found" };
+            throw json({ error: "Workout not found" }, { status: 404 });
         }
 
-        // Check if the user has access to the workout
-        if (workout.userId.toString() !== user._id) {
-            return {
-                status: 403,
-                error: "Forbidden: You do not have access to this workout",
-            };
+        if (workout.userId.toString() !== user._id.toString()) {
+            throw json(
+                {
+                    error: "Forbidden: You do not have access to this workout",
+                },
+                { status: 403 },
+            );
         }
 
-        return { status: 200, data: workout };
+        return { data: workout };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ error: "An unexpected error occurred" }, { status: 500 });
     }
 };

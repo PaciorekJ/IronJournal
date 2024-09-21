@@ -1,29 +1,27 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { z } from "zod";
 import {
-    deleteWorkout,
-    readWorkoutById,
-    updateWorkout,
-} from "~/services/workout-service";
+    deleteWorkoutPrototype,
+    readWorkoutPrototypeById,
+    updateWorkoutPrototype,
+} from "~/services/workout-prototype-service";
 import { requirePredicate } from "~/utils/auth.server";
-import { validateDatabaseId, validateRequestBody } from "~/utils/util.server";
+import {
+    handleError,
+    validateDatabaseId,
+    validateRequestBody,
+} from "~/utils/util.server";
 import { updateWorkoutPrototypeSchema } from "~/validation/workout-prototype";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     const { user } = await requirePredicate(request, { user: true });
 
-    const id = validateDatabaseId(params.id || "");
-
     const url = new URL(request.url);
     const searchParams = new URLSearchParams(url.search);
 
-    const result = await readWorkoutById(user, id, searchParams);
+    const id = validateDatabaseId(params.id || "");
 
-    if (result.status !== 200) {
-        return json({ error: result.error }, { status: result.status });
-    }
-
-    return json(result.data, { status: 200 });
+    const result = await readWorkoutPrototypeById(user, id, searchParams);
+    return json(result, { status: 200 });
 };
 
 export const action = async ({ request, params }: LoaderFunctionArgs) => {
@@ -32,47 +30,27 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
     const method = request.method.toUpperCase();
     const id = validateDatabaseId(params.id || "");
 
-    if (method === "PATCH") {
-        try {
-            const requestData = validateRequestBody(request);
+    let result = null;
 
-            const validatedData =
-                updateWorkoutPrototypeSchema.parse(requestData);
+    try {
+        switch (method) {
+            case "PATCH":
+                const requestData = await validateRequestBody(request);
 
-            const result = await updateWorkout(user, id, validatedData);
+                const validatedData =
+                    updateWorkoutPrototypeSchema.parse(requestData);
 
-            return json(result, { status: result.status });
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                return json(
-                    { error: "Validation failed", details: error.errors },
-                    { status: 400 },
-                );
-            }
+                result = await updateWorkoutPrototype(user, id, validatedData);
+                return json(result, { status: 200 });
 
-            const errorMessage =
-                error instanceof Error
-                    ? error.message
-                    : "An unexpected error occurred";
+            case "DELETE":
+                result = await deleteWorkoutPrototype(user, id);
+                return json(result, { status: 200 });
 
-            return json({ error: errorMessage }, { status: 500 });
+            default:
+                return json({ error: "Method not allowed" }, { status: 405 });
         }
+    } catch (error) {
+        return handleError(error);
     }
-
-    if (method === "DELETE") {
-        try {
-            const result = await deleteWorkout(user, id);
-
-            return json(result, { status: result.status });
-        } catch (error) {
-            const errorMessage =
-                error instanceof Error
-                    ? error.message
-                    : "An unexpected error occurred";
-
-            return json({ error: errorMessage }, { status: 500 });
-        }
-    }
-
-    return json({ error: "Method not allowed" }, { status: 405 });
 };

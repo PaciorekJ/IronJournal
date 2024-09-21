@@ -7,6 +7,7 @@ import { MECHANIC, MechanicValue } from "~/constants/mechanic";
 import { MUSCLE_GROUPS, MuscleGroupValue } from "~/constants/muscle-groups";
 
 interface IExercise extends Document {
+    _id: mongoose.Schema.Types.ObjectId;
     name: string;
     level: LevelValue;
     force?: ForceValue;

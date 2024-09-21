@@ -6,11 +6,10 @@ import { isLoginValid } from "~/utils/auth.server";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     await isLoginValid(request);
 
-    const result = await readExercises(request);
+    const url = new URL(request.url);
+    const searchParams = new URLSearchParams(url.search);
 
-    if (result.status !== 200) {
-        return json({ error: result.error }, { status: result.status });
-    }
+    const result = await readExercises(searchParams);
 
     return json(result, { status: 200 });
 };

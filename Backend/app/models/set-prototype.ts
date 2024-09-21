@@ -9,6 +9,7 @@ import { IExercise } from "./exercise";
 export type NumberOrRange = number | [number, number];
 
 interface ISetPrototype extends Document {
+    _id: mongoose.Schema.Types.ObjectId;
     workoutId: mongoose.Schema.Types.ObjectId;
     userId: mongoose.Schema.Types.ObjectId;
     exercise: IExercise["_id"];

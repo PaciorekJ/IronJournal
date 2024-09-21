@@ -1,44 +1,83 @@
-import mongoose, { RootFilterQuery } from "mongoose";
+import { json } from "@remix-run/node";
+import { RootFilterQuery } from "mongoose";
+import { z } from "zod";
+import { CATEGORY, CategoryValue } from "~/constants/category";
+import { EQUIPMENT, EquipmentValue } from "~/constants/equipment";
+import { FORCE, ForceValue } from "~/constants/force";
+import { LEVEL, LevelValue } from "~/constants/level";
+import { MUSCLE_GROUPS, MuscleGroupValue } from "~/constants/muscle-groups";
 import { ServiceResult } from "~/interfaces/service-result";
 import { Exercise, IExercise } from "~/models/exercise";
 import {
+    addPaginationAndSorting,
     buildQueryFromSearchParams,
     IBuildQueryConfig,
 } from "~/utils/util.server";
 
-const queryConfig: IBuildQueryConfig = {
+// Defined search Params usable by Exercise Services
+const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
     name: {
         isArray: false,
         constructor: String,
         regex: (value: string) => new RegExp(value),
+        validationSchema: z.string().min(1),
     },
-    level: { isArray: false, constructor: String },
-    category: { isArray: false, constructor: String },
+    level: {
+        isArray: false,
+        constructor: String,
+        validationSchema: z.enum(
+            Object.values(LEVEL) as [LevelValue, ...LevelValue[]],
+        ),
+    },
+    category: {
+        isArray: false,
+        constructor: String,
+        validationSchema: z.enum(
+            Object.values(CATEGORY) as [CategoryValue, ...CategoryValue[]],
+        ),
+    },
     force: {
         isArray: false,
         constructor: String,
         regex: (value: string) => new RegExp(value),
+        validationSchema: z.enum(
+            Object.values(FORCE) as [ForceValue, ...ForceValue[]],
+        ),
     },
     equipment: {
         isArray: true,
         constructor: String,
         regex: (value: string) => new RegExp(value),
+        validationSchema: z.enum(
+            Object.values(EQUIPMENT) as [EquipmentValue, ...EquipmentValue[]],
+        ),
     },
-    primaryMuscles: { isArray: true, constructor: String },
-    secondaryMuscles: { isArray: true, constructor: String },
-    limit: { isArray: false, constructor: Number },
-    offset: { isArray: false, constructor: Number },
-    sortBy: { isArray: false, constructor: String },
-    sortOrder: { isArray: false, constructor: String },
-};
+    primaryMuscles: {
+        isArray: true,
+        constructor: String,
+        validationSchema: z.enum(
+            Object.values(MUSCLE_GROUPS) as [
+                MuscleGroupValue,
+                ...MuscleGroupValue[],
+            ],
+        ),
+    },
+    secondaryMuscles: {
+        isArray: true,
+        constructor: String,
+        validationSchema: z.enum(
+            Object.values(MUSCLE_GROUPS) as [
+                MuscleGroupValue,
+                ...MuscleGroupValue[],
+            ],
+        ),
+    },
+});
 
 export const readExercises = async (
-    request: Request,
+    searchParams: URLSearchParams,
 ): Promise<ServiceResult<IExercise[]>> => {
     try {
-        const url = new URL(request.url);
-        const searchParams = new URLSearchParams(url.search);
-
         const { query, limit, offset, sortBy, sortOrder } =
             buildQueryFromSearchParams<IExercise>(searchParams, queryConfig);
 
@@ -60,36 +99,24 @@ export const readExercises = async (
         ).exec();
         const hasMore = offset + exercises.length < totalCount;
 
-        return { status: 200, data: exercises, hasMore };
+        return { data: exercises, hasMore };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ status: 500, error: "An unexpected error occurred" });
     }
 };
 
 export const readExerciseById = async (
-    id: string,
+    exerciseId: string,
 ): Promise<ServiceResult<IExercise>> => {
-    if (!id || !mongoose.isValidObjectId(id)) {
-        return { status: 400, error: "Invalid or missing exercise ID" };
-    }
-
     try {
-        const exercise = await Exercise.findById(id).lean().exec();
+        const exercise = await Exercise.findById(exerciseId).lean().exec();
 
         if (!exercise) {
-            return { status: 404, error: "Exercise not found" };
+            throw json({ error: "Exercise not found" }, { status: 404 });
         }
 
-        return { status: 200, data: exercise };
+        return { data: exercise };
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An unexpected error occurred";
-        return { status: 500, error: errorMessage };
+        throw json({ status: 500, error: "An unexpected error occurred" });
     }
 };
