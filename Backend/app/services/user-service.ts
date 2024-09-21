@@ -15,7 +15,7 @@ const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
         isArray: false,
         constructor: String,
         regex: (value: string) => new RegExp(value),
-        validationSchema: z.string().min(1),
+        schema: z.string().min(1),
     },
 });
 

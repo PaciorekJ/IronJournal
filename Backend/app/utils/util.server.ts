@@ -14,7 +14,7 @@ type IFieldConfigBase = {
     isArray: boolean;
     constructor: (value: string) => any;
     regex: (value: string) => RegExp;
-    validationSchema?: z.ZodType<any>;
+    schema?: z.ZodType<any>;
 };
 
 type IFieldConfig = AllCombinations<IFieldConfigBase>;
@@ -47,7 +47,7 @@ export const buildQueryFromSearchParams = <T>(
             isArray = false,
             constructor = (value: string) => value,
             regex = null,
-            validationSchema, // Optional Zod validation schema
+            schema, // Optional Zod validation schema
         } = fieldConfig || {};
 
         const paramValue = searchParams.get(key);
@@ -73,13 +73,11 @@ export const buildQueryFromSearchParams = <T>(
 
             // Validate the parsed value using Zod if a validation schema exists
             try {
-                if (validationSchema) {
+                if (schema) {
                     if (isArray) {
-                        parsedValue = validationSchema
-                            .array()
-                            .parse(parsedValue);
+                        parsedValue = schema.array().parse(parsedValue);
                     } else {
-                        parsedValue = validationSchema.parse(parsedValue);
+                        parsedValue = schema.parse(parsedValue);
                     }
                 }
             } catch (error) {
@@ -151,22 +149,22 @@ export function addPaginationAndSorting<T extends IBuildQueryConfig>(
         limit: {
             isArray: false,
             constructor: Number,
-            validationSchema: z.number().positive().default(10),
+            schema: z.number().positive().default(10),
         },
         offset: {
             isArray: false,
             constructor: Number,
-            validationSchema: z.number().nonnegative().default(0),
+            schema: z.number().nonnegative().default(0),
         },
         sortBy: {
             isArray: false,
             constructor: String,
-            validationSchema: z.enum(Object.keys(config) as any),
+            schema: z.enum(Object.keys(config) as any),
         },
         sortOrder: {
             isArray: false,
             constructor: String,
-            validationSchema: z.enum(["asc", "desc"]).default("asc"),
+            schema: z.enum(["asc", "desc"]).default("asc"),
         },
     };
 

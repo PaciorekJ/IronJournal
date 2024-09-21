@@ -45,6 +45,7 @@ const workoutScheduleItemSchema = z
 const tempCreateProgramSchema = z
     .object({
         name: z.string(),
+        userId: objectIdSchema,
         description: z.string().optional(),
         workoutSchedule: z.array(workoutScheduleItemSchema).optional(),
         durationInDays: z.number().optional(),

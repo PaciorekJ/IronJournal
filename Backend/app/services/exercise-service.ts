@@ -20,19 +20,17 @@ const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
         isArray: false,
         constructor: String,
         regex: (value: string) => new RegExp(value),
-        validationSchema: z.string().min(1),
+        schema: z.string().min(1),
     },
     level: {
         isArray: false,
         constructor: String,
-        validationSchema: z.enum(
-            Object.values(LEVEL) as [LevelValue, ...LevelValue[]],
-        ),
+        schema: z.enum(Object.values(LEVEL) as [LevelValue, ...LevelValue[]]),
     },
     category: {
         isArray: false,
         constructor: String,
-        validationSchema: z.enum(
+        schema: z.enum(
             Object.values(CATEGORY) as [CategoryValue, ...CategoryValue[]],
         ),
     },
@@ -40,22 +38,20 @@ const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
         isArray: false,
         constructor: String,
         regex: (value: string) => new RegExp(value),
-        validationSchema: z.enum(
-            Object.values(FORCE) as [ForceValue, ...ForceValue[]],
-        ),
+        schema: z.enum(Object.values(FORCE) as [ForceValue, ...ForceValue[]]),
     },
     equipment: {
         isArray: true,
         constructor: String,
         regex: (value: string) => new RegExp(value),
-        validationSchema: z.enum(
+        schema: z.enum(
             Object.values(EQUIPMENT) as [EquipmentValue, ...EquipmentValue[]],
         ),
     },
     primaryMuscles: {
         isArray: true,
         constructor: String,
-        validationSchema: z.enum(
+        schema: z.enum(
             Object.values(MUSCLE_GROUPS) as [
                 MuscleGroupValue,
                 ...MuscleGroupValue[],
@@ -65,7 +61,7 @@ const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
     secondaryMuscles: {
         isArray: true,
         constructor: String,
-        validationSchema: z.enum(
+        schema: z.enum(
             Object.values(MUSCLE_GROUPS) as [
                 MuscleGroupValue,
                 ...MuscleGroupValue[],

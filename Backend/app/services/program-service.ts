@@ -27,13 +27,18 @@ const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
         isArray: false,
         constructor: String,
         regex: (value: string) => new RegExp(value),
-        validationSchema: z.string().min(1),
+        schema: z.string().min(1),
+    },
+    userId: {
+        isArray: false,
+        constructor: String,
+        schema: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId"),
     },
     scheduleType: {
         isArray: false,
         constructor: String,
         regex: (value: string) => new RegExp(value),
-        validationSchema: z.enum(
+        schema: z.enum(
             Object.values(SCHEDULE_TYPE) as [
                 ScheduleTypeValue,
                 ...ScheduleTypeValue[],
@@ -44,7 +49,7 @@ const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
         isArray: true,
         constructor: String,
         regex: (value: string) => new RegExp(value),
-        validationSchema: z.enum(
+        schema: z.enum(
             Object.values(FOCUS_AREAS) as [
                 FocusAreasValue,
                 ...FocusAreasValue[],
@@ -55,7 +60,7 @@ const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
         isArray: false,
         constructor: String,
         regex: (value: string) => new RegExp(value),
-        validationSchema: z.enum(
+        schema: z.enum(
             Object.values(TARGET_AUDIENCE) as [
                 TargetAudienceValue,
                 ...TargetAudienceValue[],
