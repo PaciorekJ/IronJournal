@@ -8,24 +8,31 @@ import { IExercise } from "./exercise";
 
 export type NumberOrRange = number | [number, number];
 
+export interface Tempo {
+    eccentric: number;
+    bottomPause: number;
+    concentric: number;
+    topPause: number;
+}
+
 interface ISetPrototype extends Document {
     _id: mongoose.Schema.Types.ObjectId;
-    workoutId: mongoose.Schema.Types.ObjectId;
+    type: SetTypeValue;
     userId: mongoose.Schema.Types.ObjectId;
     exercise: IExercise["_id"];
     alternatives?: IExercise["_id"][];
     restDurationInSeconds?: number;
-    createdAt: Date;
-    type: SetTypeValue;
 }
 
 const SetPrototypeSchema: Schema<ISetPrototype> = new Schema(
     {
+        type: { type: String, enum: Object.values(SET_TYPES), required: true },
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
         },
+
         exercise: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Exercise",
@@ -39,10 +46,8 @@ const SetPrototypeSchema: Schema<ISetPrototype> = new Schema(
             },
         ],
         restDurationInSeconds: { type: Number },
-        createdAt: { type: Date, default: Date.now },
-        type: { type: String, enum: Object.values(SET_TYPES), required: true },
     },
-    { discriminatorKey: "type" },
+    { discriminatorKey: "type", timestamps: true },
 );
 
 const SetPrototype = mongoose.model<ISetPrototype>(
@@ -53,6 +58,7 @@ const SetPrototype = mongoose.model<ISetPrototype>(
 interface ISetPrototypeStraightSet extends ISetPrototype {
     reps: NumberOrRange;
     sets: NumberOrRange;
+    tempo?: Tempo;
     weightSelection: {
         method: WeightSelectionMethodValue;
         value: number;
@@ -62,6 +68,7 @@ interface ISetPrototypeStraightSet extends ISetPrototype {
 const SetPrototypeStraightSetSchema = new Schema({
     reps: { type: Schema.Types.Mixed, required: true },
     sets: { type: Schema.Types.Mixed, required: true },
+    tempo: { type: Schema.Types.Mixed },
     weightSelection: {
         method: {
             type: String,
@@ -79,6 +86,7 @@ const SetPrototypeStraightSet = mongoose.model<ISetPrototypeStraightSet>(
 
 interface ISetPrototypeDropSet extends ISetPrototype {
     drops: {
+        tempo?: Tempo;
         weightSelection: {
             method: WeightSelectionMethodValue;
             value: number;
@@ -90,6 +98,7 @@ interface ISetPrototypeDropSet extends ISetPrototype {
 const SetPrototypeDropSetSchema = new Schema({
     drops: [
         {
+            tempo: { type: Schema.Types.Mixed },
             weightSelection: {
                 method: {
                     type: String,
@@ -110,6 +119,7 @@ const SetPrototypeDropSet = mongoose.model<ISetPrototypeDropSet>(
 
 interface ISetPrototypeSuperset extends ISetPrototype {
     exercises: {
+        tempo?: Tempo;
         exercise: IExercise["_id"];
         reps: NumberOrRange;
         restDurationInSeconds?: number;
@@ -123,6 +133,7 @@ interface ISetPrototypeSuperset extends ISetPrototype {
 const SetPrototypeSupersetSchema = new Schema({
     exercises: [
         {
+            tempo: { type: Schema.Types.Mixed },
             exercise: {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "Exercise",

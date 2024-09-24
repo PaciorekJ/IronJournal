@@ -6,6 +6,7 @@ import {
     TARGET_AUDIENCE,
     TargetAudienceValue,
 } from "~/constants/target-audiences";
+import { Timestamps } from "~/interfaces/timestamp";
 
 interface IWorkoutSchedule {
     day: DaysOfWeekValue | number;
@@ -19,15 +20,13 @@ interface ICardioRecommendation {
     type: string;
 }
 
-interface IProgram extends Document {
+interface IProgram extends Document, Timestamps {
     _id: mongoose.Schema.Types.ObjectId;
     name: string;
     description?: string;
     workoutSchedule?: IWorkoutSchedule[];
     userId: mongoose.Schema.Types.ObjectId;
     durationInDays?: number;
-    createdAt: Date;
-    updatedAt: Date;
     notes?: string;
     isPublic?: boolean;
     scheduleType: ScheduleTypeValue;
@@ -59,8 +58,6 @@ const ProgramSchema: Schema<IProgram> = new Schema({
         required: true,
     },
     durationInDays: { type: Number },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
     notes: { type: String },
     isPublic: { type: Boolean, default: false },
     scheduleType: {
@@ -76,12 +73,7 @@ const ProgramSchema: Schema<IProgram> = new Schema({
         type: { type: String },
     },
     progressionStrategy: { type: String },
-});
-
-ProgramSchema.pre<IProgram>("save", function (next) {
-    this.updatedAt = new Date();
-    next();
-});
+}, { timestamps: true });
 
 ProgramSchema.path("workoutSchedule").validate(function (
     workouts: IWorkoutSchedule[],

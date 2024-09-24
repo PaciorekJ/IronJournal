@@ -5,6 +5,7 @@ import { EQUIPMENT } from "~/constants/equipment";
 import { FOCUS_AREAS } from "~/constants/focus-area";
 import { FORCE } from "~/constants/force";
 import { INTENSITY_LEVEL } from "~/constants/intensity-levels";
+import { LANGUAGE } from "~/constants/language";
 import { LEVEL } from "~/constants/level";
 import { MECHANIC } from "~/constants/mechanic";
 import { MUSCLE_GROUPS } from "~/constants/muscle-groups";
@@ -58,6 +59,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     return json({
         data: {
+            languages: Object.values(LANGUAGE),
             ...convertKeysToCamelCase(EXERCISE_CONSTANTS_MAP),
             ...convertKeysToCamelCase(PROGRAM_CONSTANTS_MAP),
             ...convertKeysToCamelCase(WORKOUT_CONSTANTS_MAP),

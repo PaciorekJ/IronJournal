@@ -51,6 +51,12 @@ ExerciseSchema.pre<IExercise>("save", function (next) {
     next();
 });
 
+ExerciseSchema.pre("save", function (next) {
+   // Convert all all relevant fields to proper language mappings 
+
+   // Call libra API for each language, and store each according to the language
+});
+
 const Exercise = mongoose.model<IExercise>("Exercise", ExerciseSchema);
 
 export { Exercise };
