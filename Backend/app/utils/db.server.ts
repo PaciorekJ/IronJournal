@@ -18,7 +18,9 @@ class Database {
         }
 
         try {
-            await mongoose.connect(this.uri);
+            await mongoose.connect(this.uri, {
+                dbName: "iron-journal",
+            });
 
             this.connection = mongoose.connection;
             console.log("Successfully connected to MongoDB");

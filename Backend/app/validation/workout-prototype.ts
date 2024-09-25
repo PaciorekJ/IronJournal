@@ -1,21 +1,26 @@
+// workoutPrototype.schema.ts
+
 import { z } from "zod";
 import {
     INTENSITY_LEVEL,
     IntensityLevelValue,
 } from "~/constants/intensity-levels";
+import { createSetPrototypeSchema } from "./set-prototype.server";
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 const objectIdSchema = z.string().regex(objectIdRegex, "Invalid ObjectId");
 
 export const createWorkoutPrototypeSchema = z
     .object({
-        name: z.string(),
+        name: z.string().min(1, "Name is required."),
         programId: objectIdSchema.optional(),
-        warmup: objectIdSchema.optional(),
-        coolDown: objectIdSchema.optional(),
-        sets: z.array(objectIdSchema),
+        warmup: z.array(createSetPrototypeSchema).optional(),
+        coolDown: z.array(createSetPrototypeSchema).optional(),
+        sets: z
+            .array(createSetPrototypeSchema)
+            .min(1, "At least one set is required."),
         description: z.string().optional(),
-        durationInMinutes: z.number().optional(),
+        durationInMinutes: z.number().positive().optional(),
         intensityLevel: z
             .enum(
                 Object.values(INTENSITY_LEVEL) as [
@@ -27,6 +32,7 @@ export const createWorkoutPrototypeSchema = z
         notes: z.string().optional(),
     })
     .strict();
+
 export const updateWorkoutPrototypeSchema =
     createWorkoutPrototypeSchema.partial();
 
@@ -34,5 +40,6 @@ export const updateWorkoutPrototypeSchema =
 export type CreateWorkoutPrototypeInput = z.infer<
     typeof createWorkoutPrototypeSchema
 >;
-export interface UpdateWorkoutPrototypeInput
-    extends Partial<CreateWorkoutPrototypeInput> {}
+export type UpdateWorkoutPrototypeInput = z.infer<
+    typeof updateWorkoutPrototypeSchema
+>;

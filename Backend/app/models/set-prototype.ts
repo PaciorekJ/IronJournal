@@ -1,4 +1,6 @@
-import mongoose, { Document, Schema } from "mongoose";
+// setPrototype.ts
+
+import mongoose, { Schema } from "mongoose";
 import { SET_TYPES, SetTypeValue } from "~/constants/set-types";
 import {
     WEIGHT_SELECTION_METHOD,
@@ -15,77 +17,24 @@ export interface Tempo {
     topPause: number;
 }
 
-interface ISetPrototype extends Document {
-    _id: mongoose.Schema.Types.ObjectId;
+interface ISetPrototype {
+    _id: mongoose.Types.ObjectId;
     type: SetTypeValue;
-    userId: mongoose.Schema.Types.ObjectId;
     exercise: IExercise["_id"];
     alternatives?: IExercise["_id"][];
     restDurationInSeconds?: number;
-}
 
-const SetPrototypeSchema: Schema<ISetPrototype> = new Schema(
-    {
-        type: { type: String, enum: Object.values(SET_TYPES), required: true },
-        userId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-        },
-
-        exercise: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Exercise",
-            required: true,
-        },
-        alternatives: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Exercise",
-                default: [],
-            },
-        ],
-        restDurationInSeconds: { type: Number },
-    },
-    { discriminatorKey: "type", timestamps: true },
-);
-
-const SetPrototype = mongoose.model<ISetPrototype>(
-    "SetPrototype",
-    SetPrototypeSchema,
-);
-
-interface ISetPrototypeStraightSet extends ISetPrototype {
-    reps: NumberOrRange;
-    sets: NumberOrRange;
+    // Fields specific to Straight Set
+    reps?: NumberOrRange;
+    sets?: NumberOrRange;
     tempo?: Tempo;
-    weightSelection: {
+    weightSelection?: {
         method: WeightSelectionMethodValue;
         value: number;
     };
-}
 
-const SetPrototypeStraightSetSchema = new Schema({
-    reps: { type: Schema.Types.Mixed, required: true },
-    sets: { type: Schema.Types.Mixed, required: true },
-    tempo: { type: Schema.Types.Mixed },
-    weightSelection: {
-        method: {
-            type: String,
-            enum: Object.values(WEIGHT_SELECTION_METHOD),
-            required: true,
-        },
-        value: { type: Number, required: true },
-    },
-});
-
-const SetPrototypeStraightSet = mongoose.model<ISetPrototypeStraightSet>(
-    SET_TYPES.STRAIGHT_SET,
-    SetPrototypeStraightSetSchema,
-);
-
-interface ISetPrototypeDropSet extends ISetPrototype {
-    drops: {
+    // Fields specific to Drop Set
+    drops?: {
         tempo?: Tempo;
         weightSelection: {
             method: WeightSelectionMethodValue;
@@ -93,32 +42,9 @@ interface ISetPrototypeDropSet extends ISetPrototype {
         };
         reps: NumberOrRange;
     }[];
-}
 
-const SetPrototypeDropSetSchema = new Schema({
-    drops: [
-        {
-            tempo: { type: Schema.Types.Mixed },
-            weightSelection: {
-                method: {
-                    type: String,
-                    enum: Object.values(WEIGHT_SELECTION_METHOD),
-                    required: true,
-                },
-                value: { type: Number, required: true },
-            },
-            reps: { type: Schema.Types.Mixed, required: true },
-        },
-    ],
-});
-
-const SetPrototypeDropSet = mongoose.model<ISetPrototypeDropSet>(
-    SET_TYPES.DROP_SET,
-    SetPrototypeDropSetSchema,
-);
-
-interface ISetPrototypeSuperset extends ISetPrototype {
-    exercises: {
+    // Fields specific to Superset
+    exercises?: {
         tempo?: Tempo;
         exercise: IExercise["_id"];
         reps: NumberOrRange;
@@ -130,43 +56,123 @@ interface ISetPrototypeSuperset extends ISetPrototype {
     }[];
 }
 
-const SetPrototypeSupersetSchema = new Schema({
-    exercises: [
-        {
-            tempo: { type: Schema.Types.Mixed },
-            exercise: {
+const SetPrototypeSchema = new Schema<ISetPrototype>(
+    {
+        type: { type: String, enum: Object.values(SET_TYPES), required: true },
+        exercise: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Exercise",
+        },
+        alternatives: [
+            {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "Exercise",
-                required: true,
+                default: [],
             },
-            reps: { type: Schema.Types.Mixed, required: true },
-            restDurationInSeconds: { type: Number },
-            weightSelection: {
-                method: {
-                    type: String,
-                    enum: Object.values(WEIGHT_SELECTION_METHOD),
-                    required: true,
-                },
-                value: { type: Number, required: true },
-            },
-        },
-    ],
-});
+        ],
+        restDurationInSeconds: { type: Number },
 
-const SetPrototypeSuperset = mongoose.model<ISetPrototypeSuperset>(
-    SET_TYPES.SUPER_SET,
-    SetPrototypeSupersetSchema,
+        // Fields specific to Straight Set
+        reps: { type: Schema.Types.Mixed },
+        sets: { type: Schema.Types.Mixed },
+        tempo: {
+            eccentric: { type: Number },
+            bottomPause: { type: Number },
+            concentric: { type: Number },
+            topPause: { type: Number },
+        },
+        weightSelection: {
+            method: {
+                type: String,
+                enum: Object.values(WEIGHT_SELECTION_METHOD),
+            },
+            value: { type: Number },
+        },
+
+        // Fields specific to Drop Set
+        drops: [
+            {
+                tempo: {
+                    eccentric: { type: Number },
+                    bottomPause: { type: Number },
+                    concentric: { type: Number },
+                    topPause: { type: Number },
+                },
+                weightSelection: {
+                    method: {
+                        type: String,
+                        enum: Object.values(WEIGHT_SELECTION_METHOD),
+                    },
+                    value: { type: Number },
+                },
+                reps: { type: Schema.Types.Mixed },
+            },
+        ],
+
+        // Fields specific to Superset
+        exercises: [
+            {
+                tempo: {
+                    eccentric: { type: Number },
+                    bottomPause: { type: Number },
+                    concentric: { type: Number },
+                    topPause: { type: Number },
+                },
+                exercise: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "Exercise",
+                },
+                reps: { type: Schema.Types.Mixed },
+                restDurationInSeconds: { type: Number },
+                weightSelection: {
+                    method: {
+                        type: String,
+                        enum: Object.values(WEIGHT_SELECTION_METHOD),
+                    },
+                    value: { type: Number },
+                },
+            },
+        ],
+    },
+    { _id: false },
 );
 
-export {
-    SetPrototype,
-    SetPrototypeDropSet,
-    SetPrototypeStraightSet,
-    SetPrototypeSuperset,
-};
-export type {
-    ISetPrototype,
-    ISetPrototypeDropSet,
-    ISetPrototypeStraightSet,
-    ISetPrototypeSuperset,
-};
+SetPrototypeSchema.pre<ISetPrototype>("validate", function (next) {
+    switch (this.type) {
+        case SET_TYPES.STRAIGHT_SET:
+            if (!this.reps || !this.sets || !this.weightSelection) {
+                return next(
+                    new Error(
+                        "Straight Set must have reps, sets, and weightSelection.",
+                    ),
+                );
+            }
+            break;
+        case SET_TYPES.DROP_SET:
+            if (
+                !this.drops ||
+                !Array.isArray(this.drops) ||
+                this.drops.length === 0
+            ) {
+                return next(new Error("Drop Set must have at least one drop."));
+            }
+            break;
+        case SET_TYPES.SUPER_SET:
+            if (
+                !this.exercises ||
+                !Array.isArray(this.exercises) ||
+                this.exercises.length === 0
+            ) {
+                return next(
+                    new Error("Superset must have at least one exercise."),
+                );
+            }
+            break;
+        default:
+            return next(new Error("Invalid set type."));
+    }
+    next();
+});
+
+export { SetPrototypeSchema };
+export type { ISetPrototype };

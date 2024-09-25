@@ -1,3 +1,5 @@
+// setPrototype.schema.ts
+
 import { z } from "zod";
 import { SET_TYPES, SetTypeValue } from "~/constants/set-types";
 import {
@@ -25,6 +27,16 @@ const numberOrRangeSchema = z
         },
     );
 
+const tempoSchema = z
+    .object({
+        eccentric: z.number().nonnegative(),
+        bottomPause: z.number().nonnegative(),
+        concentric: z.number().nonnegative(),
+        topPause: z.number().nonnegative(),
+    })
+    .partial()
+    .strict();
+
 const weightSelectionSchema = z
     .object({
         method: z.enum(
@@ -39,62 +51,98 @@ const weightSelectionSchema = z
 
 const baseSetPrototypeSchema = z
     .object({
-        workoutId: objectIdSchema,
-        exercise: objectIdSchema,
-        alternatives: z.array(objectIdSchema).optional().default([]),
-        restDurationInSeconds: z.number().optional(),
         type: z.enum(
             Object.values(SET_TYPES) as [SetTypeValue, ...SetTypeValue[]],
         ),
+        exercise: objectIdSchema.optional(),
+        alternatives: z.array(objectIdSchema).optional().default([]),
+        restDurationInSeconds: z.number().optional(),
     })
     .strict();
 
-const straightSetSchema = baseSetPrototypeSchema
+const setPrototypeSchema = baseSetPrototypeSchema
     .extend({
-        type: z.literal(SET_TYPES.STRAIGHT_SET),
-        reps: numberOrRangeSchema,
-        sets: numberOrRangeSchema,
-        weightSelection: weightSelectionSchema,
+        // Fields for Straight Set
+        reps: numberOrRangeSchema.optional(),
+        sets: numberOrRangeSchema.optional(),
+        tempo: tempoSchema.optional(),
+        weightSelection: weightSelectionSchema.optional(),
+
+        // Fields for Drop Set
+        drops: z
+            .array(
+                z.object({
+                    tempo: tempoSchema.optional(),
+                    weightSelection: weightSelectionSchema,
+                    reps: numberOrRangeSchema,
+                }),
+            )
+            .optional(),
+
+        // Fields for Superset
+        exercises: z
+            .array(
+                z.object({
+                    tempo: tempoSchema.optional(),
+                    exercise: objectIdSchema,
+                    reps: numberOrRangeSchema,
+                    restDurationInSeconds: z.number().optional(),
+                    weightSelection: weightSelectionSchema,
+                }),
+            )
+            .optional(),
     })
     .strict();
 
-const dropSetSchema = baseSetPrototypeSchema
-    .extend({
-        type: z.literal(SET_TYPES.DROP_SET),
-        drops: z.array(
-            z.object({
-                weightSelection: weightSelectionSchema,
-                reps: numberOrRangeSchema,
-            }),
-        ),
-    })
-    .strict();
+export const createSetPrototypeSchema = setPrototypeSchema.superRefine(
+    (data, ctx) => {
+        // Custom validation based on 'type'
+        switch (data.type) {
+            case SET_TYPES.STRAIGHT_SET:
+                if (
+                    !data.reps ||
+                    !data.sets ||
+                    !data.weightSelection ||
+                    !data.exercise
+                ) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message:
+                            "Straight Set must have 'exercise', 'reps', 'sets', and 'weightSelection'.",
+                    });
+                }
+                break;
+            case SET_TYPES.DROP_SET:
+                if (!data.drops || data.drops.length === 0 || !data.exercise) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message:
+                            "Drop Set must have 'exercise' and at least one 'drop' with 'reps' and 'weightSelection'.",
+                    });
+                }
+                break;
+            case SET_TYPES.SUPER_SET:
+                if (!data.exercises || data.exercises.length === 0) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message:
+                            "Superset must have at least one 'exercise' with 'reps' and 'weightSelection'.",
+                    });
+                }
+                break;
+            default:
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Invalid 'type' field.",
+                });
+                break;
+        }
+    },
+);
 
-const supersetSchema = baseSetPrototypeSchema
-    .extend({
-        type: z.literal(SET_TYPES.SUPER_SET),
-        exercises: z.array(
-            z.object({
-                exercise: objectIdSchema,
-                reps: numberOrRangeSchema,
-                restDurationInSeconds: z.string().optional().default("0:30"),
-                weightSelection: weightSelectionSchema,
-            }),
-        ),
-    })
-    .strict();
-
-export const createSetPrototypeSchema = z.discriminatedUnion("type", [
-    straightSetSchema,
-    dropSetSchema,
-    supersetSchema,
-]);
-
-export const updateSetPrototypeSchema = z.discriminatedUnion("type", [
-    straightSetSchema.partial().required({ type: true }),
-    dropSetSchema.partial().required({ type: true }),
-    supersetSchema.partial().required({ type: true }),
-]);
+export const updateSetPrototypeSchema = setPrototypeSchema.partial().extend({
+    type: z.enum(Object.values(SET_TYPES) as [SetTypeValue, ...SetTypeValue[]]),
+});
 
 export type CreateSetPrototypeInput = z.infer<typeof createSetPrototypeSchema>;
 export type UpdateSetPrototypeInput = z.infer<typeof updateSetPrototypeSchema>;

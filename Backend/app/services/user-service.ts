@@ -76,9 +76,8 @@ export const updateUser = async (
 
         const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
             new: true,
-        })
-            .select("-firebaseId")
-            .lean();
+            runValidators: true,
+        }).select("-firebaseId");
         if (!updatedUser) {
             throw json({ error: "User not found" }, { status: 404 });
         }

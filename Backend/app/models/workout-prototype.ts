@@ -1,50 +1,43 @@
+// workoutPrototype.ts
+
 import mongoose, { Document, Schema } from "mongoose";
 import {
     INTENSITY_LEVEL,
     IntensityLevelValue,
 } from "~/constants/intensity-levels";
 import { Timestamps } from "~/interfaces/timestamp";
+import { ISetPrototype, SetPrototypeSchema } from "./set-prototype";
 
 interface IWorkoutPrototype extends Document, Timestamps {
-    _id: mongoose.Schema.Types.ObjectId;
+    _id: mongoose.Types.ObjectId;
     name: string;
-
-    warmup?: mongoose.Schema.Types.ObjectId;
-    coolDown?: mongoose.Schema.Types.ObjectId;
-    sets: mongoose.Schema.Types.ObjectId[];
-    
-    userId: mongoose.Schema.Types.ObjectId;
-    
+    warmup?: ISetPrototype[]; // Embedded SetPrototypes
+    sets: ISetPrototype[]; // Embedded SetPrototypes
+    coolDown?: ISetPrototype[]; // Embedded SetPrototypes
+    userId: mongoose.Types.ObjectId;
     description?: string;
     intensityLevel?: IntensityLevelValue;
     durationInMinutes?: number;
     notes?: string;
 }
 
+const options = { timestamps: true };
+
 const WorkoutPrototypeSchema: Schema<IWorkoutPrototype> = new Schema(
     {
         name: { type: String, required: true },
-        warmup: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "SetPrototype",
-                required: true,
-            },
-        ],
-        sets: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "SetPrototype",
-                required: true,
-            },
-        ],
-        coolDown: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "SetPrototype",
-                required: true,
-            },
-        ],
+        warmup: {
+            type: [SetPrototypeSchema],
+            default: [],
+        },
+        sets: {
+            type: [SetPrototypeSchema],
+            required: true,
+        },
+        coolDown: {
+            type: [SetPrototypeSchema],
+            default: [],
+        },
         description: { type: String },
         userId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -55,7 +48,7 @@ const WorkoutPrototypeSchema: Schema<IWorkoutPrototype> = new Schema(
         intensityLevel: { type: String, enum: Object.values(INTENSITY_LEVEL) },
         notes: { type: String },
     },
-    { timestamps: true },
+    options,
 );
 
 WorkoutPrototypeSchema.index({ userId: 1 });
@@ -67,4 +60,3 @@ const WorkoutPrototype = mongoose.model<IWorkoutPrototype>(
 
 export { WorkoutPrototype };
 export type { IWorkoutPrototype };
-

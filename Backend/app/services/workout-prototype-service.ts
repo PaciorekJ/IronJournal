@@ -5,7 +5,6 @@ import {
     IntensityLevelValue,
 } from "~/constants/intensity-levels";
 import { ServiceResult } from "~/interfaces/service-result";
-import { SetPrototype } from "~/models/set-prototype";
 import { IUser } from "~/models/user";
 import {
     IWorkoutPrototype,
@@ -53,30 +52,6 @@ export const createWorkoutPrototype = async (
     data: CreateWorkoutPrototypeInput,
 ): Promise<ServiceResult<IWorkoutPrototype>> => {
     try {
-        const { sets } = data;
-
-        const setIds: string[] = sets.map((setId: string) => setId.toString());
-
-        const validSets = await SetPrototype.find({
-            _id: { $in: setIds },
-            userId: user._id,
-        })
-            .select("_id")
-            .lean();
-
-        const validSetIds = validSets.map((set) => set._id.toString());
-
-        const invalidSets = setIds.filter((id) => !validSetIds.includes(id));
-        if (invalidSets.length > 0) {
-            throw json(
-                {
-                    error: "Invalid set IDs provided",
-                    invalidSets,
-                },
-                { status: 400 },
-            );
-        }
-
         const newWorkout = await WorkoutPrototype.create({
             ...data,
             userId: user._id,
@@ -131,14 +106,6 @@ export const deleteWorkoutPrototype = async (
         if (!workout) {
             throw json({ error: "Workout not found" }, { status: 404 });
         }
-
-        const setsToDelete = [
-            ...workout.sets,
-            workout.coolDown,
-            workout.warmup,
-        ];
-        const workoutSetsValid = setsToDelete.filter((set) => set);
-        await SetPrototype.deleteMany({ _id: { $in: workoutSetsValid } });
 
         await workout.deleteOne();
 
