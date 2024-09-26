@@ -1,4 +1,5 @@
 import { json } from "@remix-run/node";
+import { MongooseError } from "mongoose";
 import { z } from "zod";
 import {
     INTENSITY_LEVEL,
@@ -148,7 +149,13 @@ export const readWorkoutPrototypes = async (
 
         return { data: workouts, hasMore };
     } catch (error) {
-        throw json({ error: "An unexpected error occurred" }, { status: 500 });
+        if (error instanceof MongooseError) {
+            throw json({
+                status: 400,
+                error: "Bad request, ensure that the query is valid",
+            });
+        }
+        throw json({ status: 500, error: "An unexpected error occurred" });
     }
 };
 
@@ -182,6 +189,12 @@ export const readWorkoutPrototypeById = async (
 
         return { data: workout };
     } catch (error) {
-        throw json({ error: "An unexpected error occurred" }, { status: 500 });
+        if (error instanceof MongooseError) {
+            throw json({
+                status: 400,
+                error: "Bad request, ensure that the query is valid",
+            });
+        }
+        throw json({ status: 500, error: "An unexpected error occurred" });
     }
 };

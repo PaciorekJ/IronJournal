@@ -1,5 +1,8 @@
 export const MUSCLE_GROUPS = {
     ABDOMINALS: "abdominals",
+    NECK: "neck",
+    ADDUCTORS: "adductors",
+    ABDUCTORS: "abductors",
     BICEPS: "biceps",
     TRICEPS: "triceps",
     DELTOIDS: "deltoids",

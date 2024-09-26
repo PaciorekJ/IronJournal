@@ -130,14 +130,31 @@ export function buildPopulateOptions(
               ]
             : [field, null];
 
+        let select;
+
+        if (selectFields) {
+            // Split selectFields into an array
+            let fields = selectFields.split(",").map((f) => f.trim());
+
+            if (path.trim() === "userId") {
+                // Remove 'firebaseId' from fields if present
+                fields = fields.filter((f) => f !== "firebaseId");
+                if (fields.length > 0) {
+                    select = fields.join(" ");
+                } else {
+                    select = "-firebaseId";
+                }
+            } else {
+                select = fields.join(" ");
+            }
+        } else if (path.trim() === "userId") {
+            // No selectFields specified, exclude 'firebaseId' using exclusion projection
+            select = "-firebaseId";
+        }
+
         return {
             path: path.trim(),
-            select: selectFields
-                ? selectFields
-                      .split(",")
-                      .map((f) => f.trim())
-                      .join(" ")
-                : undefined,
+            select: select || undefined,
         };
     });
 }

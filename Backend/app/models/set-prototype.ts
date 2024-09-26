@@ -18,9 +18,8 @@ export interface Tempo {
 }
 
 interface ISetPrototype {
-    _id: mongoose.Types.ObjectId;
     type: SetTypeValue;
-    exercise: IExercise["_id"];
+    exerciseId: IExercise["_id"];
     alternatives?: IExercise["_id"][];
     restDurationInSeconds?: number;
 
@@ -59,7 +58,7 @@ interface ISetPrototype {
 const SetPrototypeSchema = new Schema<ISetPrototype>(
     {
         type: { type: String, enum: Object.values(SET_TYPES), required: true },
-        exercise: {
+        exerciseId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Exercise",
         },

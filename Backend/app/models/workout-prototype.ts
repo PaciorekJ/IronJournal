@@ -21,8 +21,6 @@ interface IWorkoutPrototype extends Document, Timestamps {
     notes?: string;
 }
 
-const options = { timestamps: true };
-
 const WorkoutPrototypeSchema: Schema<IWorkoutPrototype> = new Schema(
     {
         name: { type: String, required: true },
@@ -48,7 +46,7 @@ const WorkoutPrototypeSchema: Schema<IWorkoutPrototype> = new Schema(
         intensityLevel: { type: String, enum: Object.values(INTENSITY_LEVEL) },
         notes: { type: String },
     },
-    options,
+    { timestamps: true },
 );
 
 WorkoutPrototypeSchema.index({ userId: 1 });

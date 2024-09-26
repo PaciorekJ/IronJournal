@@ -13,13 +13,13 @@ const objectIdSchema = z.string().regex(objectIdRegex, "Invalid ObjectId");
 export const createWorkoutPrototypeSchema = z
     .object({
         name: z.string().min(1, "Name is required."),
-        programId: objectIdSchema.optional(),
-        warmup: z.array(createSetPrototypeSchema).optional(),
-        coolDown: z.array(createSetPrototypeSchema).optional(),
+        warmup: z.array(createSetPrototypeSchema).optional().default([]),
         sets: z
             .array(createSetPrototypeSchema)
             .min(1, "At least one set is required."),
+        coolDown: z.array(createSetPrototypeSchema).optional().default([]),
         description: z.string().optional(),
+        userId: objectIdSchema,
         durationInMinutes: z.number().positive().optional(),
         intensityLevel: z
             .enum(
@@ -36,7 +36,6 @@ export const createWorkoutPrototypeSchema = z
 export const updateWorkoutPrototypeSchema =
     createWorkoutPrototypeSchema.partial();
 
-// TYPES for expected inputs to CRUD Operations
 export type CreateWorkoutPrototypeInput = z.infer<
     typeof createWorkoutPrototypeSchema
 >;

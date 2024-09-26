@@ -17,7 +17,9 @@ import { config } from "dotenv";
 config();
 
 import Database from "~/utils/db.server";
-Database.connect().then;
+Database.connect().then(() => {
+    console.log("Connected to MongoDB");
+});
 
 const ABORT_DELAY = 5_000;
 

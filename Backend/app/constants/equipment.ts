@@ -9,6 +9,7 @@ export const EQUIPMENT = {
     EXERCISE_BALL: "exercise ball",
     CABLE: "cable",
     FOAM_ROLL: "foam roll",
+    "E-Z CURL BAR": "e-z curl bar",
     OTHER: "other",
 } as const;
 

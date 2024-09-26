@@ -1,4 +1,5 @@
 import { json } from "@remix-run/node";
+import { MongooseError } from "mongoose";
 import { z } from "zod";
 import { FOCUS_AREAS, FocusAreasValue } from "~/constants/focus-area";
 import { SCHEDULE_TYPE, ScheduleTypeValue } from "~/constants/schedule-types";
@@ -225,12 +226,19 @@ export const readPrograms = async (
         });
 
         const programs = await queryObj.lean();
+
         const totalCount = await Program.countDocuments(query).exec();
 
         const hasMore = offset + programs.length < totalCount;
 
         return { status: 200, data: programs, hasMore };
     } catch (error) {
+        if (error instanceof MongooseError) {
+            throw json({
+                status: 400,
+                error: "Bad request, ensure that the query is valid",
+            });
+        }
         throw json({ status: 500, error: "An unexpected error occurred" });
     }
 };
@@ -271,6 +279,12 @@ export const readProgramById = async (
 
         return { data: program };
     } catch (error) {
+        if (error instanceof MongooseError) {
+            throw json({
+                status: 400,
+                error: "Bad request, ensure that the query is valid",
+            });
+        }
         throw json({ status: 500, error: "An unexpected error occurred" });
     }
 };

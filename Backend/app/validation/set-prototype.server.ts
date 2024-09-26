@@ -11,7 +11,10 @@ const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 const objectIdSchema = z.string().regex(objectIdRegex, "Invalid ObjectId");
 
 const numberOrRangeSchema = z
-    .union([z.number(), z.tuple([z.number(), z.number()])])
+    .union([
+        z.number().positive(),
+        z.tuple([z.number().positive(), z.number().positive()]),
+    ])
     .refine(
         (val) => {
             if (typeof val === "number") {
@@ -54,9 +57,9 @@ const baseSetPrototypeSchema = z
         type: z.enum(
             Object.values(SET_TYPES) as [SetTypeValue, ...SetTypeValue[]],
         ),
-        exercise: objectIdSchema.optional(),
+        exerciseId: objectIdSchema.optional(),
         alternatives: z.array(objectIdSchema).optional().default([]),
-        restDurationInSeconds: z.number().optional(),
+        restDurationInSeconds: z.number().nonnegative().optional(),
     })
     .strict();
 
@@ -73,7 +76,7 @@ const setPrototypeSchema = baseSetPrototypeSchema
             .array(
                 z.object({
                     tempo: tempoSchema.optional(),
-                    weightSelection: weightSelectionSchema,
+                    weightSelection: weightSelectionSchema.optional(),
                     reps: numberOrRangeSchema,
                 }),
             )
@@ -84,10 +87,10 @@ const setPrototypeSchema = baseSetPrototypeSchema
             .array(
                 z.object({
                     tempo: tempoSchema.optional(),
-                    exercise: objectIdSchema,
+                    exerciseId: objectIdSchema,
                     reps: numberOrRangeSchema,
-                    restDurationInSeconds: z.number().optional(),
-                    weightSelection: weightSelectionSchema,
+                    restDurationInSeconds: z.number().nonnegative().optional(),
+                    weightSelection: weightSelectionSchema.optional(),
                 }),
             )
             .optional(),
@@ -99,25 +102,32 @@ export const createSetPrototypeSchema = setPrototypeSchema.superRefine(
         // Custom validation based on 'type'
         switch (data.type) {
             case SET_TYPES.STRAIGHT_SET:
-                if (
-                    !data.reps ||
-                    !data.sets ||
-                    !data.weightSelection ||
-                    !data.exercise
-                ) {
+                if (!data.exerciseId) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message: "Straight Set must have 'exerciseId'.",
+                    });
+                }
+                if (data.reps === undefined || data.sets === undefined) {
                     ctx.addIssue({
                         code: z.ZodIssueCode.custom,
                         message:
-                            "Straight Set must have 'exercise', 'reps', 'sets', and 'weightSelection'.",
+                            "Straight Set must have 'reps', 'sets', and 'weightSelection'.",
                     });
                 }
                 break;
             case SET_TYPES.DROP_SET:
-                if (!data.drops || data.drops.length === 0 || !data.exercise) {
+                if (!data.exerciseId) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message: "Drop Set must have 'exerciseId'.",
+                    });
+                }
+                if (!data.drops || data.drops.length === 0) {
                     ctx.addIssue({
                         code: z.ZodIssueCode.custom,
                         message:
-                            "Drop Set must have 'exercise' and at least one 'drop' with 'reps' and 'weightSelection'.",
+                            "Drop Set must have at least one 'drop' with 'reps' and 'weightSelection'.",
                     });
                 }
                 break;
