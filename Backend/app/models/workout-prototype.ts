@@ -1,50 +1,34 @@
-// workoutPrototype.ts
-
 import mongoose, { Document, Schema } from "mongoose";
 import {
     INTENSITY_LEVEL,
-    IntensityLevelValue,
-} from "~/constants/intensity-levels";
+    IntensityLevelKey,
+} from "~/constants/intensity-level";
 import { Timestamps } from "~/interfaces/timestamp";
 import { ISetPrototype, SetPrototypeSchema } from "./set-prototype";
 
 interface IWorkoutPrototype extends Document, Timestamps {
     _id: mongoose.Types.ObjectId;
     name: string;
-    warmup?: ISetPrototype[]; // Embedded SetPrototypes
-    sets: ISetPrototype[]; // Embedded SetPrototypes
-    coolDown?: ISetPrototype[]; // Embedded SetPrototypes
-    userId: mongoose.Types.ObjectId;
     description?: string;
-    intensityLevel?: IntensityLevelValue;
-    durationInMinutes?: number;
-    notes?: string;
+    sets: ISetPrototype[];
+    userId: mongoose.Types.ObjectId;
+    intensityLevel?: IntensityLevelKey;
 }
 
 const WorkoutPrototypeSchema: Schema<IWorkoutPrototype> = new Schema(
     {
         name: { type: String, required: true },
-        warmup: {
-            type: [SetPrototypeSchema],
-            default: [],
-        },
+        description: { type: String },
         sets: {
             type: [SetPrototypeSchema],
             required: true,
         },
-        coolDown: {
-            type: [SetPrototypeSchema],
-            default: [],
-        },
-        description: { type: String },
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
         },
-        durationInMinutes: { type: Number },
-        intensityLevel: { type: String, enum: Object.values(INTENSITY_LEVEL) },
-        notes: { type: String },
+        intensityLevel: { type: String, enum: Object.keys(INTENSITY_LEVEL) },
     },
     { timestamps: true },
 );

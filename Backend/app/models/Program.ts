@@ -1,23 +1,17 @@
 import mongoose, { Document, Schema } from "mongoose";
-import { DAYS_OF_WEEK, DaysOfWeekValue } from "~/constants/days-of-week";
-import { FOCUS_AREAS, FocusAreasValue } from "~/constants/focus-area";
-import { SCHEDULE_TYPE, ScheduleTypeValue } from "~/constants/schedule-types";
+import { DAYS_OF_WEEK, DaysOfWeekKey } from "~/constants/days-of-week";
+import { FOCUS_AREA, FocusAreasKey } from "~/constants/focus-area";
+import { SCHEDULE_TYPE, ScheduleTypeKey } from "~/constants/schedule-type";
 import {
     TARGET_AUDIENCE,
-    TargetAudienceValue,
-} from "~/constants/target-audiences";
+    TargetAudienceKey,
+} from "~/constants/target-audience";
 import { Timestamps } from "~/interfaces/timestamp";
 
 interface IWorkoutSchedule {
-    day: DaysOfWeekValue | number;
-    workoutId?: mongoose.Schema.Types.ObjectId;
+    day: DaysOfWeekKey | number;
+    workoutIds?: mongoose.Schema.Types.ObjectId[];
     isRestDay?: boolean;
-}
-
-interface ICardioRecommendation {
-    frequency: string;
-    durationInMinutes: number;
-    type: string;
 }
 
 interface IProgram extends Document, Timestamps {
@@ -26,54 +20,49 @@ interface IProgram extends Document, Timestamps {
     description?: string;
     workoutSchedule?: IWorkoutSchedule[];
     userId: mongoose.Schema.Types.ObjectId;
-    durationInDays?: number;
-    notes?: string;
     isPublic?: boolean;
-    scheduleType: ScheduleTypeValue;
-    focusAreas?: FocusAreasValue[];
-    targetAudience?: TargetAudienceValue;
-    cardioRecommendations?: ICardioRecommendation;
-    progressionStrategy?: string;
+    scheduleType: ScheduleTypeKey;
+    focusAreas?: FocusAreasKey[];
+    targetAudience?: TargetAudienceKey;
+    repetitions?: number;
 }
 
-const ProgramSchema: Schema<IProgram> = new Schema({
-    name: { type: String, required: true },
-    description: { type: String },
-    workoutSchedule: {
-        type: [
-            {
-                day: { type: Schema.Types.Mixed, required: true },
-                workoutId: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: "WorkoutPrototype",
+const ProgramSchema: Schema<IProgram> = new Schema(
+    {
+        name: { type: String, required: true },
+        description: { type: String },
+        workoutSchedule: {
+            type: [
+                {
+                    day: { type: Schema.Types.Mixed, required: true },
+                    workoutIds: [
+                        {
+                            type: mongoose.Schema.Types.ObjectId,
+                            ref: "WorkoutPrototype",
+                        },
+                    ],
+                    isRestDay: { type: Boolean, default: false },
                 },
-                isRestDay: { type: Boolean, default: false },
-            },
-        ],
-        default: [],
+            ],
+            default: [],
+        },
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+        isPublic: { type: Boolean, default: false },
+        scheduleType: {
+            type: String,
+            enum: Object.values(SCHEDULE_TYPE),
+            required: true,
+        },
+        focusAreas: [{ type: String, enum: Object.values(FOCUS_AREA) }],
+        targetAudience: { type: String, enum: Object.values(TARGET_AUDIENCE) },
+        repetitions: { type: Number, default: 0 },
     },
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-    },
-    durationInDays: { type: Number },
-    notes: { type: String },
-    isPublic: { type: Boolean, default: false },
-    scheduleType: {
-        type: String,
-        enum: Object.values(SCHEDULE_TYPE),
-        required: true,
-    },
-    focusAreas: [{ type: String, enum: Object.values(FOCUS_AREAS) }],
-    targetAudience: { type: String, enum: Object.values(TARGET_AUDIENCE) },
-    cardioRecommendations: {
-        frequency: { type: String },
-        durationInMinutes: { type: Number },
-        type: { type: String },
-    },
-    progressionStrategy: { type: String },
-}, { timestamps: true });
+    { timestamps: true },
+);
 
 ProgramSchema.path("workoutSchedule").validate(function (
     workouts: IWorkoutSchedule[],
@@ -81,29 +70,30 @@ ProgramSchema.path("workoutSchedule").validate(function (
     const scheduleType = this.scheduleType;
 
     for (const workout of workouts) {
+        const hasWorkoutIds =
+            workout.workoutIds && workout.workoutIds.length > 0;
+
         if (
-            (!workout.workoutId && !workout.isRestDay) ||
-            (workout.workoutId && workout.isRestDay)
+            (!hasWorkoutIds && !workout.isRestDay) ||
+            (hasWorkoutIds && workout.isRestDay)
         ) {
             return false;
         }
 
-        if (typeof workout.isRestDay === "boolean" && workout.isRestDay) {
+        if (workout.isRestDay) {
             continue;
         }
 
         if (
-            scheduleType === SCHEDULE_TYPE.FIXED_DAYS &&
+            SCHEDULE_TYPE[scheduleType] === SCHEDULE_TYPE.WEEKLY &&
             (typeof workout.day !== "string" ||
-                !Object.values(DAYS_OF_WEEK).includes(
-                    workout.day as DaysOfWeekValue,
-                ))
+                !Object.keys(DAYS_OF_WEEK).includes(workout.day))
         ) {
             return false;
         }
 
         if (
-            scheduleType === SCHEDULE_TYPE.CYCLE &&
+            SCHEDULE_TYPE[scheduleType] === SCHEDULE_TYPE.CYCLE &&
             typeof workout.day !== "number"
         ) {
             return false;
@@ -111,7 +101,7 @@ ProgramSchema.path("workoutSchedule").validate(function (
     }
 
     return true;
-}, "Invalid workout schedule: Either `workoutId` or `isRestDay` must be set, but not both. `day` field must match `scheduleType`.");
+}, "Invalid workout schedule: Either 'workoutIds' must be a non-empty array or 'isRestDay' must be true, but not both. 'day' field must match 'scheduleType'.");
 
 ProgramSchema.index({ userId: 1 });
 ProgramSchema.index({ scheduleType: 1 });
@@ -120,4 +110,4 @@ ProgramSchema.index({ isPublic: 1 });
 const Program = mongoose.model<IProgram>("Program", ProgramSchema);
 
 export { Program };
-export type { IProgram };
+export type { IProgram, IWorkoutSchedule };

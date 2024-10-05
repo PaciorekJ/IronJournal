@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { DAYS_OF_WEEK, DaysOfWeekValue } from "~/constants/days-of-week";
-import { FOCUS_AREAS, FocusAreasValue } from "~/constants/focus-area";
-import { SCHEDULE_TYPE, ScheduleTypeValue } from "~/constants/schedule-types";
+import { DAYS_OF_WEEK, DaysOfWeekKey } from "~/constants/days-of-week";
+import { FOCUS_AREA, FocusAreasKey } from "~/constants/focus-area";
+import { SCHEDULE_TYPE, ScheduleTypeKey } from "~/constants/schedule-type";
 import {
     TARGET_AUDIENCE,
-    TargetAudienceValue,
-} from "~/constants/target-audiences";
+    TargetAudienceKey,
+} from "~/constants/target-audience";
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 const objectIdSchema = z.string().regex(objectIdRegex, "Invalid ObjectId");
@@ -22,23 +22,27 @@ const workoutScheduleItemSchema = z
     .object({
         day: z.union([
             z.enum(
-                Object.values(DAYS_OF_WEEK) as [
-                    DaysOfWeekValue,
-                    ...DaysOfWeekValue[],
+                Object.keys(DAYS_OF_WEEK) as [
+                    DaysOfWeekKey,
+                    ...DaysOfWeekKey[],
                 ],
             ),
             z.number(),
         ]),
-        workoutId: objectIdSchema.optional(),
+        workoutIds: z.array(objectIdSchema).optional(),
         isRestDay: z.boolean().optional(),
     })
     .strict()
     .refine(
         (data) =>
-            (data.workoutId && !data.isRestDay) ||
-            (!data.workoutId && data.isRestDay),
+            (data.workoutIds &&
+                data.workoutIds.length > 0 &&
+                !data.isRestDay) ||
+            ((!data.workoutIds || data.workoutIds.length === 0) &&
+                data.isRestDay),
         {
-            message: "Either workoutId or isRestDay must be set, but not both.",
+            message:
+                "Either 'workoutIds' must be a non-empty array or 'isRestDay' must be true, but not both.",
         },
     );
 
@@ -48,30 +52,30 @@ const tempCreateProgramSchema = z
         userId: objectIdSchema,
         description: z.string().optional(),
         workoutSchedule: z.array(workoutScheduleItemSchema).optional(),
-        durationInDays: z.number().optional(),
+        repetitions: z.number().nonnegative().optional().default(0),
         notes: z.string().optional(),
         isPublic: z.boolean().optional().default(false),
         scheduleType: z.enum(
-            Object.values(SCHEDULE_TYPE) as [
-                ScheduleTypeValue,
-                ...ScheduleTypeValue[],
+            Object.keys(SCHEDULE_TYPE) as [
+                ScheduleTypeKey,
+                ...ScheduleTypeKey[],
             ],
         ),
         focusAreas: z
             .array(
                 z.enum(
-                    Object.values(FOCUS_AREAS) as [
-                        FocusAreasValue,
-                        ...FocusAreasValue[],
+                    Object.keys(FOCUS_AREA) as [
+                        FocusAreasKey,
+                        ...FocusAreasKey[],
                     ],
                 ),
             )
             .optional(),
         targetAudience: z
             .enum(
-                Object.values(TARGET_AUDIENCE) as [
-                    TargetAudienceValue,
-                    ...TargetAudienceValue[],
+                Object.keys(TARGET_AUDIENCE) as [
+                    TargetAudienceKey,
+                    ...TargetAudienceKey[],
                 ],
             )
             .optional(),
@@ -80,7 +84,7 @@ const tempCreateProgramSchema = z
     })
     .strict();
 
-export const createProgramSchema = tempCreateProgramSchema.strict();
+export const createProgramSchema = tempCreateProgramSchema;
 export const updateProgramSchema = tempCreateProgramSchema.partial();
 
 // TYPES for expected inputs to CRUD Operations

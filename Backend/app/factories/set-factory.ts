@@ -1,6 +1,6 @@
 // app/factories/SetFactory.ts
 
-import { SET_TYPES, SetTypeValue } from "~/constants/set-types";
+import { SET_TYPE, SetTypeValue } from "~/constants/set-type";
 import {
     SetPrototypeDropSet,
     SetPrototypeStraightSet,
@@ -14,13 +14,13 @@ class SetFactory {
         data: CreateSetPrototypeInput,
     ) {
         switch (setType) {
-            case SET_TYPES.STRAIGHT_SET:
+            case SET_TYPE.SET_PROTOTYPE_STRAIGHT_SET:
                 return await SetPrototypeStraightSet.create(data);
 
-            case SET_TYPES.DROP_SET:
+            case SET_TYPE.SET_PROTOTYPE_DROP_SET:
                 return await SetPrototypeDropSet.create(data);
 
-            case SET_TYPES.SUPER_SET:
+            case SET_TYPE.SET_PROTOTYPE_SUPER_SET:
                 return await SetPrototypeSuperset.create(data);
 
             default:

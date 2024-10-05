@@ -9,4 +9,3 @@ export const DAYS_OF_WEEK = {
 } as const;
 
 export type DaysOfWeekKey = keyof typeof DAYS_OF_WEEK;
-export type DaysOfWeekValue = (typeof DAYS_OF_WEEK)[DaysOfWeekKey];

@@ -5,4 +5,3 @@ export const LEVEL = {
 } as const;
 
 export type LevelKey = keyof typeof LEVEL;
-export type LevelValue = (typeof LEVEL)[LevelKey];

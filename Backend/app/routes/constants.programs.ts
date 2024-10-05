@@ -1,9 +1,25 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { isLoginValid } from "~/utils/auth.server";
-import { convertKeysToCamelCase } from "~/utils/util.server";
-import { PROGRAM_CONSTANTS_MAP } from "./constants";
+import { DAYS_OF_WEEK } from "~/constants/days-of-week";
+import { FOCUS_AREA } from "~/constants/focus-area";
+import { SCHEDULE_TYPE } from "~/constants/schedule-type";
+import { TARGET_AUDIENCE } from "~/constants/target-audience";
+import { requirePredicate } from "~/utils/auth.server";
+import { getLocalizedConstants } from "~/utils/localization.server";
+import { validateLanguagePreference } from "~/utils/util.server";
+
+export const PROGRAM_CONSTANT_MAP: Record<string, string[]> = {
+    FOCUS_AREA: Object.keys(FOCUS_AREA),
+    SCHEDULE_TYPE: Object.keys(SCHEDULE_TYPE),
+    TARGET_AUDIENCE: Object.keys(TARGET_AUDIENCE),
+    DAYS_OF_WEEK: Object.keys(DAYS_OF_WEEK),
+};
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-    await isLoginValid(request);
-    return json({ data: convertKeysToCamelCase(PROGRAM_CONSTANTS_MAP) });
+    const { user } = await requirePredicate(request, { user: true });
+
+    const userLanguage = validateLanguagePreference(user.languagePreference);
+
+    const data = getLocalizedConstants(PROGRAM_CONSTANT_MAP, userLanguage);
+
+    return json({ data });
 };

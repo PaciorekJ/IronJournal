@@ -1,6 +1,8 @@
 import { json } from "@remix-run/node";
 import mongoose from "mongoose";
 import { z } from "zod";
+import { LanguageKey } from "~/constants/language";
+import { languagePreferenceSchema } from "~/validation/user.server";
 
 type AllCombinations<T> = T extends object
     ?
@@ -285,6 +287,17 @@ export function validateDatabaseId(id: string) {
         );
     }
     return id;
+}
+
+export function validateLanguagePreference(language: LanguageKey) {
+    const { success: isValidLangPreference, error } =
+        languagePreferenceSchema.safeParse(language);
+
+    if (!isValidLangPreference) {
+        handleError(error);
+    }
+
+    return language;
 }
 
 /**

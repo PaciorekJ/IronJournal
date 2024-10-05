@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "run": "node testApi.js"
+    "run": "node getToken.js"
   },
   "dependencies": {
     "axios": "^1.7.7",

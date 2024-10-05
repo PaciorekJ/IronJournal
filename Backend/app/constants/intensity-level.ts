@@ -5,4 +5,3 @@ export const INTENSITY_LEVEL = {
 } as const;
 
 export type IntensityLevelKey = keyof typeof INTENSITY_LEVEL;
-export type IntensityLevelValue = (typeof INTENSITY_LEVEL)[IntensityLevelKey];

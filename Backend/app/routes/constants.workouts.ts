@@ -1,10 +1,19 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { isLoginValid } from "~/utils/auth.server";
-import { convertKeysToCamelCase } from "~/utils/util.server";
-import { WORKOUT_CONSTANTS_MAP } from "./constants";
+import { INTENSITY_LEVEL } from "~/constants/intensity-level";
+import { requirePredicate } from "~/utils/auth.server";
+import { getLocalizedConstants } from "~/utils/localization.server";
+import { validateLanguagePreference } from "~/utils/util.server";
+
+export const WORKOUT_CONSTANT_MAP: Record<string, string[]> = {
+    INTENSITY_LEVEL: Object.keys(INTENSITY_LEVEL),
+};
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-    await isLoginValid(request);
+    const { user } = await requirePredicate(request, { user: true });
 
-    return json({ data: convertKeysToCamelCase(WORKOUT_CONSTANTS_MAP) });
+    const userLanguage = validateLanguagePreference(user.languagePreference);
+
+    const data = getLocalizedConstants(WORKOUT_CONSTANT_MAP, userLanguage);
+
+    return json({ data });
 };

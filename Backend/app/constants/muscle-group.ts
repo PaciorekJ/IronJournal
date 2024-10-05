@@ -1,4 +1,4 @@
-export const MUSCLE_GROUPS = {
+export const MUSCLE_GROUP = {
     ABDOMINALS: "abdominals",
     NECK: "neck",
     ADDUCTORS: "adductors",
@@ -9,7 +9,7 @@ export const MUSCLE_GROUPS = {
     ERECTOR_SPINAE: "erector spinae",
     GLUTES: "glutes",
     HAMSTRINGS: "hamstrings",
-    LATS: "lats",
+    LATISSIMUS_DORSI: "latissimus dorsi",
     OBLIQUES: "obliques",
     PECTORALS: "pectorals",
     QUADRICEPS: "quadriceps",
@@ -18,8 +18,6 @@ export const MUSCLE_GROUPS = {
     FOREARMS: "forearms",
     LOWER_BACK: "lower back",
     MIDDLE_BACK: "middle back",
-    SHOULDERS: "shoulders",
 } as const;
 
-export type MuscleGroupKey = keyof typeof MUSCLE_GROUPS;
-export type MuscleGroupValue = (typeof MUSCLE_GROUPS)[MuscleGroupKey];
+export type MuscleGroupKey = keyof typeof MUSCLE_GROUP;

@@ -1,14 +1,14 @@
 import { json } from "@remix-run/node";
 import { MongooseError } from "mongoose";
 import { z } from "zod";
-import { FOCUS_AREAS, FocusAreasValue } from "~/constants/focus-area";
-import { SCHEDULE_TYPE, ScheduleTypeValue } from "~/constants/schedule-types";
+import { FOCUS_AREA, FocusAreasKey } from "~/constants/focus-area";
+import { SCHEDULE_TYPE, ScheduleTypeKey } from "~/constants/schedule-type";
 import {
     TARGET_AUDIENCE,
-    TargetAudienceValue,
-} from "~/constants/target-audiences";
+    TargetAudienceKey,
+} from "~/constants/target-audience";
 import { ServiceResult } from "~/interfaces/service-result";
-import { IProgram, Program } from "~/models/program";
+import { IProgram, IWorkoutSchedule, Program } from "~/models/program";
 import { IUser } from "~/models/user";
 import { WorkoutPrototype } from "~/models/workout-prototype";
 import {
@@ -40,9 +40,9 @@ const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
         constructor: String,
         regex: (value: string) => new RegExp(value),
         schema: z.enum(
-            Object.values(SCHEDULE_TYPE) as [
-                ScheduleTypeValue,
-                ...ScheduleTypeValue[],
+            Object.keys(SCHEDULE_TYPE) as [
+                ScheduleTypeKey,
+                ...ScheduleTypeKey[],
             ],
         ),
     },
@@ -51,10 +51,7 @@ const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
         constructor: String,
         regex: (value: string) => new RegExp(value),
         schema: z.enum(
-            Object.values(FOCUS_AREAS) as [
-                FocusAreasValue,
-                ...FocusAreasValue[],
-            ],
+            Object.keys(FOCUS_AREA) as [FocusAreasKey, ...FocusAreasKey[]],
         ),
     },
     targetAudience: {
@@ -62,9 +59,9 @@ const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
         constructor: String,
         regex: (value: string) => new RegExp(value),
         schema: z.enum(
-            Object.values(TARGET_AUDIENCE) as [
-                TargetAudienceValue,
-                ...TargetAudienceValue[],
+            Object.keys(TARGET_AUDIENCE) as [
+                TargetAudienceKey,
+                ...TargetAudienceKey[],
             ],
         ),
     },
@@ -77,8 +74,12 @@ export const createProgram = async (
     try {
         const { workoutSchedule } = createData;
 
-        const workoutIds: string[] = (workoutSchedule || [])
-            .map((item) => item.workoutId?.toString())
+        const workoutIds: string[] = (
+            (workoutSchedule || []) as IWorkoutSchedule[]
+        )
+            .flatMap(
+                (item) => item.workoutIds?.map((id) => id.toString()) || [],
+            )
             .filter((id): id is string => !!id);
 
         const validWorkouts = await WorkoutPrototype.find({

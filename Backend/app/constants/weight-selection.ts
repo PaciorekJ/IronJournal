@@ -5,5 +5,3 @@ export const WEIGHT_SELECTION_METHOD = {
 } as const;
 
 export type WeightSelectionMethodKey = keyof typeof WEIGHT_SELECTION_METHOD;
-export type WeightSelectionMethodValue =
-    (typeof WEIGHT_SELECTION_METHOD)[WeightSelectionMethodKey];

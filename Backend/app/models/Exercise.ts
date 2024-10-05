@@ -1,22 +1,22 @@
 import mongoose, { Document, Schema } from "mongoose";
-import { CATEGORY, CategoryValue } from "~/constants/category";
-import { EQUIPMENT, EquipmentValue } from "~/constants/equipment";
-import { FORCE, ForceValue } from "~/constants/force";
-import { LEVEL, LevelValue } from "~/constants/level";
-import { MECHANIC, MechanicValue } from "~/constants/mechanic";
-import { MUSCLE_GROUPS, MuscleGroupValue } from "~/constants/muscle-groups";
+import { CATEGORY, CategoryKey } from "~/constants/category";
+import { EQUIPMENT, EquipmentKey } from "~/constants/equipment";
+import { FORCE, ForceKey } from "~/constants/force";
+import { LEVEL, LevelKey } from "~/constants/level";
+import { MECHANIC, MechanicKey } from "~/constants/mechanic";
+import { MUSCLE_GROUP, MuscleGroupKey } from "~/constants/muscle-group";
 
 interface IExercise extends Document {
     _id: mongoose.Schema.Types.ObjectId;
     name: string;
-    level: LevelValue;
-    force?: ForceValue;
-    mechanic?: MechanicValue;
-    equipment?: EquipmentValue;
-    primaryMuscles: MuscleGroupValue[];
-    secondaryMuscles?: MuscleGroupValue[];
     instructions: string[];
-    category: CategoryValue;
+    level: LevelKey;
+    force?: ForceKey;
+    mechanic?: MechanicKey;
+    equipment?: EquipmentKey;
+    primaryMuscles: MuscleGroupKey[];
+    secondaryMuscles?: MuscleGroupKey[];
+    category: CategoryKey;
     images: string[];
     id: string;
 }
@@ -26,7 +26,7 @@ const ExerciseSchema: Schema<IExercise> = new Schema({
     level: { type: String, enum: Object.values(LEVEL), required: true },
     primaryMuscles: {
         type: [String],
-        enum: Object.values(MUSCLE_GROUPS),
+        enum: Object.values(MUSCLE_GROUP),
         required: true,
     },
     instructions: { type: [String], required: true },
@@ -38,7 +38,7 @@ const ExerciseSchema: Schema<IExercise> = new Schema({
     equipment: { type: String, enum: Object.values(EQUIPMENT) },
     secondaryMuscles: {
         type: [String],
-        enum: Object.values(MUSCLE_GROUPS),
+        enum: Object.values(MUSCLE_GROUP),
         default: [],
     },
 });

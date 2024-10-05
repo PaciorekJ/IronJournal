@@ -1,52 +1,45 @@
 import { z } from "zod";
-import { CATEGORY, CategoryValue } from "~/constants/category";
-import { EQUIPMENT, EquipmentValue } from "~/constants/equipment";
-import { FORCE, ForceValue } from "~/constants/force";
-import { LEVEL, LevelValue } from "~/constants/level";
-import { MECHANIC, MechanicValue } from "~/constants/mechanic";
-import { MUSCLE_GROUPS, MuscleGroupValue } from "~/constants/muscle-groups";
+import { CATEGORY, CategoryKey } from "~/constants/category";
+import { EQUIPMENT, EquipmentKey } from "~/constants/equipment";
+import { FORCE, ForceKey } from "~/constants/force";
+import { LEVEL, LevelKey } from "~/constants/level";
+import { MECHANIC, MechanicKey } from "~/constants/mechanic";
+import { MUSCLE_GROUP, MuscleGroupKey } from "~/constants/muscle-group";
 
 // Creation Schema for Exercise
 export const createExerciseSchema = z
     .object({
         name: z.string(),
-        level: z.enum(Object.values(LEVEL) as [LevelValue, ...LevelValue[]]),
+        level: z.enum(Object.keys(LEVEL) as [LevelKey, ...LevelKey[]]),
         primaryMuscles: z.array(
             z.enum(
-                Object.values(MUSCLE_GROUPS) as [
-                    MuscleGroupValue,
-                    ...MuscleGroupValue[],
+                Object.keys(MUSCLE_GROUP) as [
+                    MuscleGroupKey,
+                    ...MuscleGroupKey[],
                 ],
             ),
         ),
         instructions: z.array(z.string()),
         category: z.enum(
-            Object.values(CATEGORY) as [CategoryValue, ...CategoryValue[]],
+            Object.keys(CATEGORY) as [CategoryKey, ...CategoryKey[]],
         ),
         images: z.array(z.string()),
-        id: z.string(), // Unique identifier
+        id: z.string(),
         force: z
-            .enum(Object.values(FORCE) as [ForceValue, ...ForceValue[]])
+            .enum(Object.keys(FORCE) as [ForceKey, ...ForceKey[]])
             .optional(),
         mechanic: z
-            .enum(
-                Object.values(MECHANIC) as [MechanicValue, ...MechanicValue[]],
-            )
+            .enum(Object.keys(MECHANIC) as [MechanicKey, ...MechanicKey[]])
             .optional(),
         equipment: z
-            .enum(
-                Object.values(EQUIPMENT) as [
-                    EquipmentValue,
-                    ...EquipmentValue[],
-                ],
-            )
+            .enum(Object.keys(EQUIPMENT) as [EquipmentKey, ...EquipmentKey[]])
             .optional(),
         secondaryMuscles: z
             .array(
                 z.enum(
-                    Object.values(MUSCLE_GROUPS) as [
-                        MuscleGroupValue,
-                        ...MuscleGroupValue[],
+                    Object.keys(MUSCLE_GROUP) as [
+                        MuscleGroupKey,
+                        ...MuscleGroupKey[],
                     ],
                 ),
             )

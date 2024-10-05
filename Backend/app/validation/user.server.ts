@@ -1,6 +1,12 @@
 import { z } from "zod";
+import { LANGUAGE, LanguageKey } from "~/constants/language";
 
 const safeUsernamePattern = /^[a-zA-Z0-9_]+$/;
+
+export const languagePreferenceSchema = z.enum(
+    Object.keys(LANGUAGE) as [LanguageKey, ...LanguageKey[]],
+    { message: "Invalid language preference" },
+);
 
 export const createUserSchema = z
     .object({
@@ -14,6 +20,7 @@ export const createUserSchema = z
             )
             .trim(),
         firebaseId: z.string().min(1, "Firebase ID is required").trim(),
+        languagePreference: languagePreferenceSchema,
     })
     .strict();
 

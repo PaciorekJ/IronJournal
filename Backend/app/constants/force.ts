@@ -5,4 +5,3 @@ export const FORCE = {
 } as const;
 
 export type ForceKey = keyof typeof FORCE;
-export type ForceValue = (typeof FORCE)[ForceKey];

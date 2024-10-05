@@ -3,8 +3,8 @@ import { MongooseError } from "mongoose";
 import { z } from "zod";
 import {
     INTENSITY_LEVEL,
-    IntensityLevelValue,
-} from "~/constants/intensity-levels";
+    IntensityLevelKey,
+} from "~/constants/intensity-level";
 import { ServiceResult } from "~/interfaces/service-result";
 import { IUser } from "~/models/user";
 import {
@@ -35,9 +35,9 @@ const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
         constructor: String,
         regex: (value: string) => new RegExp(value),
         schema: z.enum(
-            Object.values(INTENSITY_LEVEL) as [
-                IntensityLevelValue,
-                ...IntensityLevelValue[],
+            Object.keys(INTENSITY_LEVEL) as [
+                IntensityLevelKey,
+                ...IntensityLevelKey[],
             ],
         ),
     },

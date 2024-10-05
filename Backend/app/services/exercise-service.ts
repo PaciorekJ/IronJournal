@@ -1,11 +1,11 @@
 import { json } from "@remix-run/node";
 import { RootFilterQuery } from "mongoose";
 import { z } from "zod";
-import { CATEGORY, CategoryValue } from "~/constants/category";
-import { EQUIPMENT, EquipmentValue } from "~/constants/equipment";
-import { FORCE, ForceValue } from "~/constants/force";
-import { LEVEL, LevelValue } from "~/constants/level";
-import { MUSCLE_GROUPS, MuscleGroupValue } from "~/constants/muscle-groups";
+import { CATEGORY, CategoryKey } from "~/constants/category";
+import { EQUIPMENT, EquipmentKey } from "~/constants/equipment";
+import { FORCE, ForceKey } from "~/constants/force";
+import { LEVEL, LevelKey } from "~/constants/level";
+import { MUSCLE_GROUP, MuscleGroupKey } from "~/constants/muscle-group";
 import { ServiceResult } from "~/interfaces/service-result";
 import { Exercise, IExercise } from "~/models/exercise";
 import {
@@ -25,47 +25,41 @@ const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
     level: {
         isArray: false,
         constructor: String,
-        schema: z.enum(Object.values(LEVEL) as [LevelValue, ...LevelValue[]]),
+        schema: z.enum(Object.keys(LEVEL) as [LevelKey, ...LevelKey[]]),
     },
     category: {
         isArray: false,
         constructor: String,
         schema: z.enum(
-            Object.values(CATEGORY) as [CategoryValue, ...CategoryValue[]],
+            Object.keys(CATEGORY) as [CategoryKey, ...CategoryKey[]],
         ),
     },
     force: {
         isArray: false,
         constructor: String,
         regex: (value: string) => new RegExp(value),
-        schema: z.enum(Object.values(FORCE) as [ForceValue, ...ForceValue[]]),
+        schema: z.enum(Object.keys(FORCE) as [ForceKey, ...ForceKey[]]),
     },
     equipment: {
         isArray: true,
         constructor: String,
         regex: (value: string) => new RegExp(value),
         schema: z.enum(
-            Object.values(EQUIPMENT) as [EquipmentValue, ...EquipmentValue[]],
+            Object.keys(EQUIPMENT) as [EquipmentKey, ...EquipmentKey[]],
         ),
     },
     primaryMuscles: {
         isArray: true,
         constructor: String,
         schema: z.enum(
-            Object.values(MUSCLE_GROUPS) as [
-                MuscleGroupValue,
-                ...MuscleGroupValue[],
-            ],
+            Object.keys(MUSCLE_GROUP) as [MuscleGroupKey, ...MuscleGroupKey[]],
         ),
     },
     secondaryMuscles: {
         isArray: true,
         constructor: String,
         schema: z.enum(
-            Object.values(MUSCLE_GROUPS) as [
-                MuscleGroupValue,
-                ...MuscleGroupValue[],
-            ],
+            Object.keys(MUSCLE_GROUP) as [MuscleGroupKey, ...MuscleGroupKey[]],
         ),
     },
 });

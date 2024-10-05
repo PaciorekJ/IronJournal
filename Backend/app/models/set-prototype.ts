@@ -1,10 +1,10 @@
 // setPrototype.ts
 
 import mongoose, { Schema } from "mongoose";
-import { SET_TYPES, SetTypeValue } from "~/constants/set-types";
+import { SET_TYPE, SetTypeKey } from "~/constants/set-type";
 import {
     WEIGHT_SELECTION_METHOD,
-    WeightSelectionMethodValue,
+    WeightSelectionMethodKey,
 } from "~/constants/weight-selection";
 import { IExercise } from "./exercise";
 
@@ -18,7 +18,7 @@ export interface Tempo {
 }
 
 interface ISetPrototype {
-    type: SetTypeValue;
+    type: SetTypeKey;
     exerciseId: IExercise["_id"];
     alternatives?: IExercise["_id"][];
     restDurationInSeconds?: number;
@@ -28,7 +28,7 @@ interface ISetPrototype {
     sets?: NumberOrRange;
     tempo?: Tempo;
     weightSelection?: {
-        method: WeightSelectionMethodValue;
+        method: WeightSelectionMethodKey;
         value: number;
     };
 
@@ -36,7 +36,7 @@ interface ISetPrototype {
     drops?: {
         tempo?: Tempo;
         weightSelection: {
-            method: WeightSelectionMethodValue;
+            method: WeightSelectionMethodKey;
             value: number;
         };
         reps: NumberOrRange;
@@ -49,7 +49,7 @@ interface ISetPrototype {
         reps: NumberOrRange;
         restDurationInSeconds?: number;
         weightSelection: {
-            method: WeightSelectionMethodValue;
+            method: WeightSelectionMethodKey;
             value: number;
         };
     }[];
@@ -57,7 +57,7 @@ interface ISetPrototype {
 
 const SetPrototypeSchema = new Schema<ISetPrototype>(
     {
-        type: { type: String, enum: Object.values(SET_TYPES), required: true },
+        type: { type: String, enum: Object.keys(SET_TYPE), required: true },
         exerciseId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Exercise",
@@ -83,7 +83,7 @@ const SetPrototypeSchema = new Schema<ISetPrototype>(
         weightSelection: {
             method: {
                 type: String,
-                enum: Object.values(WEIGHT_SELECTION_METHOD),
+                enum: Object.keys(WEIGHT_SELECTION_METHOD),
             },
             value: { type: Number },
         },
@@ -100,7 +100,7 @@ const SetPrototypeSchema = new Schema<ISetPrototype>(
                 weightSelection: {
                     method: {
                         type: String,
-                        enum: Object.values(WEIGHT_SELECTION_METHOD),
+                        enum: Object.keys(WEIGHT_SELECTION_METHOD),
                     },
                     value: { type: Number },
                 },
@@ -126,7 +126,7 @@ const SetPrototypeSchema = new Schema<ISetPrototype>(
                 weightSelection: {
                     method: {
                         type: String,
-                        enum: Object.values(WEIGHT_SELECTION_METHOD),
+                        enum: Object.keys(WEIGHT_SELECTION_METHOD),
                     },
                     value: { type: Number },
                 },
@@ -137,8 +137,8 @@ const SetPrototypeSchema = new Schema<ISetPrototype>(
 );
 
 SetPrototypeSchema.pre<ISetPrototype>("validate", function (next) {
-    switch (this.type) {
-        case SET_TYPES.STRAIGHT_SET:
+    switch (SET_TYPE[this.type]) {
+        case SET_TYPE.SET_PROTOTYPE_STRAIGHT_SET:
             if (!this.reps || !this.sets || !this.weightSelection) {
                 return next(
                     new Error(
@@ -147,7 +147,7 @@ SetPrototypeSchema.pre<ISetPrototype>("validate", function (next) {
                 );
             }
             break;
-        case SET_TYPES.DROP_SET:
+        case SET_TYPE.SET_PROTOTYPE_DROP_SET:
             if (
                 !this.drops ||
                 !Array.isArray(this.drops) ||
@@ -156,7 +156,7 @@ SetPrototypeSchema.pre<ISetPrototype>("validate", function (next) {
                 return next(new Error("Drop Set must have at least one drop."));
             }
             break;
-        case SET_TYPES.SUPER_SET:
+        case SET_TYPE.SET_PROTOTYPE_SUPER_SET:
             if (
                 !this.exercises ||
                 !Array.isArray(this.exercises) ||

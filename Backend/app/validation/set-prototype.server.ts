@@ -1,10 +1,8 @@
-// setPrototype.schema.ts
-
 import { z } from "zod";
-import { SET_TYPES, SetTypeValue } from "~/constants/set-types";
+import { SET_TYPE, SetTypeKey } from "~/constants/set-type";
 import {
     WEIGHT_SELECTION_METHOD,
-    WeightSelectionMethodValue,
+    WeightSelectionMethodKey,
 } from "~/constants/weight-selection";
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
@@ -43,9 +41,9 @@ const tempoSchema = z
 const weightSelectionSchema = z
     .object({
         method: z.enum(
-            Object.values(WEIGHT_SELECTION_METHOD) as [
-                WeightSelectionMethodValue,
-                ...WeightSelectionMethodValue[],
+            Object.keys(WEIGHT_SELECTION_METHOD) as [
+                WeightSelectionMethodKey,
+                ...WeightSelectionMethodKey[],
             ],
         ),
         value: z.number().positive(),
@@ -54,9 +52,7 @@ const weightSelectionSchema = z
 
 const baseSetPrototypeSchema = z
     .object({
-        type: z.enum(
-            Object.values(SET_TYPES) as [SetTypeValue, ...SetTypeValue[]],
-        ),
+        type: z.enum(Object.keys(SET_TYPE) as [SetTypeKey, ...SetTypeKey[]]),
         exerciseId: objectIdSchema.optional(),
         alternatives: z.array(objectIdSchema).optional().default([]),
         restDurationInSeconds: z.number().nonnegative().optional(),
@@ -99,9 +95,8 @@ const setPrototypeSchema = baseSetPrototypeSchema
 
 export const createSetPrototypeSchema = setPrototypeSchema.superRefine(
     (data, ctx) => {
-        // Custom validation based on 'type'
-        switch (data.type) {
-            case SET_TYPES.STRAIGHT_SET:
+        switch (SET_TYPE[data.type]) {
+            case SET_TYPE.SET_PROTOTYPE_STRAIGHT_SET:
                 if (!data.exerciseId) {
                     ctx.addIssue({
                         code: z.ZodIssueCode.custom,
@@ -116,7 +111,7 @@ export const createSetPrototypeSchema = setPrototypeSchema.superRefine(
                     });
                 }
                 break;
-            case SET_TYPES.DROP_SET:
+            case SET_TYPE.SET_PROTOTYPE_DROP_SET:
                 if (!data.exerciseId) {
                     ctx.addIssue({
                         code: z.ZodIssueCode.custom,
@@ -131,7 +126,7 @@ export const createSetPrototypeSchema = setPrototypeSchema.superRefine(
                     });
                 }
                 break;
-            case SET_TYPES.SUPER_SET:
+            case SET_TYPE.SET_PROTOTYPE_SUPER_SET:
                 if (!data.exercises || data.exercises.length === 0) {
                     ctx.addIssue({
                         code: z.ZodIssueCode.custom,
@@ -151,7 +146,7 @@ export const createSetPrototypeSchema = setPrototypeSchema.superRefine(
 );
 
 export const updateSetPrototypeSchema = setPrototypeSchema.partial().extend({
-    type: z.enum(Object.values(SET_TYPES) as [SetTypeValue, ...SetTypeValue[]]),
+    type: z.enum(Object.keys(SET_TYPE) as [SetTypeKey, ...SetTypeKey[]]),
 });
 
 export type CreateSetPrototypeInput = z.infer<typeof createSetPrototypeSchema>;
