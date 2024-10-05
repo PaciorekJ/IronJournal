@@ -4,12 +4,13 @@ import {
     IntensityLevelKey,
 } from "~/constants/intensity-level";
 import { Timestamps } from "~/interfaces/timestamp";
+import { defaultLocalizedField, localizedField, validateLocalizedField } from "~/utils/localization.server";
 import { ISetPrototype, SetPrototypeSchema } from "./set-prototype";
 
 interface IWorkoutPrototype extends Document, Timestamps {
     _id: mongoose.Types.ObjectId;
-    name: string;
-    description?: string;
+    name: localizedField<string>;
+    description?: localizedField<string>;
     sets: ISetPrototype[];
     userId: mongoose.Types.ObjectId;
     intensityLevel?: IntensityLevelKey;
@@ -17,8 +18,24 @@ interface IWorkoutPrototype extends Document, Timestamps {
 
 const WorkoutPrototypeSchema: Schema<IWorkoutPrototype> = new Schema(
     {
-        name: { type: String, required: true },
-        description: { type: String },
+        name: {
+            type: Map,
+            of: String,
+            required: true,
+            validate: {
+                validator: validateLocalizedField,
+                message: 'Invalid language key in "name" field.',
+            },
+        },
+        description: {
+            type: Map,
+            of: String,
+            default: defaultLocalizedField(),
+            validate: {
+                validator: validateLocalizedField,
+                message: 'Invalid language key in "description" field.',
+            },
+        },
         sets: {
             type: [SetPrototypeSchema],
             required: true,

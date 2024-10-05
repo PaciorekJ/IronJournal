@@ -7,6 +7,11 @@ import {
     TargetAudienceKey,
 } from "~/constants/target-audience";
 import { Timestamps } from "~/interfaces/timestamp";
+import {
+    defaultLocalizedField,
+    localizedField,
+    validateLocalizedField,
+} from "~/utils/localization.server";
 
 interface IWorkoutSchedule {
     day: DaysOfWeekKey | number;
@@ -16,8 +21,8 @@ interface IWorkoutSchedule {
 
 interface IProgram extends Document, Timestamps {
     _id: mongoose.Schema.Types.ObjectId;
-    name: string;
-    description?: string;
+    name: localizedField<string>;
+    description?: localizedField<string>;
     workoutSchedule?: IWorkoutSchedule[];
     userId: mongoose.Schema.Types.ObjectId;
     isPublic?: boolean;
@@ -29,8 +34,24 @@ interface IProgram extends Document, Timestamps {
 
 const ProgramSchema: Schema<IProgram> = new Schema(
     {
-        name: { type: String, required: true },
-        description: { type: String },
+        name: {
+            type: Map,
+            of: String,
+            required: true,
+            validate: {
+                validator: validateLocalizedField,
+                message: 'Invalid language key in "name" field.',
+            },
+        },
+        description: {
+            type: Map,
+            of: String,
+            default: defaultLocalizedField(),
+            validate: {
+                validator: validateLocalizedField,
+                message: 'Invalid language key in "description" field.',
+            },
+        },
         workoutSchedule: {
             type: [
                 {
@@ -54,11 +75,11 @@ const ProgramSchema: Schema<IProgram> = new Schema(
         isPublic: { type: Boolean, default: false },
         scheduleType: {
             type: String,
-            enum: Object.values(SCHEDULE_TYPE),
+            enum: Object.keys(SCHEDULE_TYPE),
             required: true,
         },
-        focusAreas: [{ type: String, enum: Object.values(FOCUS_AREA) }],
-        targetAudience: { type: String, enum: Object.values(TARGET_AUDIENCE) },
+        focusAreas: [{ type: String, enum: Object.keys(FOCUS_AREA) }],
+        targetAudience: { type: String, enum: Object.keys(TARGET_AUDIENCE) },
         repetitions: { type: Number, default: 0 },
     },
     { timestamps: true },

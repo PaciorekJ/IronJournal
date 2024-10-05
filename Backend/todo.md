@@ -4,7 +4,7 @@
 
 - Add localized data to data models wehre applicable this should be a as follows
 
-``description: { "en": "Hello" , "es": "Hola" }``
+
 
 - Set at least one of the lang codes upon creation
 - Use rabbitMQ works to translate the rest of the languages async

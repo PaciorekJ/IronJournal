@@ -52,8 +52,8 @@ const CONSTANT_LOCALIZATIONS: Record<
             HIGH: "high",
         },
         LANGUAGE: {
-            SPANISH: "es",
-            ENGLISH: "en",
+            es: "Spanish",
+            en: "English",
         },
         LEVEL: {
             BEGINNER: "beginner",
@@ -159,8 +159,8 @@ const CONSTANT_LOCALIZATIONS: Record<
             HIGH: "alta",
         },
         LANGUAGE: {
-            SPANISH: "es",
-            ENGLISH: "en",
+            es: "Español",
+            en: "Inglés",
         },
         LEVEL: {
             BEGINNER: "principiante",

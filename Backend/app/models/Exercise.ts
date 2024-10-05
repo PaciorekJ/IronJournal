@@ -5,11 +5,16 @@ import { FORCE, ForceKey } from "~/constants/force";
 import { LEVEL, LevelKey } from "~/constants/level";
 import { MECHANIC, MechanicKey } from "~/constants/mechanic";
 import { MUSCLE_GROUP, MuscleGroupKey } from "~/constants/muscle-group";
+import {
+    defaultLocalizedField,
+    localizedField,
+    validateLocalizedField,
+} from "~/utils/localization.server";
 
 interface IExercise extends Document {
     _id: mongoose.Schema.Types.ObjectId;
-    name: string;
-    instructions: string[];
+    name: localizedField<string>;
+    instructions: localizedField<string>[];
     level: LevelKey;
     force?: ForceKey;
     mechanic?: MechanicKey;
@@ -22,23 +27,45 @@ interface IExercise extends Document {
 }
 
 const ExerciseSchema: Schema<IExercise> = new Schema({
-    name: { type: String, required: true },
-    level: { type: String, enum: Object.values(LEVEL), required: true },
-    primaryMuscles: {
-        type: [String],
-        enum: Object.values(MUSCLE_GROUP),
+    name: {
+        type: Map,
+        of: String,
+        required: true,
+        validate: {
+            validator: validateLocalizedField,
+            message: 'Invalid language key in "name" field.',
+        },
+    },
+    instructions: {
+        type: [
+            {
+                type: Map,
+                of: String,
+                required: true,
+                default: defaultLocalizedField(),
+            },
+        ],
+        validate: {
+            validator: validateLocalizedField,
+            message: 'Invalid language key in "instructions" field.',
+        },
         required: true,
     },
-    instructions: { type: [String], required: true },
-    category: { type: String, enum: Object.values(CATEGORY), required: true },
+    level: { type: String, enum: Object.keys(LEVEL), required: true },
+    primaryMuscles: {
+        type: [String],
+        enum: Object.keys(MUSCLE_GROUP),
+        required: true,
+    },
+    category: { type: String, enum: Object.keys(CATEGORY), required: true },
     images: { type: [String], required: true },
     id: { type: String, required: true, unique: true },
-    force: { type: String, enum: Object.values(FORCE) },
-    mechanic: { type: String, enum: Object.values(MECHANIC) },
-    equipment: { type: String, enum: Object.values(EQUIPMENT) },
+    force: { type: String, enum: Object.keys(FORCE) },
+    mechanic: { type: String, enum: Object.keys(MECHANIC) },
+    equipment: { type: String, enum: Object.keys(EQUIPMENT) },
     secondaryMuscles: {
         type: [String],
-        enum: Object.values(MUSCLE_GROUP),
+        enum: Object.keys(MUSCLE_GROUP),
         default: [],
     },
 });
