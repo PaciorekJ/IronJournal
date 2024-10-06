@@ -6,12 +6,12 @@ import {
     SetPrototypeStraightSet,
     SetPrototypeSuperset,
 } from "~/models/set-prototype";
-import { CreateSetPrototypeInput } from "~/validation/set-prototype.server";
+import { ISetPrototypeCreateDTO } from "~/validation/set-prototype.server";
 
 class SetFactory {
     public static async create(
         setType: SetTypeValue,
-        data: CreateSetPrototypeInput,
+        data: ISetPrototypeCreateDTO,
     ) {
         switch (setType) {
             case SET_TYPE.SET_PROTOTYPE_STRAIGHT_SET:

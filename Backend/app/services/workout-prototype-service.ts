@@ -1,60 +1,43 @@
 import { json } from "@remix-run/node";
 import { MongooseError } from "mongoose";
-import { z } from "zod";
-import {
-    INTENSITY_LEVEL,
-    IntensityLevelKey,
-} from "~/constants/intensity-level";
+import { LanguageKey } from "~/constants/language";
 import { ServiceResult } from "~/interfaces/service-result";
+import {
+    getLocalizedField,
+    localizeDataInput,
+} from "~/localization/utils.server";
+import {
+    ILocalizedWorkoutPrototype,
+    localizeWorkoutPrototypeConstants,
+} from "~/localization/workout-prototype.server";
 import { IUser } from "~/models/user";
 import {
     IWorkoutPrototype,
     WorkoutPrototype,
 } from "~/models/workout-prototype";
 import {
-    addPaginationAndSorting,
     buildPopulateOptions,
     buildQueryFromSearchParams,
-    IBuildQueryConfig,
-} from "~/utils/util.server";
+    workoutPrototypeQueryConfig,
+} from "~/utils/query.server";
 import {
-    CreateWorkoutPrototypeInput,
-    UpdateWorkoutPrototypeInput,
+    IWorkoutPrototypeCreateDTO,
+    IWorkoutPrototypeUpdateDTO,
 } from "~/validation/workout-prototype";
-
-// Defined search Params usable by WorkoutPrototype Services + Populate Options where applicable
-const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
-    name: {
-        isArray: false,
-        constructor: String,
-        regex: (value: string) => new RegExp(value),
-        schema: z.string().min(1),
-    },
-    intensityLevel: {
-        isArray: false,
-        constructor: String,
-        regex: (value: string) => new RegExp(value),
-        schema: z.enum(
-            Object.keys(INTENSITY_LEVEL) as [
-                IntensityLevelKey,
-                ...IntensityLevelKey[],
-            ],
-        ),
-    },
-    userId: {
-        isArray: false,
-        constructor: String,
-        schema: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId"),
-    },
-});
 
 export const createWorkoutPrototype = async (
     user: IUser,
-    data: CreateWorkoutPrototypeInput,
+    data: IWorkoutPrototypeCreateDTO,
 ): Promise<ServiceResult<IWorkoutPrototype>> => {
     try {
+        const { data: localizedCreateData, queueTranslationTask } =
+            localizeDataInput(data, user.languagePreference, [
+                "name",
+                "description",
+            ]);
+
         const newWorkout = await WorkoutPrototype.create({
-            ...data,
+            ...localizedCreateData,
             userId: user._id,
         });
 
@@ -70,7 +53,7 @@ export const createWorkoutPrototype = async (
 export const updateWorkoutPrototype = async (
     user: IUser,
     workoutId: string,
-    updateData: UpdateWorkoutPrototypeInput,
+    updateData: IWorkoutPrototypeUpdateDTO,
 ): Promise<ServiceResult<IWorkoutPrototype>> => {
     try {
         const workout = await WorkoutPrototype.findOne({
@@ -82,7 +65,13 @@ export const updateWorkoutPrototype = async (
             throw json({ error: "Workout not found" }, { status: 404 });
         }
 
-        Object.assign(workout, updateData);
+        const { data: localizedUpdateData, queueTranslationTask } =
+            localizeDataInput(updateData, user.languagePreference, [
+                "name",
+                "description",
+            ]);
+
+        Object.assign(workout, localizedUpdateData);
         await workout.save();
 
         return {
@@ -121,10 +110,14 @@ export const deleteWorkoutPrototype = async (
 export const readWorkoutPrototypes = async (
     user: IUser,
     searchParams: URLSearchParams,
-): Promise<ServiceResult<IWorkoutPrototype[]>> => {
+): Promise<ServiceResult<ILocalizedWorkoutPrototype[]>> => {
     try {
         const { query, limit, offset, sortBy, sortOrder } =
-            buildQueryFromSearchParams(searchParams, queryConfig) as any;
+            buildQueryFromSearchParams<IUser>(
+                searchParams,
+                workoutPrototypeQueryConfig,
+                user.languagePreference as LanguageKey,
+            ) as any;
 
         query.userId = user._id;
 
@@ -132,22 +125,60 @@ export const readWorkoutPrototypes = async (
             ? { [sortBy]: sortOrder as 1 | -1 }
             : null;
 
+        const language = user.languagePreference as LanguageKey;
+
         let queryObj = WorkoutPrototype.find(query)
+            .select({
+                [`name.${language}`]: 1,
+                [`name.en`]: 1,
+                [`description.${language}`]: 1,
+                [`description.en`]: 1,
+                sets: 1,
+                userId: 1,
+                intensityLevel: 1,
+                createdAt: 1,
+                updatedAt: 1,
+            })
             .sort(sortOption)
             .skip(offset)
             .limit(limit);
 
         const populateOptions = buildPopulateOptions(searchParams, "populate");
-        populateOptions.forEach((option: string | string[]) => {
+        populateOptions.forEach((option) => {
             queryObj = queryObj.populate(option);
         });
 
-        const workouts = await queryObj.lean();
+        const workouts = (await queryObj.lean().exec()) as IWorkoutPrototype[];
+
+        const localizedWorkouts: ILocalizedWorkoutPrototype[] = workouts.map(
+            (workout) => {
+                // Localize fields
+                const localizedName = getLocalizedField(workout.name, language);
+                const localizedDescription =
+                    workout.description &&
+                    getLocalizedField(workout.description, language);
+
+                // Update the workout with localized fields
+                const localizedWorkoutData = {
+                    ...workout,
+                    name: localizedName,
+                    description: localizedDescription,
+                };
+
+                // Localize constants and nested structures
+                const localizedWorkout = localizeWorkoutPrototypeConstants(
+                    localizedWorkoutData as unknown as IWorkoutPrototype,
+                    language,
+                );
+
+                return localizedWorkout;
+            },
+        );
 
         const totalCount = await WorkoutPrototype.countDocuments(query).exec();
         const hasMore = offset + workouts.length < totalCount;
 
-        return { data: workouts, hasMore };
+        return { data: localizedWorkouts, hasMore };
     } catch (error) {
         if (error instanceof MongooseError) {
             throw json({
@@ -163,16 +194,28 @@ export const readWorkoutPrototypeById = async (
     user: IUser,
     workoutId: string,
     searchParams: URLSearchParams,
-): Promise<ServiceResult<IWorkoutPrototype>> => {
+): Promise<ServiceResult<ILocalizedWorkoutPrototype>> => {
     try {
-        let query = WorkoutPrototype.findById(workoutId);
+        const language = user.languagePreference as LanguageKey;
+
+        let queryObj = WorkoutPrototype.findById(workoutId).select({
+            [`name.${language}`]: 1,
+            [`name.en`]: 1,
+            [`description.${language}`]: 1,
+            [`description.en`]: 1,
+            sets: 1,
+            userId: 1,
+            intensityLevel: 1,
+            createdAt: 1,
+            updatedAt: 1,
+        });
 
         const populateOptions = buildPopulateOptions(searchParams, "populate");
         populateOptions.forEach((option) => {
-            query = query.populate(option);
+            queryObj = queryObj.populate(option);
         });
 
-        const workout = await query.lean();
+        const workout = (await queryObj.lean().exec()) as IWorkoutPrototype;
 
         if (!workout) {
             throw json({ error: "Workout not found" }, { status: 404 });
@@ -187,7 +230,26 @@ export const readWorkoutPrototypeById = async (
             );
         }
 
-        return { data: workout };
+        // Localize fields
+        const localizedName = getLocalizedField(workout.name, language);
+        const localizedDescription =
+            workout.description &&
+            getLocalizedField(workout.description, language);
+
+        // Update the workout with localized fields
+        const localizedWorkoutData = {
+            ...workout,
+            name: localizedName,
+            description: localizedDescription,
+        };
+
+        // Localize constants and nested structures
+        const localizedWorkout = localizeWorkoutPrototypeConstants(
+            localizedWorkoutData as unknown as IWorkoutPrototype,
+            language,
+        );
+
+        return { data: localizedWorkout };
     } catch (error) {
         if (error instanceof MongooseError) {
             throw json({

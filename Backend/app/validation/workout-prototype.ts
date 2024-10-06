@@ -32,9 +32,9 @@ export const createWorkoutPrototypeSchema = z
 export const updateWorkoutPrototypeSchema =
     createWorkoutPrototypeSchema.partial();
 
-export type CreateWorkoutPrototypeInput = z.infer<
+export type IWorkoutPrototypeCreateDTO = z.infer<
     typeof createWorkoutPrototypeSchema
 >;
-export type UpdateWorkoutPrototypeInput = z.infer<
+export type IWorkoutPrototypeUpdateDTO = z.infer<
     typeof updateWorkoutPrototypeSchema
 >;

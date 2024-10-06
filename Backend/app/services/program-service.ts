@@ -1,75 +1,32 @@
 import { json } from "@remix-run/node";
 import { MongooseError } from "mongoose";
-import { z } from "zod";
-import { FOCUS_AREA, FocusAreasKey } from "~/constants/focus-area";
-import { SCHEDULE_TYPE, ScheduleTypeKey } from "~/constants/schedule-type";
-import {
-    TARGET_AUDIENCE,
-    TargetAudienceKey,
-} from "~/constants/target-audience";
+import { LanguageKey } from "~/constants/language";
 import { ServiceResult } from "~/interfaces/service-result";
+import {
+    ILocalizedProgram,
+    localizeProgramConstants,
+} from "~/localization/program.server";
+import {
+    getLocalizedField,
+    localizeDataInput,
+} from "~/localization/utils.server";
 import { IProgram, IWorkoutSchedule, Program } from "~/models/program";
 import { IUser } from "~/models/user";
 import { WorkoutPrototype } from "~/models/workout-prototype";
 import {
-    IBuildQueryConfig,
-    addPaginationAndSorting,
     buildPopulateOptions,
     buildQueryFromSearchParams,
-} from "~/utils/util.server";
+    IQueryField,
+    programQueryConfig,
+} from "~/utils/query.server";
 import {
-    CreateProgramInput,
-    UpdateProgramInput,
+    IProgramCreateDTO,
+    IProgramUpdateDTO,
 } from "~/validation/program.server";
-
-// Defined search Params usable by Program Services + Populate Options where applicable
-const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
-    name: {
-        isArray: false,
-        constructor: String,
-        regex: (value: string) => new RegExp(value),
-        schema: z.string().min(1),
-    },
-    userId: {
-        isArray: false,
-        constructor: String,
-        schema: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId"),
-    },
-    scheduleType: {
-        isArray: false,
-        constructor: String,
-        regex: (value: string) => new RegExp(value),
-        schema: z.enum(
-            Object.keys(SCHEDULE_TYPE) as [
-                ScheduleTypeKey,
-                ...ScheduleTypeKey[],
-            ],
-        ),
-    },
-    focusAreas: {
-        isArray: true,
-        constructor: String,
-        regex: (value: string) => new RegExp(value),
-        schema: z.enum(
-            Object.keys(FOCUS_AREA) as [FocusAreasKey, ...FocusAreasKey[]],
-        ),
-    },
-    targetAudience: {
-        isArray: false,
-        constructor: String,
-        regex: (value: string) => new RegExp(value),
-        schema: z.enum(
-            Object.keys(TARGET_AUDIENCE) as [
-                TargetAudienceKey,
-                ...TargetAudienceKey[],
-            ],
-        ),
-    },
-});
 
 export const createProgram = async (
     user: IUser,
-    createData: CreateProgramInput,
+    createData: IProgramCreateDTO,
 ): Promise<ServiceResult<IProgram>> => {
     try {
         const { workoutSchedule } = createData;
@@ -109,8 +66,14 @@ export const createProgram = async (
             );
         }
 
+        const { data: localizedCreateData, queueTranslationTask } =
+            await localizeDataInput(createData, user.languagePreference, [
+                "name",
+                "description",
+            ]);
+
         const newProgram: IProgram = await Program.create({
-            ...createData,
+            ...localizedCreateData,
             userId: user._id,
         });
 
@@ -126,7 +89,7 @@ export const createProgram = async (
 export const updateProgram = async (
     user: IUser,
     programId: string,
-    updateData: UpdateProgramInput,
+    updateData: IProgramUpdateDTO,
 ): Promise<ServiceResult<IProgram>> => {
     try {
         const program = await Program.findOne({ _id: programId });
@@ -151,7 +114,13 @@ export const updateProgram = async (
             );
         }
 
-        Object.assign(program, updateData);
+        const { data: localizedUpdateData, queueTranslationTask } =
+            localizeDataInput(updateData, user.languagePreference, [
+                "name",
+                "description",
+            ]);
+
+        Object.assign(program, localizedUpdateData);
         await program.save();
 
         return {
@@ -191,14 +160,17 @@ export const deleteProgram = async (
         throw json({ status: 500, error: "An unexpected error occurred" });
     }
 };
-
 export const readPrograms = async (
     user: IUser,
     searchParams: URLSearchParams,
-): Promise<ServiceResult<IProgram[]>> => {
+): Promise<ServiceResult<ILocalizedProgram[]>> => {
     try {
         const { query, limit, offset, sortBy, sortOrder } =
-            buildQueryFromSearchParams(searchParams, queryConfig) as any;
+            buildQueryFromSearchParams<IProgram>(
+                searchParams,
+                programQueryConfig,
+                user.languagePreference as LanguageKey,
+            ) as any;
 
         const mine = searchParams.get("mine") === "true";
         const userId = searchParams.get("userId");
@@ -206,7 +178,7 @@ export const readPrograms = async (
         if (mine) {
             query.userId = user._id;
         } else if (userId) {
-            query.userId = userId;
+            query.userId = userId as IQueryField<string>;
             query.isPublic = true;
         } else {
             query.isPublic = true;
@@ -216,23 +188,65 @@ export const readPrograms = async (
             ? { [sortBy]: sortOrder as 1 | -1 }
             : null;
 
+        const language = user.languagePreference as LanguageKey;
+
         let queryObj = Program.find(query)
+            .select({
+                [`name.${language}`]: 1,
+                [`name.en`]: 1,
+                [`description.${language}`]: 1,
+                [`description.en`]: 1,
+                scheduleType: 1,
+                focusAreas: 1,
+                targetAudience: 1,
+                workoutSchedule: 1,
+                userId: 1,
+                isPublic: 1,
+                repetitions: 1,
+                createdAt: 1,
+                updatedAt: 1,
+            })
             .sort(sortOption)
             .skip(offset)
             .limit(limit);
 
         const populateOptions = buildPopulateOptions(searchParams, "populate");
-        populateOptions.forEach((option: string | string[]) => {
+        populateOptions.forEach((option) => {
             queryObj = queryObj.populate(option);
         });
 
-        const programs = await queryObj.lean();
+        const programs = (await queryObj.lean().exec()) as IProgram[];
+
+        const localizedPrograms: ILocalizedProgram[] = programs.map(
+            (program) => {
+                // Localize fields
+                const localizedName = getLocalizedField(program.name, language);
+                const localizedDescription =
+                    program.description &&
+                    getLocalizedField(program.description, language);
+
+                // Update the program with localized fields
+                const localizedProgramData = {
+                    ...program,
+                    name: localizedName,
+                    description: localizedDescription,
+                };
+
+                // Localize constants and nested structures
+                const localizedProgram = localizeProgramConstants(
+                    localizedProgramData as unknown as IProgram,
+                    language,
+                );
+
+                return localizedProgram;
+            },
+        );
 
         const totalCount = await Program.countDocuments(query).exec();
 
         const hasMore = offset + programs.length < totalCount;
 
-        return { status: 200, data: programs, hasMore };
+        return { data: localizedPrograms, hasMore };
     } catch (error) {
         if (error instanceof MongooseError) {
             throw json({
@@ -248,24 +262,35 @@ export const readProgramById = async (
     user: IUser,
     programId: string,
     searchParams: URLSearchParams,
-): Promise<ServiceResult<IProgram>> => {
+): Promise<ServiceResult<ILocalizedProgram>> => {
     try {
-        let query = Program.findById(programId);
+        const language = user.languagePreference as LanguageKey;
+
+        let queryObj = Program.findById(programId).select({
+            [`name.${language}`]: 1,
+            [`name.en`]: 1,
+            [`description.${language}`]: 1,
+            [`description.en`]: 1,
+            scheduleType: 1,
+            focusAreas: 1,
+            targetAudience: 1,
+            workoutSchedule: 1,
+            userId: 1,
+            isPublic: 1,
+            repetitions: 1,
+            createdAt: 1,
+            updatedAt: 1,
+        });
 
         const populateOptions = buildPopulateOptions(searchParams, "populate");
         populateOptions.forEach((option) => {
-            query = query.populate(option);
+            queryObj = queryObj.populate(option);
         });
 
-        const program = await query.lean();
+        const program = (await queryObj.lean().exec()) as IProgram;
 
         if (!program) {
-            throw json(
-                { error: "Program not found" },
-                {
-                    status: 404,
-                },
-            );
+            throw json({ error: "Program not found" }, { status: 404 });
         }
 
         if (
@@ -278,7 +303,26 @@ export const readProgramById = async (
             });
         }
 
-        return { data: program };
+        // Localize fields
+        const localizedName = getLocalizedField(program.name, language);
+        const localizedDescription =
+            program.description &&
+            getLocalizedField(program.description, language);
+
+        // Update the program with localized fields
+        const localizedProgramData = {
+            ...program,
+            name: localizedName,
+            description: localizedDescription,
+        };
+
+        // Localize constants and nested structures
+        const localizedProgram = localizeProgramConstants(
+            localizedProgramData as unknown as IProgram,
+            language,
+        );
+
+        return { data: localizedProgram };
     } catch (error) {
         if (error instanceof MongooseError) {
             throw json({

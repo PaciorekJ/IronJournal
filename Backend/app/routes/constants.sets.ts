@@ -1,8 +1,8 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { SET_TYPE } from "~/constants/set-type";
 import { WEIGHT_SELECTION_METHOD } from "~/constants/weight-selection";
+import { getLocalizedConstants } from "~/localization/utils.server";
 import { requirePredicate } from "~/utils/auth.server";
-import { getLocalizedConstants } from "~/utils/localization.server";
 import { validateLanguagePreference } from "~/utils/util.server";
 
 export const SET_CONSTANT_MAP: Record<string, string[]> = {

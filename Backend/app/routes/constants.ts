@@ -1,6 +1,6 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
+import { getLocalizedConstants } from "~/localization/utils.server";
 import { requirePredicate } from "~/utils/auth.server";
-import { getLocalizedConstants } from "~/utils/localization.server";
 import { validateLanguagePreference } from "~/utils/util.server";
 import { EXERCISE_CONSTANT_MAP } from "./constants.exercises";
 import { languageArray } from "./constants.languages";

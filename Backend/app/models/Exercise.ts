@@ -9,7 +9,7 @@ import {
     defaultLocalizedField,
     localizedField,
     validateLocalizedField,
-} from "~/utils/localization.server";
+} from "~/localization/utils.server";
 
 interface IExercise extends Document {
     _id: mongoose.Schema.Types.ObjectId;

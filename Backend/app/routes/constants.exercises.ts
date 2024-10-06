@@ -5,8 +5,8 @@ import { FORCE } from "~/constants/force";
 import { LEVEL } from "~/constants/level";
 import { MECHANIC } from "~/constants/mechanic";
 import { MUSCLE_GROUP } from "~/constants/muscle-group";
+import { getLocalizedConstants } from "~/localization/utils.server";
 import { requirePredicate } from "~/utils/auth.server";
-import { getLocalizedConstants } from "~/utils/localization.server";
 import { validateLanguagePreference } from "~/utils/util.server";
 
 export const EXERCISE_CONSTANT_MAP: Record<string, string[]> = {

@@ -1,26 +1,19 @@
 import { json } from "@remix-run/node";
-import { z } from "zod";
+import { LanguageKey } from "~/constants/language";
 import { ServiceResult } from "~/interfaces/service-result";
+import {
+    ILocalizedUser,
+    localizeUserConstants,
+} from "~/localization/users.server";
 import { IUser, User } from "~/models/user";
 import {
-    IBuildQueryConfig,
-    addPaginationAndSorting,
     buildQueryFromSearchParams,
-} from "~/utils/util.server";
-import { CreateUserInput, UpdateUserInput } from "~/validation/user.server";
-
-// Defined search Params usable by User Services + Populate Options where applicable
-const queryConfig: IBuildQueryConfig = addPaginationAndSorting({
-    username: {
-        isArray: false,
-        constructor: String,
-        regex: (value: string) => new RegExp(value),
-        schema: z.string().min(1),
-    },
-});
+    userQueryConfig,
+} from "~/utils/query.server";
+import { IUserCreateDTO, IUserUpdateDTO } from "~/validation/user.server";
 
 export const createUser = async (
-    createData: CreateUserInput,
+    createData: IUserCreateDTO,
 ): Promise<ServiceResult<IUser>> => {
     try {
         const { username, firebaseId } = createData;
@@ -60,7 +53,7 @@ export const createUser = async (
 
 export const updateUser = async (
     userId: string,
-    updateData: UpdateUserInput,
+    updateData: IUserUpdateDTO,
 ): Promise<ServiceResult<IUser>> => {
     try {
         const updateUsername = updateData.username;
@@ -109,40 +102,64 @@ export const deleteUser = async (
 };
 
 export const readUsers = async (
+    user: IUser,
     searchParams: URLSearchParams,
-): Promise<ServiceResult<IUser[]>> => {
+): Promise<ServiceResult<ILocalizedUser[]>> => {
     try {
         const { query, limit, offset } = buildQueryFromSearchParams(
             searchParams,
-            queryConfig,
+            userQueryConfig,
+            user.languagePreference as LanguageKey,
         );
 
         const users = await User.find(query)
             .skip(offset)
             .limit(limit)
             .select("-firebaseId")
-            .lean();
+            .lean()
+            .exec();
+
+        const language = user.languagePreference as LanguageKey;
+
+        const localizedUsers: ILocalizedUser[] = users.map((userData) => {
+            const localizedUser = localizeUserConstants(
+                userData as IUser,
+                language,
+            );
+            return localizedUser;
+        });
 
         const totalCount = await User.countDocuments(query).exec();
         const hasMore = offset + users.length < totalCount;
 
-        return { data: users, hasMore };
+        return { data: localizedUsers, hasMore };
     } catch (error) {
         throw json({ error: "An unexpected error occurred" }, { status: 500 });
     }
 };
 
 export const readUserById = async (
+    currentUser: IUser,
     userId: string,
-): Promise<ServiceResult<IUser>> => {
+): Promise<ServiceResult<ILocalizedUser>> => {
     try {
-        const user = await User.findById(userId).select("-firebaseId").lean();
+        const userData = await User.findById(userId)
+            .select("-firebaseId")
+            .lean()
+            .exec();
 
-        if (!user) {
+        if (!userData) {
             throw json({ error: "User not found" }, { status: 404 });
         }
 
-        return { data: user };
+        const language = currentUser.languagePreference as LanguageKey;
+
+        const localizedUser = localizeUserConstants(
+            userData as IUser,
+            language,
+        );
+
+        return { data: localizedUser };
     } catch (error) {
         throw json({ error: "An unexpected error occurred" }, { status: 500 });
     }

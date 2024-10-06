@@ -4,7 +4,11 @@ import {
     IntensityLevelKey,
 } from "~/constants/intensity-level";
 import { Timestamps } from "~/interfaces/timestamp";
-import { defaultLocalizedField, localizedField, validateLocalizedField } from "~/utils/localization.server";
+import {
+    defaultLocalizedField,
+    localizedField,
+    validateLocalizedField,
+} from "~/localization/utils.server";
 import { ISetPrototype, SetPrototypeSchema } from "./set-prototype";
 
 interface IWorkoutPrototype extends Document, Timestamps {

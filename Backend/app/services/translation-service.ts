@@ -1,4 +1,6 @@
 import axios from "axios";
+import { LanguageKey } from "~/constants/language";
+import { localizedField } from "~/localization/utils.server";
 
 if (!process.env.LIBRETRANSLATE_URL) {
     throw new Error("Missing environment variable: LIBRETRANSLATE_URL");
@@ -17,7 +19,6 @@ async function translateText(
     targets: string[],
 ): Promise<{ [key: string]: string }> {
     try {
-        // Create an array of promises to translate into each target language
         const translationPromises = targets.map(async (target) => {
             const response = await libreTranslateInstance.post("/translate", {
                 q: text,

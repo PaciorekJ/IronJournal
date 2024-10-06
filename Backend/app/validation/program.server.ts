@@ -88,9 +88,9 @@ export const createProgramSchema = tempCreateProgramSchema;
 export const updateProgramSchema = tempCreateProgramSchema.partial();
 
 // TYPES for expected inputs to CRUD Operations
-export interface CreateProgramInput
+export interface IProgramCreateDTO
     extends Omit<
         z.infer<typeof createProgramSchema>,
         "userId" | "createdAt" | "updatedAt"
     > {}
-export interface UpdateProgramInput extends Partial<CreateProgramInput> {}
+export interface IProgramUpdateDTO extends Partial<IProgramCreateDTO> {}

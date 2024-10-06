@@ -1,7 +1,7 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { INTENSITY_LEVEL } from "~/constants/intensity-level";
+import { getLocalizedConstants } from "~/localization/utils.server";
 import { requirePredicate } from "~/utils/auth.server";
-import { getLocalizedConstants } from "~/utils/localization.server";
 import { validateLanguagePreference } from "~/utils/util.server";
 
 export const WORKOUT_CONSTANT_MAP: Record<string, string[]> = {

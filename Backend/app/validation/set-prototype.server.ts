@@ -149,5 +149,5 @@ export const updateSetPrototypeSchema = setPrototypeSchema.partial().extend({
     type: z.enum(Object.keys(SET_TYPE) as [SetTypeKey, ...SetTypeKey[]]),
 });
 
-export type CreateSetPrototypeInput = z.infer<typeof createSetPrototypeSchema>;
-export type UpdateSetPrototypeInput = z.infer<typeof updateSetPrototypeSchema>;
+export type ISetPrototypeCreateDTO = z.infer<typeof createSetPrototypeSchema>;
+export type ISetPrototypeUpdateDTO = z.infer<typeof updateSetPrototypeSchema>;

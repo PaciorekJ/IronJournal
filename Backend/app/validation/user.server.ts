@@ -28,5 +28,5 @@ export const updateUserSchema = createUserSchema
     .omit({ firebaseId: true })
     .partial();
 
-export type CreateUserInput = z.infer<typeof createUserSchema>;
-export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+export type IUserCreateDTO = z.infer<typeof createUserSchema>;
+export type IUserUpdateDTO = z.infer<typeof updateUserSchema>;

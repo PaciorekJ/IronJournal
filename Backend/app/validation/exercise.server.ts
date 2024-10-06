@@ -49,3 +49,6 @@ export const createExerciseSchema = z
     .strict();
 
 export const updateExerciseSchema = createExerciseSchema.partial();
+
+export interface IExerciseCreateDTO extends z.infer<typeof createExerciseSchema> {};
+export interface IExerciseUpdateDTO extends z.infer<typeof updateExerciseSchema> {};

@@ -11,7 +11,7 @@ import {
     defaultLocalizedField,
     localizedField,
     validateLocalizedField,
-} from "~/utils/localization.server";
+} from "~/localization/utils.server";
 
 interface IWorkoutSchedule {
     day: DaysOfWeekKey | number;
