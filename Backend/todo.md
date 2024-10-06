@@ -2,17 +2,12 @@
 
 ## Important Steps
 
-- Add localized data to data models wehre applicable this should be a as follows
-
-
-
-- Set at least one of the lang codes upon creation
 - Use rabbitMQ works to translate the rest of the languages async
 - DB will be update async-ly
-- Some fields will need to be converted on the fly, but many fields are numeric meaning they require to translation
 
-- Revise All gets for resources to get the localize constants from the localization map, so that the equipment needed for a exercises is properly converted
-- Revise Exercises to use the keys instead of the values
+- Revise exercise.json to use localize field format.
+- Ensure searching and retrieving localized document is correct!
+- Make sure that localize searches will fall back to the creators language as this is 100% there! As of now english is the default for almost all fallbacks but using the users native language would be optimal for UX weight out the pros and cons of this to see if this is worth adding.
 
 ## Back Burner
 
