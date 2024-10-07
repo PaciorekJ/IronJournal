@@ -5,7 +5,7 @@ export const CATEGORY = {
     PLYOMETRICS: "plyometrics",
     POWERLIFTING: "powerlifting",
     STRONGMAN: "strongman",
-    OLYMPIC: "olympic weightlifting",
+    OLYMPIC_WEIGHTLIFTING: "olympic weightlifting",
 } as const;
 
 export type CategoryKey = keyof typeof CATEGORY;

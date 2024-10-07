@@ -43,12 +43,12 @@ const ExerciseSchema: Schema<IExercise> = new Schema({
                 of: String,
                 required: true,
                 default: defaultLocalizedField(),
+                validate: {
+                    validator: validateLocalizedField,
+                    message: 'Invalid language key in "instructions" field.',
+                },
             },
         ],
-        validate: {
-            validator: validateLocalizedField,
-            message: 'Invalid language key in "instructions" field.',
-        },
         required: true,
     },
     level: { type: String, enum: Object.keys(LEVEL), required: true },
