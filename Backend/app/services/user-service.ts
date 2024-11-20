@@ -1,15 +1,17 @@
-import { json } from "@remix-run/node";
-import { LanguageKey } from "~/constants/language";
-import { ServiceResult } from "~/interfaces/service-result";
 import {
     ILocalizedUser,
+    IUser,
+    LanguageKey,
     localizeUserConstants,
-} from "~/localization/users.server";
-import { IUser, User } from "~/models/user";
+    User,
+} from "@paciorekj/iron-journal-shared";
+import { json } from "@remix-run/node";
+import { ServiceResult } from "~/interfaces/service-result";
 import {
     buildQueryFromSearchParams,
     userQueryConfig,
 } from "~/utils/query.server";
+import { handleError } from "~/utils/util.server";
 import { IUserCreateDTO, IUserUpdateDTO } from "~/validation/user.server";
 
 export const createUser = async (
@@ -47,7 +49,7 @@ export const createUser = async (
             data: user as IUser,
         };
     } catch (error) {
-        throw json({ error: "An unexpected error occurred" }, { status: 500 });
+        throw handleError(error);
     }
 };
 
@@ -63,7 +65,7 @@ export const updateUser = async (
                 .select("_id")
                 .lean());
 
-        if (existingUser && existingUser._id.toString() !== userId) {
+        if (existingUser && (existingUser as IUser)._id.toString() !== userId) {
             throw json({ error: "Username is already taken" }, { status: 409 });
         }
 
@@ -80,7 +82,7 @@ export const updateUser = async (
             data: updatedUser,
         };
     } catch (error) {
-        throw json({ error: "An unexpected error occurred" }, { status: 500 });
+        throw handleError(error);
     }
 };
 
@@ -97,7 +99,7 @@ export const deleteUser = async (
 
         return { message: "User deleted successfully" };
     } catch (error) {
-        throw json({ error: "An unexpected error occurred" }, { status: 500 });
+        throw handleError(error);
     }
 };
 
@@ -106,15 +108,21 @@ export const readUsers = async (
     searchParams: URLSearchParams,
 ): Promise<ServiceResult<ILocalizedUser[]>> => {
     try {
-        const { query, limit, offset } = buildQueryFromSearchParams(
-            searchParams,
-            userQueryConfig,
-            user.languagePreference as LanguageKey,
-        );
+        const { query, limit, offset, sortBy, sortOrder } =
+            buildQueryFromSearchParams(
+                searchParams,
+                userQueryConfig,
+                user.languagePreference as LanguageKey,
+            );
+
+        const sortOption: Record<string, 1 | -1> | undefined = sortBy
+            ? { [sortBy]: sortOrder as 1 | -1 }
+            : undefined;
 
         const users = await User.find(query)
             .skip(offset)
             .limit(limit)
+            .sort(sortOption)
             .select("-firebaseId")
             .lean()
             .exec();
@@ -134,7 +142,7 @@ export const readUsers = async (
 
         return { data: localizedUsers, hasMore };
     } catch (error) {
-        throw json({ error: "An unexpected error occurred" }, { status: 500 });
+        throw handleError(error);
     }
 };
 
@@ -161,6 +169,6 @@ export const readUserById = async (
 
         return { data: localizedUser };
     } catch (error) {
-        throw json({ error: "An unexpected error occurred" }, { status: 500 });
+        throw handleError(error);
     }
 };

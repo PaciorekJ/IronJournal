@@ -1,6 +1,6 @@
+import { IUser, User } from "@paciorekj/iron-journal-shared/models";
 import { json } from "@remix-run/node";
 import admin from "firebase-admin";
-import { IUser, User } from "~/models/user";
 
 import serviceAccount from "~/serviceAccountKey.json";
 
@@ -74,7 +74,7 @@ export const requirePredicate = async <
     const user = await User.findOne({ firebaseId: firebaseToken.uid }).lean();
 
     // Handle the case where a predicate is defined but fails
-    if (config?.predicate && user && !config.predicate(user)) {
+    if (config?.predicate && user && !config.predicate(user as IUser)) {
         throw json(
             { error: "Forbidden: Insufficient permissions" },
             { status: 403 },
@@ -95,7 +95,7 @@ export const requirePredicate = async <
                 { status: 404 },
             );
         }
-        result.user = user;
+        result.user = user as IUser;
     }
 
     // Assign the firebaseToken if required in the config

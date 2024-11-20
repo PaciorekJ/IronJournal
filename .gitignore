@@ -5,6 +5,7 @@ node_modules
 .pnp.js
 
 # Remix build output
+build
 /build
 /public/build
 
@@ -36,6 +37,9 @@ coverage
 
 # Optional npm cache directory
 .npm
+
+# Personal NPM packages
+.npmrc
 
 # Optional eslint cache
 .eslintcache

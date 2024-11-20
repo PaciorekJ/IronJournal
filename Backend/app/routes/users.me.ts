@@ -11,7 +11,7 @@ import { createUserSchema, updateUserSchema } from "~/validation/user.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const { user } = await requirePredicate(request, { user: true });
-    const result = await readUserById(user._id.toString());
+    const result = await readUserById(user, user._id.toString());
     return json(result, { status: 200 });
 };
 

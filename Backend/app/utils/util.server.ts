@@ -1,7 +1,7 @@
+import { LanguageKey } from "@paciorekj/iron-journal-shared/constants";
 import { json } from "@remix-run/node";
-import mongoose from "mongoose";
+import mongoose, { MongooseError } from "mongoose";
 import { z } from "zod";
-import { LanguageKey } from "~/constants/language";
 import { languagePreferenceSchema } from "~/validation/user.server";
 
 export function convertKeysToCamelCase(
@@ -129,6 +129,14 @@ export function handleError(error: unknown) {
             { error: "Validation failed", details: error.errors },
             { status: 400 },
         );
+    }
+
+    if (error instanceof MongooseError) {
+        console.error(error);
+        throw json({
+            status: 500,
+            error: "An unexpected error occurred with the database.",
+        });
     }
 
     if (error instanceof Response) {

@@ -1,0 +1,16 @@
+db.workoutprototypes.find({_id: ObjectId("671fbb24362876b9604aaac3")})
+db.workoutprototypes.find({id_: ObjectId("671fbb24362876b9604aaac3")})
+db.workoutprototypes.find({id_: ObjectId("671fbb24362876b9604aaac3"}))
+db.workoutprototypes.findById(ObjectId("671fbb24362876b9604aaac3"))
+use iron-journal
+db.workoutprototypes.find({_id: ObjectId("671adbf0e3b9feece9c7c1e0")})
+use iron-journal
+db.workoutprototypes.find({_id: ObjectId("671acd2e5583395b277251c4")})
+db.workoutprototypes.find()
+db.workoutprototypes.find({_id: "671acd2e5583395b277251c4"})
+db.WorkoutPrototypes.find()
+db.WorkoutPrototypes.find({_id: "671acd2e5583395b277251c4"})
+db.WorkoutPrototypes.findById("671acd2e5583395b277251c4")
+db.workoutPrototypes.findById("671acd2e5583395b277251c4")
+db.workoutPrototypes.findById(671acd2e5583395b277251c4)
+use iron-journal

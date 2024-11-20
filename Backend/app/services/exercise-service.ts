@@ -1,18 +1,19 @@
+import {
+    Exercise,
+    IExercise,
+    ILocalizedExercise,
+    IUser,
+    LanguageKey,
+    convertLocalizeExercise,
+} from "@paciorekj/iron-journal-shared";
 import { json } from "@remix-run/node";
 import { RootFilterQuery } from "mongoose";
-import { LanguageKey } from "~/constants/language";
 import { ServiceResult } from "~/interfaces/service-result";
-import {
-    ILocalizedExercise,
-    localizeExerciseConstants,
-} from "~/localization/exercise.server";
-import { getLocalizedField } from "~/localization/utils.server";
-import { Exercise, IExercise } from "~/models/exercise";
-import { IUser } from "~/models/user";
 import {
     buildQueryFromSearchParams,
     exerciseQueryConfig,
 } from "~/utils/query.server";
+import { handleError } from "~/utils/util.server";
 export const readExercises = async (
     user: IUser,
     searchParams: URLSearchParams,
@@ -34,56 +35,15 @@ export const readExercises = async (
         const exercises = await Exercise.find(
             query as RootFilterQuery<IExercise>,
         )
-            .select({
-                [`name.${language}`]: 1,
-                [`name.en`]: 1,
-                instructions: 1,
-                level: 1,
-                force: 1,
-                mechanic: 1,
-                equipment: 1,
-                category: 1,
-                primaryMuscles: 1,
-                secondaryMuscles: 1,
-                images: 1,
-                id: 1,
-            })
             .sort(sortOption)
             .skip(offset)
             .limit(limit)
             .lean()
             .exec();
 
-        // Type assertion to help TypeScript understand the structure
-        const exercisesTyped = exercises;
-
-        const localizedExercises: ILocalizedExercise[] = exercisesTyped.map(
-            (exercise) => {
-                // Localize fields
-                const localizedName = getLocalizedField(
-                    exercise.name,
-                    language,
-                );
-
-                const localizedInstructions = exercise.instructions
-                    ? exercise.instructions.map((instruction) =>
-                          getLocalizedField(instruction, language),
-                      )
-                    : [];
-
-                // Update the exercise with localized fields
-                const localizedExercise: ILocalizedExercise = {
-                    ...exercise,
-                    name: localizedName,
-                    instructions: localizedInstructions,
-                };
-
-                // Localize enum constants
-                return localizeExerciseConstants(
-                    localizedExercise as unknown as IExercise,
-                    language,
-                );
-            },
+        const localizedExercises: ILocalizedExercise[] = exercises.map(
+            (exercise) =>
+                convertLocalizeExercise(exercise as IExercise, language),
         );
 
         const totalCount = await Exercise.countDocuments(
@@ -93,7 +53,7 @@ export const readExercises = async (
 
         return { data: localizedExercises, hasMore };
     } catch (error) {
-        throw json({ status: 500, error: "An unexpected error occurred" });
+        throw handleError(error);
     }
 };
 
@@ -104,55 +64,19 @@ export const readExerciseById = async (
     try {
         const language = user.languagePreference as LanguageKey;
 
-        const exercise = await Exercise.findById(exerciseId)
-            .select({
-                [`name.${language}`]: 1,
-                [`name.en`]: 1,
-                instructions: 1,
-                level: 1,
-                force: 1,
-                mechanic: 1,
-                equipment: 1,
-                category: 1,
-                primaryMuscles: 1,
-                secondaryMuscles: 1,
-                images: 1,
-                id: 1,
-            })
-            .lean()
-            .exec();
+        const exercise = await Exercise.findById(exerciseId).lean().exec();
 
         if (!exercise) {
             throw json({ error: "Exercise not found" }, { status: 404 });
         }
 
-        // Type assertion
-        const exerciseTyped = exercise;
-
-        // Localize fields
-        const localizedName = getLocalizedField(exerciseTyped.name, language);
-
-        const localizedInstructions = exerciseTyped.instructions
-            ? exerciseTyped.instructions.map((instruction) =>
-                  getLocalizedField(instruction, language),
-              )
-            : [];
-
-        // Update the exercise with localized fields
-        const localizedExercise: ILocalizedExercise = {
-            ...exerciseTyped,
-            name: localizedName,
-            instructions: localizedInstructions,
-        };
-
-        // Localize enum constants
-        const finalExercise = localizeExerciseConstants(
-            localizedExercise as unknown as IExercise,
+        const finalExercise = convertLocalizeExercise(
+            exercise as IExercise,
             language,
         );
 
         return { data: finalExercise };
     } catch (error) {
-        throw json({ status: 500, error: "An unexpected error occurred" });
+        throw handleError(error);
     }
 };

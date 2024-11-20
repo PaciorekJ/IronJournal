@@ -1,0 +1,81 @@
+{
+    "name": "@paciorekj/iron-journal-shared",
+    "version": "1.2.6",
+    "description": "Shared library for Iron Journal.",
+    "author": "Jason Paciorek <jason@paciorekwebsolutions.com>",
+    "license": "ISC",
+    "main": "./dist/esm/index.js",
+    "module": "./dist/esm/index.js",
+    "types": "./dist/types/index.d.ts",
+    "scripts": {
+        "build": "npm run clean && rollup -c",
+        "clean": "rimraf dist",
+        "publish": "npm publish --access restricted"
+    },
+    "exports": {
+        ".": {
+            "import": "./dist/esm/index.js",
+            "types": "./dist/types/index.d.ts"
+        },
+        "./constants": {
+            "import": "./dist/esm/constants/index.js",
+            "types": "./dist/types/constants/index.d.ts"
+        },
+        "./constants/*": {
+            "import": "./dist/esm/constants/*.js",
+            "types": "./dist/types/constants/*.d.ts"
+        },
+        "./database": {
+            "import": "./dist/esm/database/index.js",
+            "types": "./dist/types/database/index.d.ts"
+        },
+        "./models": {
+            "import": "./dist/esm/models/index.js",
+            "types": "./dist/types/models/index.d.ts"
+        },
+        "./models/*": {
+            "import": "./dist/esm/models/*.js",
+            "types": "./dist/types/models/*.d.ts"
+        },
+        "./rabbitMQ": {
+            "import": "./dist/esm/rabbitMQ/index.js",
+            "types": "./dist/types/rabbitMQ/index.d.ts"
+        },
+        "./localization": {
+            "import": "./dist/esm/localization/index.js",
+            "types": "./dist/types/localization/index.d.ts"
+        },
+        "./localization/*": {
+            "import": "./dist/esm/localization/*.js",
+            "types": "./dist/types/localization/*.d.ts"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "type": "module",
+    "publishConfig": {
+        "registry": "https://npm.pkg.github.com"
+    },
+    "dependencies": {
+        "amqplib": "^0.10.4",
+        "axios": "^1.7.7",
+        "dotenv": "^16.4.5",
+        "mongoose": "^8.8.0",
+        "uuid": "^11.0.2"
+    },
+    "devDependencies": {
+        "@rollup/plugin-commonjs": "^28.0.1",
+        "@rollup/plugin-node-resolve": "^15.3.0",
+        "@types/amqplib": "^0.10.5",
+        "@types/node": "^18.19.64",
+        "@types/uuid": "^10.0.0",
+        "fast-glob": "^3.3.2",
+        "rimraf": "^6.0.1",
+        "rollup": "^4.27.2",
+        "rollup-plugin-typescript2": "^0.36.0",
+        "typescript": "^5.6.3"
+    },
+    "sideEffects": false
+}

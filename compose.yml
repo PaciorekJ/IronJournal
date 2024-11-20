@@ -1,0 +1,87 @@
+services:
+  server:
+    container_name: iron-journal-server
+    image: iron-journal-server:1.0
+    build:
+      context: ./Backend
+      dockerfile: /app/Dockerfile
+    ports:
+      - '3000:3000'
+    depends_on:
+      translation-worker:
+        condition: service_started
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/iron-journal
+      - RABBITMQ_URI=amqp://guest:guest@rabbitmq:5672
+    networks:
+      - app-network
+
+  translation-worker:
+    container_name: iron-journal-translation-worker
+    image: iron-journal-translation-worker:1.0
+    build: ./translation-worker/
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/iron-journal
+      - LIBRETRANSLATE_URL=http://libretranslate:5000
+      - RABBITMQ_URI=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      libretranslate:
+        condition: service_started
+    networks:
+      - app-network
+
+  db:
+    container_name: iron-journal-db
+    hostname: mongodb
+    image: mongo:8.0
+    restart: always
+    volumes:
+      - ./data/db:/data/db
+    ports:
+      - '27017'
+    networks:
+      - app-network
+    command: ["mongod", "--bind_ip", "0.0.0.0"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--host", "localhost", "--port", "27017", "--eval", "db.adminCommand({ ping: 1 })"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  rabbitmq:
+    hostname: rabbitmq
+    image: rabbitmq:3-management
+    ports:
+      - '5672'
+      - '15672:15672'
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - app-network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  libretranslate:
+    hostname: libretranslate
+    restart: always
+    image: libretranslate/libretranslate:v1.6.1
+    ports:
+      - '5000'
+    networks:
+      - app-network
+
+volumes:
+  rabbitmq_data:
+  mongodb_data:
+
+networks:
+  app-network:
+    driver: bridge

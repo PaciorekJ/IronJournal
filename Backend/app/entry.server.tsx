@@ -13,10 +13,10 @@ import { RemixServer } from "@remix-run/react";
 import { isbot } from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 
+import Database from "@paciorekj/iron-journal-shared/database";
 import { config } from "dotenv";
 config();
 
-import Database from "~/utils/db.server";
 Database.connect().then(() => {
     console.log("Connected to MongoDB");
 });

@@ -1,5 +1,4 @@
-import { Exercise } from "~/models/exercise";
-
+import { Exercise } from "@paciorekj/iron-journal-shared";
 import { json } from "@remix-run/node";
 import exercises from "~/exercises.json";
 

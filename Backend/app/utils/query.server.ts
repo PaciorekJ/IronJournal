@@ -1,21 +1,26 @@
-import { json } from "@remix-run/node";
-import { z } from "zod";
-import { CATEGORY, CategoryKey } from "~/constants/category";
-import { EQUIPMENT, EquipmentKey } from "~/constants/equipment";
-import { FOCUS_AREA, FocusAreasKey } from "~/constants/focus-area";
-import { FORCE, ForceKey } from "~/constants/force";
 import {
+    CATEGORY,
+    CategoryKey,
+    EQUIPMENT,
+    EquipmentKey,
+    FOCUS_AREA,
+    FocusAreasKey,
+    FORCE,
+    ForceKey,
     INTENSITY_LEVEL,
     IntensityLevelKey,
-} from "~/constants/intensity-level";
-import { LanguageKey } from "~/constants/language";
-import { LEVEL, LevelKey } from "~/constants/level";
-import { MUSCLE_GROUP, MuscleGroupKey } from "~/constants/muscle-group";
-import { SCHEDULE_TYPE, ScheduleTypeKey } from "~/constants/schedule-type";
-import {
+    LanguageKey,
+    LEVEL,
+    LevelKey,
+    MUSCLE_GROUP,
+    MuscleGroupKey,
+    SCHEDULE_TYPE,
+    ScheduleTypeKey,
     TARGET_AUDIENCE,
     TargetAudienceKey,
-} from "~/constants/target-audience";
+} from "@paciorekj/iron-journal-shared/constants";
+import { data } from "@remix-run/node";
+import { z } from "zod";
 import { handleError } from "./util.server";
 
 type AllCombinations<T> = T extends object
@@ -184,26 +189,27 @@ export const buildQueryFromSearchParams = <T>(
     language: LanguageKey,
 ) => {
     const query: IQuery<T> = {};
-    let limit = 10;
-    let offset = 0;
+    let limit = 10; // default limit
+    let offset = 0; // default offset
     let sortBy: string | null = null;
-    let sortOrder: 1 | -1 = 1;
+    let sortOrder: 1 | -1 = 1; // default to ascending order
 
     for (const [key, fieldConfig] of Object.entries(config)) {
         const {
             isArray = false,
             constructor = (value: string) => value,
             regex = null,
-            schema, // Optional Zod validation schema
+            schema,
             getFieldPath,
         } = fieldConfig || {};
 
         const paramValue = searchParams.get(key);
 
-        if (paramValue !== null) {
+        // If the parameter is provided and not empty, process it
+        if (paramValue !== null && paramValue.trim() !== "") {
             let parsedValue: any;
 
-            // Apply constructor function to convert the paramValue to the correct type
+            // Convert param value to the correct type
             try {
                 if (isArray) {
                     parsedValue = paramValue
@@ -213,40 +219,35 @@ export const buildQueryFromSearchParams = <T>(
                     parsedValue = constructor(paramValue.trim());
                 }
             } catch (error) {
-                throw json(
+                throw data(
                     { error: `Invalid value for ${key}` },
                     { status: 400 },
                 );
             }
 
-            // Validate the parsed value using Zod if a validation schema exists
-            try {
-                if (schema) {
+            // Validate using Zod if schema exists
+            if (schema && parsedValue) {
+                try {
                     if (isArray) {
                         parsedValue = schema.array().parse(parsedValue);
                     } else {
                         parsedValue = schema.parse(parsedValue);
                     }
+                } catch (error) {
+                    throw handleError(error); // Handles Zod validation errors
                 }
-            } catch (error) {
-                throw handleError(error); // Handles Zod errors
             }
 
-            // Determine the field path
+            // Determine the field path for the query, based on language or key
             const fieldPath = getFieldPath ? getFieldPath(language) : key;
 
             // Handle pagination, sorting, and filtering
             if (key === "limit") {
-                limit = parsedValue;
+                limit = parsedValue || 10;
             } else if (key === "offset") {
-                offset = parsedValue;
+                offset = parsedValue || 0;
             } else if (key === "sortBy") {
-                // Handle sortBy field path
-                if (fieldConfig.getFieldPath) {
-                    sortBy = fieldConfig.getFieldPath(language)(parsedValue);
-                } else {
-                    sortBy = parsedValue;
-                }
+                sortBy = parsedValue || null;
             } else if (key === "sortOrder") {
                 sortOrder = parsedValue === "desc" ? -1 : 1;
             } else if (isArray && parsedValue.length > 0) {
@@ -256,8 +257,9 @@ export const buildQueryFromSearchParams = <T>(
             } else if (regex && typeof parsedValue === "string") {
                 query[fieldPath as keyof T] = {
                     $regex: regex(parsedValue),
+                    $options: "i", // Ensure case-insensitivity
                 } as IQueryField<T[keyof T]>;
-            } else {
+            } else if (parsedValue) {
                 query[fieldPath as keyof T] = parsedValue as IQueryField<
                     T[keyof T]
                 >;

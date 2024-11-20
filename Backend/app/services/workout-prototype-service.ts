@@ -1,25 +1,21 @@
-import { json } from "@remix-run/node";
-import { MongooseError } from "mongoose";
-import { LanguageKey } from "~/constants/language";
-import { ServiceResult } from "~/interfaces/service-result";
-import {
-    getLocalizedField,
-    localizeDataInput,
-} from "~/localization/utils.server";
 import {
     ILocalizedWorkoutPrototype,
-    localizeWorkoutPrototypeConstants,
-} from "~/localization/workout-prototype.server";
-import { IUser } from "~/models/user";
-import {
+    IUser,
     IWorkoutPrototype,
+    LanguageKey,
+    localizeWorkoutPrototypeConstants,
+    TranslationTask,
     WorkoutPrototype,
-} from "~/models/workout-prototype";
+} from "@paciorekj/iron-journal-shared";
+import { json } from "@remix-run/node";
+import { ServiceResult } from "~/interfaces/service-result";
+import { localizeDataInput } from "~/utils/localization.server";
 import {
     buildPopulateOptions,
     buildQueryFromSearchParams,
     workoutPrototypeQueryConfig,
 } from "~/utils/query.server";
+import { handleError } from "~/utils/util.server";
 import {
     IWorkoutPrototypeCreateDTO,
     IWorkoutPrototypeUpdateDTO,
@@ -31,22 +27,27 @@ export const createWorkoutPrototype = async (
 ): Promise<ServiceResult<IWorkoutPrototype>> => {
     try {
         const { data: localizedCreateData, queueTranslationTask } =
-            localizeDataInput(data, user.languagePreference, [
-                "name",
-                "description",
-            ]);
+            localizeDataInput(
+                data,
+                user.languagePreference as LanguageKey,
+                ["name", "description"],
+                "WORKOUT-PROTOTYPE" as any,
+            );
 
         const newWorkout = await WorkoutPrototype.create({
             ...localizedCreateData,
             userId: user._id,
         });
 
+        // Await the queueTranslationTask
+        await queueTranslationTask(newWorkout._id);
+
         return {
             message: "Workout created successfully",
             data: newWorkout,
         };
     } catch (error) {
-        throw json({ error: "An unexpected error occurred" }, { status: 500 });
+        throw handleError(error);
     }
 };
 
@@ -66,20 +67,43 @@ export const updateWorkoutPrototype = async (
         }
 
         const { data: localizedUpdateData, queueTranslationTask } =
-            localizeDataInput(updateData, user.languagePreference, [
-                "name",
-                "description",
-            ]);
+            localizeDataInput(
+                updateData,
+                user.languagePreference as LanguageKey,
+                ["name", "description"],
+                "WORKOUT-PROTOTYPE" as any,
+            );
 
-        Object.assign(workout, localizedUpdateData);
-        await workout.save();
+        // Use findByIdAndUpdate for atomic update
+        const updatedWorkout = await WorkoutPrototype.findByIdAndUpdate(
+            workoutId,
+            { $set: localizedUpdateData },
+            { new: true },
+        );
+
+        if (!updatedWorkout) {
+            throw json({ error: "Failed to update workout" }, { status: 500 });
+        }
+
+        // Cancel any pending translation tasks before queuing a new one
+        await TranslationTask.updateMany(
+            {
+                documentId: updatedWorkout._id,
+                documentType: "WORKOUT-PROTOTYPE",
+                status: { $in: ["PENDING", "IN_PROGRESS"] },
+            },
+            { $set: { status: "CANCELED" } },
+        );
+
+        // Await the queueTranslationTask
+        await queueTranslationTask(updatedWorkout._id);
 
         return {
             message: "Workout updated successfully",
-            data: workout,
+            data: updatedWorkout,
         };
     } catch (error) {
-        throw json({ error: "An unexpected error occurred" }, { status: 500 });
+        throw handleError(error);
     }
 };
 
@@ -99,11 +123,20 @@ export const deleteWorkoutPrototype = async (
 
         await workout.deleteOne();
 
+        await TranslationTask.updateMany(
+            {
+                documentId: workout._id,
+                documentType: "WORKOUT-PROTOTYPE",
+                status: { $in: ["PENDING", "IN_PROGRESS"] },
+            },
+            { $set: { status: "CANCELED" } },
+        );
+
         return {
             message: "Workout deleted successfully",
         };
     } catch (error) {
-        throw json({ error: "An unexpected error occurred" }, { status: 500 });
+        throw handleError(error);
     }
 };
 
@@ -113,7 +146,7 @@ export const readWorkoutPrototypes = async (
 ): Promise<ServiceResult<ILocalizedWorkoutPrototype[]>> => {
     try {
         const { query, limit, offset, sortBy, sortOrder } =
-            buildQueryFromSearchParams<IUser>(
+            buildQueryFromSearchParams<IWorkoutPrototype>(
                 searchParams,
                 workoutPrototypeQueryConfig,
                 user.languagePreference as LanguageKey,
@@ -128,17 +161,6 @@ export const readWorkoutPrototypes = async (
         const language = user.languagePreference as LanguageKey;
 
         let queryObj = WorkoutPrototype.find(query)
-            .select({
-                [`name.${language}`]: 1,
-                [`name.en`]: 1,
-                [`description.${language}`]: 1,
-                [`description.en`]: 1,
-                sets: 1,
-                userId: 1,
-                intensityLevel: 1,
-                createdAt: 1,
-                updatedAt: 1,
-            })
             .sort(sortOption)
             .skip(offset)
             .limit(limit);
@@ -151,28 +173,7 @@ export const readWorkoutPrototypes = async (
         const workouts = (await queryObj.lean().exec()) as IWorkoutPrototype[];
 
         const localizedWorkouts: ILocalizedWorkoutPrototype[] = workouts.map(
-            (workout) => {
-                // Localize fields
-                const localizedName = getLocalizedField(workout.name, language);
-                const localizedDescription =
-                    workout.description &&
-                    getLocalizedField(workout.description, language);
-
-                // Update the workout with localized fields
-                const localizedWorkoutData = {
-                    ...workout,
-                    name: localizedName,
-                    description: localizedDescription,
-                };
-
-                // Localize constants and nested structures
-                const localizedWorkout = localizeWorkoutPrototypeConstants(
-                    localizedWorkoutData as unknown as IWorkoutPrototype,
-                    language,
-                );
-
-                return localizedWorkout;
-            },
+            (workout) => localizeWorkoutPrototypeConstants(workout, language),
         );
 
         const totalCount = await WorkoutPrototype.countDocuments(query).exec();
@@ -180,13 +181,7 @@ export const readWorkoutPrototypes = async (
 
         return { data: localizedWorkouts, hasMore };
     } catch (error) {
-        if (error instanceof MongooseError) {
-            throw json({
-                status: 400,
-                error: "Bad request, ensure that the query is valid",
-            });
-        }
-        throw json({ status: 500, error: "An unexpected error occurred" });
+        throw handleError(error);
     }
 };
 
@@ -198,17 +193,7 @@ export const readWorkoutPrototypeById = async (
     try {
         const language = user.languagePreference as LanguageKey;
 
-        let queryObj = WorkoutPrototype.findById(workoutId).select({
-            [`name.${language}`]: 1,
-            [`name.en`]: 1,
-            [`description.${language}`]: 1,
-            [`description.en`]: 1,
-            sets: 1,
-            userId: 1,
-            intensityLevel: 1,
-            createdAt: 1,
-            updatedAt: 1,
-        });
+        let queryObj = WorkoutPrototype.findById(workoutId);
 
         const populateOptions = buildPopulateOptions(searchParams, "populate");
         populateOptions.forEach((option) => {
@@ -230,33 +215,13 @@ export const readWorkoutPrototypeById = async (
             );
         }
 
-        // Localize fields
-        const localizedName = getLocalizedField(workout.name, language);
-        const localizedDescription =
-            workout.description &&
-            getLocalizedField(workout.description, language);
-
-        // Update the workout with localized fields
-        const localizedWorkoutData = {
-            ...workout,
-            name: localizedName,
-            description: localizedDescription,
-        };
-
-        // Localize constants and nested structures
         const localizedWorkout = localizeWorkoutPrototypeConstants(
-            localizedWorkoutData as unknown as IWorkoutPrototype,
+            workout,
             language,
         );
 
         return { data: localizedWorkout };
     } catch (error) {
-        if (error instanceof MongooseError) {
-            throw json({
-                status: 400,
-                error: "Bad request, ensure that the query is valid",
-            });
-        }
-        throw json({ status: 500, error: "An unexpected error occurred" });
+        throw handleError(error);
     }
 };

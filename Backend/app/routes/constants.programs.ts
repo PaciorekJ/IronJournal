@@ -1,9 +1,11 @@
+import {
+    DAYS_OF_WEEK,
+    FOCUS_AREA,
+    getLocalizedConstants,
+    SCHEDULE_TYPE,
+    TARGET_AUDIENCE,
+} from "@paciorekj/iron-journal-shared";
 import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { DAYS_OF_WEEK } from "~/constants/days-of-week";
-import { FOCUS_AREA } from "~/constants/focus-area";
-import { SCHEDULE_TYPE } from "~/constants/schedule-type";
-import { TARGET_AUDIENCE } from "~/constants/target-audience";
-import { getLocalizedConstants } from "~/localization/utils.server";
 import { requirePredicate } from "~/utils/auth.server";
 import { validateLanguagePreference } from "~/utils/util.server";
 

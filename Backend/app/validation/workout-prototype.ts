@@ -1,14 +1,9 @@
-// workoutPrototype.schema.ts
-
-import { z } from "zod";
 import {
     INTENSITY_LEVEL,
     IntensityLevelKey,
-} from "~/constants/intensity-level";
+} from "@paciorekj/iron-journal-shared/constants";
+import { z } from "zod";
 import { createSetPrototypeSchema } from "./set-prototype.server";
-
-const objectIdRegex = /^[0-9a-fA-F]{24}$/;
-const objectIdSchema = z.string().regex(objectIdRegex, "Invalid ObjectId");
 
 export const createWorkoutPrototypeSchema = z
     .object({
@@ -17,7 +12,6 @@ export const createWorkoutPrototypeSchema = z
         sets: z
             .array(createSetPrototypeSchema)
             .min(1, "At least one set is required."),
-        userId: objectIdSchema,
         intensityLevel: z
             .enum(
                 Object.keys(INTENSITY_LEVEL) as [

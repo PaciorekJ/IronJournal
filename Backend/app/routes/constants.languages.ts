@@ -1,6 +1,5 @@
+import { LANGUAGE } from "@paciorekj/iron-journal-shared";
 import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { LANGUAGE } from "~/constants/language";
-import { isLoginValid } from "~/utils/auth.server";
 
 export const languageArray = Object.entries(LANGUAGE).map(([key, value]) => ({
     key: key,

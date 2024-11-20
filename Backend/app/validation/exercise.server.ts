@@ -1,10 +1,18 @@
+import {
+    CATEGORY,
+    CategoryKey,
+    EQUIPMENT,
+    EquipmentKey,
+    FORCE,
+    ForceKey,
+    LEVEL,
+    LevelKey,
+    MECHANIC,
+    MechanicKey,
+    MUSCLE_GROUP,
+    MuscleGroupKey,
+} from "@paciorekj/iron-journal-shared/constants";
 import { z } from "zod";
-import { CATEGORY, CategoryKey } from "~/constants/category";
-import { EQUIPMENT, EquipmentKey } from "~/constants/equipment";
-import { FORCE, ForceKey } from "~/constants/force";
-import { LEVEL, LevelKey } from "~/constants/level";
-import { MECHANIC, MechanicKey } from "~/constants/mechanic";
-import { MUSCLE_GROUP, MuscleGroupKey } from "~/constants/muscle-group";
 
 // Creation Schema for Exercise
 export const createExerciseSchema = z
@@ -50,5 +58,7 @@ export const createExerciseSchema = z
 
 export const updateExerciseSchema = createExerciseSchema.partial();
 
-export interface IExerciseCreateDTO extends z.infer<typeof createExerciseSchema> {};
-export interface IExerciseUpdateDTO extends z.infer<typeof updateExerciseSchema> {};
+export interface IExerciseCreateDTO
+    extends z.infer<typeof createExerciseSchema> {}
+export interface IExerciseUpdateDTO
+    extends z.infer<typeof updateExerciseSchema> {}

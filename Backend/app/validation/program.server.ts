@@ -1,11 +1,14 @@
-import { z } from "zod";
-import { DAYS_OF_WEEK, DaysOfWeekKey } from "~/constants/days-of-week";
-import { FOCUS_AREA, FocusAreasKey } from "~/constants/focus-area";
-import { SCHEDULE_TYPE, ScheduleTypeKey } from "~/constants/schedule-type";
 import {
+    DAYS_OF_WEEK,
+    DaysOfWeekKey,
+    FOCUS_AREA,
+    FocusAreasKey,
+    SCHEDULE_TYPE,
+    ScheduleTypeKey,
     TARGET_AUDIENCE,
     TargetAudienceKey,
-} from "~/constants/target-audience";
+} from "@paciorekj/iron-journal-shared/constants";
+import { z } from "zod";
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 const objectIdSchema = z.string().regex(objectIdRegex, "Invalid ObjectId");

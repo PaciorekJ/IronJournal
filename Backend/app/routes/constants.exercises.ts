@@ -1,11 +1,13 @@
+import {
+    CATEGORY,
+    EQUIPMENT,
+    FORCE,
+    getLocalizedConstants,
+    LEVEL,
+    MECHANIC,
+    MUSCLE_GROUP,
+} from "@paciorekj/iron-journal-shared";
 import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { CATEGORY } from "~/constants/category";
-import { EQUIPMENT } from "~/constants/equipment";
-import { FORCE } from "~/constants/force";
-import { LEVEL } from "~/constants/level";
-import { MECHANIC } from "~/constants/mechanic";
-import { MUSCLE_GROUP } from "~/constants/muscle-group";
-import { getLocalizedConstants } from "~/localization/utils.server";
 import { requirePredicate } from "~/utils/auth.server";
 import { validateLanguagePreference } from "~/utils/util.server";
 

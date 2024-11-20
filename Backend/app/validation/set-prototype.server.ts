@@ -1,9 +1,10 @@
-import { z } from "zod";
-import { SET_TYPE, SetTypeKey } from "~/constants/set-type";
 import {
+    SET_TYPE,
+    SetTypeKey,
     WEIGHT_SELECTION_METHOD,
     WeightSelectionMethodKey,
-} from "~/constants/weight-selection";
+} from "@paciorekj/iron-journal-shared/constants";
+import { z } from "zod";
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 const objectIdSchema = z.string().regex(objectIdRegex, "Invalid ObjectId");

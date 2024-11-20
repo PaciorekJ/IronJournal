@@ -1,24 +1,25 @@
-import { json } from "@remix-run/node";
-import { MongooseError } from "mongoose";
-import { LanguageKey } from "~/constants/language";
-import { ServiceResult } from "~/interfaces/service-result";
 import {
     ILocalizedProgram,
+    IProgram,
+    IUser,
+    IWorkoutSchedule,
+    LanguageKey,
     localizeProgramConstants,
-} from "~/localization/program.server";
-import {
-    getLocalizedField,
-    localizeDataInput,
-} from "~/localization/utils.server";
-import { IProgram, IWorkoutSchedule, Program } from "~/models/program";
-import { IUser } from "~/models/user";
-import { WorkoutPrototype } from "~/models/workout-prototype";
+    Program,
+    TranslationTask,
+    WorkoutPrototype,
+} from "@paciorekj/iron-journal-shared";
+import { json } from "@remix-run/node";
+import mongoose from "mongoose";
+import { ServiceResult } from "~/interfaces/service-result";
+import { localizeDataInput } from "~/utils/localization.server";
 import {
     buildPopulateOptions,
     buildQueryFromSearchParams,
     IQueryField,
     programQueryConfig,
 } from "~/utils/query.server";
+import { handleError } from "~/utils/util.server";
 import {
     IProgramCreateDTO,
     IProgramUpdateDTO,
@@ -31,13 +32,11 @@ export const createProgram = async (
     try {
         const { workoutSchedule } = createData;
 
-        const workoutIds: string[] = (
+        const workoutIds: mongoose.Schema.Types.ObjectId[] = (
             (workoutSchedule || []) as IWorkoutSchedule[]
         )
-            .flatMap(
-                (item) => item.workoutIds?.map((id) => id.toString()) || [],
-            )
-            .filter((id): id is string => !!id);
+            .flatMap((item) => item.workoutIds || [])
+            .filter((id): id is mongoose.Schema.Types.ObjectId => !!id);
 
         const validWorkouts = await WorkoutPrototype.find({
             _id: { $in: workoutIds },
@@ -50,9 +49,9 @@ export const createProgram = async (
             workout._id.toString(),
         );
 
-        const invalidWorkouts = workoutIds.filter(
-            (id) => !validWorkoutIds.includes(id),
-        );
+        const invalidWorkouts = workoutIds
+            .map((id) => id.toString())
+            .filter((id) => !validWorkoutIds.includes(id));
 
         if (invalidWorkouts.length > 0) {
             throw json(
@@ -67,22 +66,27 @@ export const createProgram = async (
         }
 
         const { data: localizedCreateData, queueTranslationTask } =
-            await localizeDataInput(createData, user.languagePreference, [
-                "name",
-                "description",
-            ]);
+            localizeDataInput(
+                createData,
+                user.languagePreference as LanguageKey,
+                ["name", "description"],
+                "PROGRAM" as unknown as DocumentType, // Include documentType
+            );
 
-        const newProgram: IProgram = await Program.create({
+        const newProgram = await Program.create({
             ...localizedCreateData,
             userId: user._id,
         });
+
+        // Await the queueTranslationTask
+        await queueTranslationTask(newProgram._id);
 
         return {
             message: "Program created successfully",
             data: newProgram,
         };
     } catch (error) {
-        throw json({ status: 500, error: "An unexpected error occurred" });
+        throw handleError(error);
     }
 };
 
@@ -95,41 +99,53 @@ export const updateProgram = async (
         const program = await Program.findOne({ _id: programId });
 
         if (!program) {
-            throw json(
-                { error: "Program not found" },
-                {
-                    status: 404,
-                },
-            );
+            throw json({ error: "Program not found" }, { status: 404 });
         }
 
         if (program.userId.toString() !== user._id.toString()) {
             throw json(
-                {
-                    error: "You are not authorized to update this program",
-                },
-                {
-                    status: 403,
-                },
+                { error: "You are not authorized to update this program" },
+                { status: 403 },
             );
         }
 
         const { data: localizedUpdateData, queueTranslationTask } =
-            localizeDataInput(updateData, user.languagePreference, [
-                "name",
-                "description",
-            ]);
+            localizeDataInput(
+                updateData,
+                user.languagePreference as LanguageKey,
+                ["name", "description"],
+                "PROGRAM" as unknown as DocumentType,
+            );
 
-        Object.assign(program, localizedUpdateData);
-        await program.save();
+        // Use findByIdAndUpdate for atomic update
+        const updatedProgram = await Program.findByIdAndUpdate(
+            programId,
+            { $set: localizedUpdateData },
+            { new: true },
+        );
+
+        if (!updatedProgram) {
+            throw json({ error: "Failed to update program" }, { status: 500 });
+        }
+
+        await TranslationTask.updateMany(
+            {
+                documentId: updatedProgram._id,
+                documentType: "PROGRAM",
+                status: { $in: ["PENDING", "IN_PROGRESS"] },
+            },
+            { $set: { status: "CANCELED" } },
+        );
+
+        await queueTranslationTask(updatedProgram._id);
 
         return {
             status: 200,
             message: "Program updated successfully",
-            data: program,
+            data: updatedProgram,
         };
     } catch (error) {
-        throw json({ status: 500, error: "An unexpected error occurred" });
+        throw handleError(error);
     }
 };
 
@@ -145,21 +161,33 @@ export const deleteProgram = async (
         }
 
         if (program.userId.toString() !== user._id.toString()) {
-            throw json({
-                status: 403,
-                error: "You are not authorized to delete this program",
-            });
+            throw json(
+                {
+                    error: "You are not authorized to delete this program",
+                },
+                { status: 403 },
+            );
         }
 
         await Program.deleteOne({ _id: programId });
+
+        await TranslationTask.updateMany(
+            {
+                documentId: program._id,
+                documentType: "PROGRAM",
+                status: { $in: ["PENDING", "IN_PROGRESS"] },
+            },
+            { $set: { status: "CANCELED" } },
+        );
 
         return {
             message: "Program deleted successfully",
         };
     } catch (error) {
-        throw json({ status: 500, error: "An unexpected error occurred" });
+        throw handleError(error);
     }
 };
+
 export const readPrograms = async (
     user: IUser,
     searchParams: URLSearchParams,
@@ -191,21 +219,6 @@ export const readPrograms = async (
         const language = user.languagePreference as LanguageKey;
 
         let queryObj = Program.find(query)
-            .select({
-                [`name.${language}`]: 1,
-                [`name.en`]: 1,
-                [`description.${language}`]: 1,
-                [`description.en`]: 1,
-                scheduleType: 1,
-                focusAreas: 1,
-                targetAudience: 1,
-                workoutSchedule: 1,
-                userId: 1,
-                isPublic: 1,
-                repetitions: 1,
-                createdAt: 1,
-                updatedAt: 1,
-            })
             .sort(sortOption)
             .skip(offset)
             .limit(limit);
@@ -217,29 +230,8 @@ export const readPrograms = async (
 
         const programs = (await queryObj.lean().exec()) as IProgram[];
 
-        const localizedPrograms: ILocalizedProgram[] = programs.map(
-            (program) => {
-                // Localize fields
-                const localizedName = getLocalizedField(program.name, language);
-                const localizedDescription =
-                    program.description &&
-                    getLocalizedField(program.description, language);
-
-                // Update the program with localized fields
-                const localizedProgramData = {
-                    ...program,
-                    name: localizedName,
-                    description: localizedDescription,
-                };
-
-                // Localize constants and nested structures
-                const localizedProgram = localizeProgramConstants(
-                    localizedProgramData as unknown as IProgram,
-                    language,
-                );
-
-                return localizedProgram;
-            },
+        const localizedPrograms: ILocalizedProgram[] = programs.map((program) =>
+            localizeProgramConstants(program, language),
         );
 
         const totalCount = await Program.countDocuments(query).exec();
@@ -248,13 +240,7 @@ export const readPrograms = async (
 
         return { data: localizedPrograms, hasMore };
     } catch (error) {
-        if (error instanceof MongooseError) {
-            throw json({
-                status: 400,
-                error: "Bad request, ensure that the query is valid",
-            });
-        }
-        throw json({ status: 500, error: "An unexpected error occurred" });
+        throw handleError(error);
     }
 };
 
@@ -266,21 +252,7 @@ export const readProgramById = async (
     try {
         const language = user.languagePreference as LanguageKey;
 
-        let queryObj = Program.findById(programId).select({
-            [`name.${language}`]: 1,
-            [`name.en`]: 1,
-            [`description.${language}`]: 1,
-            [`description.en`]: 1,
-            scheduleType: 1,
-            focusAreas: 1,
-            targetAudience: 1,
-            workoutSchedule: 1,
-            userId: 1,
-            isPublic: 1,
-            repetitions: 1,
-            createdAt: 1,
-            updatedAt: 1,
-        });
+        let queryObj = Program.findById(programId);
 
         const populateOptions = buildPopulateOptions(searchParams, "populate");
         populateOptions.forEach((option) => {
@@ -297,39 +269,18 @@ export const readProgramById = async (
             !program.isPublic &&
             program.userId.toString() !== user._id.toString()
         ) {
-            throw json({
-                status: 403,
-                error: "Forbidden: You do not have access to this program",
-            });
+            throw json(
+                {
+                    error: "Forbidden: You do not have access to this program",
+                },
+                { status: 403 },
+            );
         }
 
-        // Localize fields
-        const localizedName = getLocalizedField(program.name, language);
-        const localizedDescription =
-            program.description &&
-            getLocalizedField(program.description, language);
-
-        // Update the program with localized fields
-        const localizedProgramData = {
-            ...program,
-            name: localizedName,
-            description: localizedDescription,
-        };
-
-        // Localize constants and nested structures
-        const localizedProgram = localizeProgramConstants(
-            localizedProgramData as unknown as IProgram,
-            language,
-        );
+        const localizedProgram = localizeProgramConstants(program, language);
 
         return { data: localizedProgram };
     } catch (error) {
-        if (error instanceof MongooseError) {
-            throw json({
-                status: 400,
-                error: "Bad request, ensure that the query is valid",
-            });
-        }
-        throw json({ status: 500, error: "An unexpected error occurred" });
+        throw handleError(error);
     }
 };

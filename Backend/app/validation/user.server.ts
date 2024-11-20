@@ -1,5 +1,8 @@
+import {
+    LANGUAGE,
+    LanguageKey,
+} from "@paciorekj/iron-journal-shared/constants";
 import { z } from "zod";
-import { LANGUAGE, LanguageKey } from "~/constants/language";
 
 const safeUsernamePattern = /^[a-zA-Z0-9_]+$/;
 
