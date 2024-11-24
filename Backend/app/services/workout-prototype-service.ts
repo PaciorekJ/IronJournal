@@ -3,7 +3,7 @@ import {
     IUser,
     IWorkoutPrototype,
     LanguageKey,
-    localizeWorkoutPrototypeConstants,
+    resolveLocalizedWorkout,
     TranslationTask,
     WorkoutPrototype,
 } from "@paciorekj/iron-journal-shared";
@@ -36,6 +36,7 @@ export const createWorkoutPrototype = async (
 
         const newWorkout = await WorkoutPrototype.create({
             ...localizedCreateData,
+            originalLanguage: user.languagePreference as LanguageKey,
             userId: user._id,
         });
 
@@ -77,7 +78,12 @@ export const updateWorkoutPrototype = async (
         // Use findByIdAndUpdate for atomic update
         const updatedWorkout = await WorkoutPrototype.findByIdAndUpdate(
             workoutId,
-            { $set: localizedUpdateData },
+            {
+                $set: {
+                    ...localizedUpdateData,
+                    originalLanguage: user.languagePreference as LanguageKey,
+                },
+            },
             { new: true },
         );
 
@@ -173,7 +179,7 @@ export const readWorkoutPrototypes = async (
         const workouts = (await queryObj.lean().exec()) as IWorkoutPrototype[];
 
         const localizedWorkouts: ILocalizedWorkoutPrototype[] = workouts.map(
-            (workout) => localizeWorkoutPrototypeConstants(workout, language),
+            (workout) => resolveLocalizedWorkout(workout, language),
         );
 
         const totalCount = await WorkoutPrototype.countDocuments(query).exec();
@@ -215,10 +221,7 @@ export const readWorkoutPrototypeById = async (
             );
         }
 
-        const localizedWorkout = localizeWorkoutPrototypeConstants(
-            workout,
-            language,
-        );
+        const localizedWorkout = resolveLocalizedWorkout(workout, language);
 
         return { data: localizedWorkout };
     } catch (error) {

@@ -2,6 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 import { INTENSITY_LEVEL } from '../constants/intensity-level.js';
 import { validateLocalizedField, defaultLocalizedField } from '../localization/utils.js';
 import { SetPrototypeSchema } from './set-prototype.js';
+import { LANGUAGE } from '../constants/language.js';
 
 const WorkoutPrototypeSchema = new Schema({
     name: {
@@ -21,6 +22,12 @@ const WorkoutPrototypeSchema = new Schema({
             validator: validateLocalizedField,
             message: 'Invalid language key in "description" field.',
         },
+    },
+    originalLanguage: {
+        type: String,
+        enum: Object.keys(LANGUAGE),
+        required: true,
+        default: "en",
     },
     sets: {
         type: [SetPrototypeSchema],

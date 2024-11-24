@@ -2,6 +2,7 @@ import mongoose, { Document, Schema } from "mongoose";
 import { CATEGORY, CategoryKey } from "../constants/category";
 import { EQUIPMENT, EquipmentKey } from "../constants/equipment";
 import { FORCE, ForceKey } from "../constants/force";
+import { LANGUAGE, LanguageKey } from "../constants/language";
 import { LEVEL, LevelKey } from "../constants/level";
 import { MECHANIC, MechanicKey } from "../constants/mechanic";
 import { MUSCLE_GROUP, MuscleGroupKey } from "../constants/muscle-group";
@@ -14,6 +15,7 @@ import {
 interface IExercise extends Document {
     _id: mongoose.Schema.Types.ObjectId;
     name: localizedField<string>;
+    originalLanguage: LanguageKey;
     instructions: localizedField<string>[];
     level: LevelKey;
     force?: ForceKey;
@@ -35,6 +37,12 @@ const ExerciseSchema: Schema<IExercise> = new Schema({
             validator: validateLocalizedField,
             message: 'Invalid language key in "name" field.',
         },
+    },
+    originalLanguage: {
+        type: String,
+        enum: Object.keys(LANGUAGE),
+        required: true,
+        default: "en",
     },
     instructions: {
         type: [

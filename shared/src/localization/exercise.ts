@@ -1,6 +1,6 @@
 import { LanguageKey } from "../constants/language";
 import { IExercise } from "../models/exercise";
-import { localizeEnumField } from "./utils";
+import { resolveLocalizedEnum, resolveLocalizedField } from "./utils";
 export interface ILocalizedExercise
     extends Omit<
         IExercise,
@@ -25,7 +25,17 @@ export interface ILocalizedExercise
     category: string;
 }
 
-export function convertLocalizeExercise(
+/**
+ * Resolve a localized exercise object.
+ *
+ * The function will look up the given `exercise` fields in the
+ * `CONSTANT_LOCALIZATIONS` object for the given `language`. If the value is
+ * present, it will be returned. If not, the original value will be returned.
+ *
+ * @param exercise - The exercise to resolve.
+ * @param language - The language to resolve for.
+ */
+export function resolveLocalizedExercise(
     exercise: IExercise,
     language: LanguageKey,
 ): ILocalizedExercise {
@@ -33,33 +43,38 @@ export function convertLocalizeExercise(
 
     // Localize 'name' field
     if (exercise.name) {
-        localizedExercise.name =
-            exercise.name[language] || exercise.name["en"] || "";
+        localizedExercise.name = resolveLocalizedField(
+            localizedExercise.name,
+            exercise.originalLanguage,
+            language,
+        );
     }
 
     // Localize 'instructions' field
     if (exercise.instructions) {
-        localizedExercise.instructions = exercise.instructions.map(
-            (instruction) => instruction[language] || instruction["en"] || "",
+        localizedExercise.instructions = resolveLocalizedField(
+            localizedExercise.instructions,
+            exercise.originalLanguage,
+            language,
         );
     }
 
     // Localize enum fields
-    localizedExercise.level = localizeEnumField(
+    localizedExercise.level = resolveLocalizedEnum(
         "LEVEL",
         exercise.level,
         language,
     );
     localizedExercise.force = exercise.force
-        ? localizeEnumField("FORCE", exercise.force, language)
+        ? resolveLocalizedEnum("FORCE", exercise.force, language)
         : undefined;
     localizedExercise.mechanic = exercise.mechanic
-        ? localizeEnumField("MECHANIC", exercise.mechanic, language)
+        ? resolveLocalizedEnum("MECHANIC", exercise.mechanic, language)
         : undefined;
     localizedExercise.equipment = exercise.equipment
-        ? localizeEnumField("EQUIPMENT", exercise.equipment, language)
+        ? resolveLocalizedEnum("EQUIPMENT", exercise.equipment, language)
         : undefined;
-    localizedExercise.category = localizeEnumField(
+    localizedExercise.category = resolveLocalizedEnum(
         "CATEGORY",
         exercise.category,
         language,
@@ -67,11 +82,11 @@ export function convertLocalizeExercise(
 
     // Localize array fields
     localizedExercise.primaryMuscles = exercise.primaryMuscles.map((muscle) =>
-        localizeEnumField("MUSCLE_GROUP", muscle, language),
+        resolveLocalizedEnum("MUSCLE_GROUP", muscle, language),
     );
     localizedExercise.secondaryMuscles = exercise.secondaryMuscles
         ? exercise.secondaryMuscles.map((muscle) =>
-              localizeEnumField("MUSCLE_GROUP", muscle, language),
+              resolveLocalizedEnum("MUSCLE_GROUP", muscle, language),
           )
         : undefined;
 

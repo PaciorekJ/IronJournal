@@ -2,7 +2,7 @@ import {
     ILocalizedUser,
     IUser,
     LanguageKey,
-    localizeUserConstants,
+    resolveLocalizedUser,
     User,
 } from "@paciorekj/iron-journal-shared";
 import { json } from "@remix-run/node";
@@ -130,7 +130,7 @@ export const readUsers = async (
         const language = user.languagePreference as LanguageKey;
 
         const localizedUsers: ILocalizedUser[] = users.map((userData) => {
-            const localizedUser = localizeUserConstants(
+            const localizedUser = resolveLocalizedUser(
                 userData as IUser,
                 language,
             );
@@ -162,10 +162,7 @@ export const readUserById = async (
 
         const language = currentUser.languagePreference as LanguageKey;
 
-        const localizedUser = localizeUserConstants(
-            userData as IUser,
-            language,
-        );
+        const localizedUser = resolveLocalizedUser(userData as IUser, language);
 
         return { data: localizedUser };
     } catch (error) {

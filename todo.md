@@ -4,16 +4,7 @@
 
 - Add Models for tracking workouts of the users
 - Add Mechanism for committing to programs, or think of an alternative approach
-- Make so creators language is sent with the user's native language to account for inconsistencies in translation.
-
-Example:
-``
-    {
-        original: "Hello"
-        translated: "Hola"
-    }
-``
-Then on the frontend display 'show Original', and 'show Translation' Button for each case
+- Make endpoints for creating and updating workouts
 
 ## Back Burner
 
@@ -21,3 +12,15 @@ Then on the frontend display 'show Original', and 'show Translation' Button for 
 
 Spin up docker image for RabbitMQ: `docker run -d --hostname my-rabbit --name some-rabbit -p 5672:5672 -p 15672:15672 rabbitmq:3-management`
 Spin up docker image for libreTranslate: `docker run -d --hostname libretranslate --name libretranslate -p 3000:3000 libretranslate/libretranslate:latest`
+
+## Defining Tracking Models
+
+```
+IWorkoutSession
+
+{
+    userId: mongoose.Schema.Types.ObjectId;
+}, Timestamps
+
+
+```

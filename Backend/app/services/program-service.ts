@@ -4,8 +4,8 @@ import {
     IUser,
     IWorkoutSchedule,
     LanguageKey,
-    localizeProgramConstants,
     Program,
+    resolveLocalizedProgram,
     TranslationTask,
     WorkoutPrototype,
 } from "@paciorekj/iron-journal-shared";
@@ -75,6 +75,7 @@ export const createProgram = async (
 
         const newProgram = await Program.create({
             ...localizedCreateData,
+            originalLanguage: user.languagePreference as LanguageKey,
             userId: user._id,
         });
 
@@ -120,7 +121,12 @@ export const updateProgram = async (
         // Use findByIdAndUpdate for atomic update
         const updatedProgram = await Program.findByIdAndUpdate(
             programId,
-            { $set: localizedUpdateData },
+            {
+                $set: {
+                    originalLanguage: user.languagePreference,
+                    ...localizedUpdateData,
+                },
+            },
             { new: true },
         );
 
@@ -231,7 +237,7 @@ export const readPrograms = async (
         const programs = (await queryObj.lean().exec()) as IProgram[];
 
         const localizedPrograms: ILocalizedProgram[] = programs.map((program) =>
-            localizeProgramConstants(program, language),
+            resolveLocalizedProgram(program, language),
         );
 
         const totalCount = await Program.countDocuments(query).exec();
@@ -277,7 +283,7 @@ export const readProgramById = async (
             );
         }
 
-        const localizedProgram = localizeProgramConstants(program, language);
+        const localizedProgram = resolveLocalizedProgram(program, language);
 
         return { data: localizedProgram };
     } catch (error) {

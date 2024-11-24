@@ -1,6 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 import { DAYS_OF_WEEK } from '../constants/days-of-week.js';
 import { FOCUS_AREA } from '../constants/focus-area.js';
+import { LANGUAGE } from '../constants/language.js';
 import { SCHEDULE_TYPE } from '../constants/schedule-type.js';
 import { TARGET_AUDIENCE } from '../constants/target-audience.js';
 import { validateLocalizedField, defaultLocalizedField } from '../localization/utils.js';
@@ -14,6 +15,12 @@ const ProgramSchema = new Schema({
             validator: validateLocalizedField,
             message: 'Invalid language key in "name" field.',
         },
+    },
+    originalLanguage: {
+        type: String,
+        enum: Object.keys(LANGUAGE),
+        required: true,
+        default: "en",
     },
     description: {
         type: Map,

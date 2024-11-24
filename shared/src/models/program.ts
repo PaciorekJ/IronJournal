@@ -1,6 +1,7 @@
 import mongoose, { Document, Schema } from "mongoose";
 import { DAYS_OF_WEEK, DaysOfWeekKey } from "../constants/days-of-week";
 import { FOCUS_AREA, FocusAreasKey } from "../constants/focus-area";
+import { LANGUAGE, LanguageKey } from "../constants/language";
 import { SCHEDULE_TYPE, ScheduleTypeKey } from "../constants/schedule-type";
 import {
     TARGET_AUDIENCE,
@@ -21,6 +22,7 @@ interface IWorkoutSchedule {
 interface IProgram extends Document {
     _id: mongoose.Schema.Types.ObjectId;
     name: localizedField<string>;
+    originalLanguage: LanguageKey;
     description?: localizedField<string>;
     workoutSchedule?: IWorkoutSchedule[];
     userId: mongoose.Schema.Types.ObjectId;
@@ -43,6 +45,12 @@ const ProgramSchema: Schema<IProgram> = new Schema(
                 validator: validateLocalizedField,
                 message: 'Invalid language key in "name" field.',
             },
+        },
+        originalLanguage: {
+            type: String,
+            enum: Object.keys(LANGUAGE),
+            required: true,
+            default: "en",
         },
         description: {
             type: Map,

@@ -2,9 +2,9 @@ import { LanguageKey } from "../constants/language";
 import { IWorkoutPrototype } from "../models/workout-prototype";
 import {
     ILocalizedSetPrototype,
-    localizeSetPrototypeConstants,
+    resolveLocalizedSetPrototype,
 } from "./set-prototype";
-import { localizeEnumField } from "./utils";
+import { resolveLocalizedEnum, resolveLocalizedField } from "./utils";
 
 export interface ILocalizedWorkoutPrototype
     extends Omit<
@@ -17,24 +17,28 @@ export interface ILocalizedWorkoutPrototype
     sets: ILocalizedSetPrototype[];
 }
 
-export function localizeWorkoutPrototypeConstants(
+export function resolveLocalizedWorkout(
     workout: IWorkoutPrototype,
     language: LanguageKey,
 ): ILocalizedWorkoutPrototype {
     const localizedWorkout = { ...workout } as any;
 
-    // Localize 'name' field
-    localizedWorkout.name = workout.name[language] || workout.name["en"] || "";
+    localizedWorkout.name = resolveLocalizedField(
+        localizedWorkout.name,
+        workout.originalLanguage,
+        language,
+    );
 
-    // Localize 'description' field
     if (workout.description) {
-        localizedWorkout.description =
-            workout.description[language] || workout.description["en"] || "";
+        localizedWorkout.description = resolveLocalizedField(
+            localizedWorkout.description,
+            workout.originalLanguage,
+            language,
+        );
     }
 
-    // Localize 'intensityLevel' field
     if (workout.intensityLevel) {
-        localizedWorkout.intensityLevel = localizeEnumField(
+        localizedWorkout.intensityLevel = resolveLocalizedEnum(
             "INTENSITY_LEVEL",
             workout.intensityLevel,
             language,
@@ -43,7 +47,7 @@ export function localizeWorkoutPrototypeConstants(
 
     // Localize 'sets' array
     localizedWorkout.sets = workout.sets.map((set) =>
-        localizeSetPrototypeConstants(set, language),
+        resolveLocalizedSetPrototype(set, language),
     );
 
     return localizedWorkout as ILocalizedWorkoutPrototype;

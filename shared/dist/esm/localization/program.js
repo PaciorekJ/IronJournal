@@ -1,25 +1,41 @@
-import { localizeEnumField } from './utils.js';
+import { resolveLocalizedField, resolveLocalizedEnum } from './utils.js';
 
-function localizeProgramConstants(program, language) {
+/**
+ * Localizes fields of an `IProgram` object to a specific language and returns
+ * a localized version as `ILocalizedProgram`.
+ *
+ * The function resolves and translates fields such as `name`, `description`,
+ * `scheduleType`, `targetAudience`, `focusAreas`, and elements within
+ * `workoutSchedule` based on the provided target `language`.
+ *
+ * - `name` and `description` are translated using `resolveLocalizedField`.
+ * - Enum fields like `scheduleType` and `targetAudience` are translated
+ *   using `resolveLocalizedEnum`.
+ * - `focusAreas` is an array of enums that are individually translated.
+ * - `workoutSchedule.day` is translated if the schedule type is "WEEKLY".
+ *
+ * @param program - The program object to localize.
+ * @param language - The target language for localization.
+ * @returns A localized version of the program.
+ */
+function resolveLocalizedProgram(program, language) {
     const localizedProgram = { ...program };
     // Localize 'name' field
     if (program.name) {
-        localizedProgram.name =
-            program.name[language] || program.name["en"] || "";
+        localizedProgram.name = resolveLocalizedField(localizedProgram.name, program.originalLanguage, language);
     }
     // Localize 'description' field
     if (program.description) {
-        localizedProgram.description =
-            program.description[language] || program.description["en"] || "";
+        localizedProgram.description = resolveLocalizedField(localizedProgram.description, program.originalLanguage, language);
     }
     // Localize enum fields
-    localizedProgram.scheduleType = localizeEnumField("SCHEDULE_TYPE", program.scheduleType, language);
+    localizedProgram.scheduleType = resolveLocalizedEnum("SCHEDULE_TYPE", program.scheduleType, language);
     localizedProgram.targetAudience = program.targetAudience
-        ? localizeEnumField("TARGET_AUDIENCE", program.targetAudience, language)
+        ? resolveLocalizedEnum("TARGET_AUDIENCE", program.targetAudience, language)
         : undefined;
     // Localize 'focusAreas' array
     localizedProgram.focusAreas = program.focusAreas
-        ? program.focusAreas.map((focusArea) => localizeEnumField("FOCUS_AREA", focusArea, language))
+        ? program.focusAreas.map((focusArea) => resolveLocalizedEnum("FOCUS_AREA", focusArea, language))
         : undefined;
     // Localize 'workoutSchedule.day'
     if (program.workoutSchedule) {
@@ -29,7 +45,7 @@ function localizeProgramConstants(program, language) {
             };
             if (program.scheduleType === "WEEKLY" &&
                 typeof schedule.day === "string") {
-                localizedSchedule.day = localizeEnumField("DAYS_OF_WEEK", schedule.day, language);
+                localizedSchedule.day = resolveLocalizedEnum("DAYS_OF_WEEK", schedule.day, language);
             }
             // If 'day' is a number (for 'CYCLE'), keep it as is
             return localizedSchedule;
@@ -38,5 +54,5 @@ function localizeProgramConstants(program, language) {
     return localizedProgram;
 }
 
-export { localizeProgramConstants };
+export { resolveLocalizedProgram };
 //# sourceMappingURL=program.js.map

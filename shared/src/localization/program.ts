@@ -1,6 +1,6 @@
 import { LanguageKey } from "../constants/language";
 import { IProgram, IWorkoutSchedule } from "../models/program";
-import { localizeEnumField } from "./utils";
+import { resolveLocalizedEnum, resolveLocalizedField } from "./utils";
 
 interface ILocalizedWorkoutSchedule extends Omit<IWorkoutSchedule, "day"> {
     day: string | number; // 'number' for 'CYCLE', 'string' for localized day
@@ -24,7 +24,25 @@ export interface ILocalizedProgram
     workoutSchedule?: ILocalizedWorkoutSchedule[];
 }
 
-export function localizeProgramConstants(
+/**
+ * Localizes fields of an `IProgram` object to a specific language and returns
+ * a localized version as `ILocalizedProgram`.
+ *
+ * The function resolves and translates fields such as `name`, `description`,
+ * `scheduleType`, `targetAudience`, `focusAreas`, and elements within
+ * `workoutSchedule` based on the provided target `language`. 
+ *
+ * - `name` and `description` are translated using `resolveLocalizedField`.
+ * - Enum fields like `scheduleType` and `targetAudience` are translated
+ *   using `resolveLocalizedEnum`.
+ * - `focusAreas` is an array of enums that are individually translated.
+ * - `workoutSchedule.day` is translated if the schedule type is "WEEKLY".
+ *
+ * @param program - The program object to localize.
+ * @param language - The target language for localization.
+ * @returns A localized version of the program.
+ */
+export function resolveLocalizedProgram(
     program: IProgram,
     language: LanguageKey,
 ): ILocalizedProgram {
@@ -32,30 +50,40 @@ export function localizeProgramConstants(
 
     // Localize 'name' field
     if (program.name) {
-        localizedProgram.name =
-            program.name[language] || program.name["en"] || "";
+        localizedProgram.name = resolveLocalizedField(
+            localizedProgram.name,
+            program.originalLanguage,
+            language,
+        );
     }
 
     // Localize 'description' field
     if (program.description) {
-        localizedProgram.description =
-            program.description[language] || program.description["en"] || "";
+        localizedProgram.description = resolveLocalizedField(
+            localizedProgram.description,
+            program.originalLanguage,
+            language,
+        );
     }
 
     // Localize enum fields
-    localizedProgram.scheduleType = localizeEnumField(
+    localizedProgram.scheduleType = resolveLocalizedEnum(
         "SCHEDULE_TYPE",
         program.scheduleType,
         language,
     );
     localizedProgram.targetAudience = program.targetAudience
-        ? localizeEnumField("TARGET_AUDIENCE", program.targetAudience, language)
+        ? resolveLocalizedEnum(
+              "TARGET_AUDIENCE",
+              program.targetAudience,
+              language,
+          )
         : undefined;
 
     // Localize 'focusAreas' array
     localizedProgram.focusAreas = program.focusAreas
         ? program.focusAreas.map((focusArea) =>
-              localizeEnumField("FOCUS_AREA", focusArea, language),
+              resolveLocalizedEnum("FOCUS_AREA", focusArea, language),
           )
         : undefined;
 
@@ -70,7 +98,7 @@ export function localizeProgramConstants(
                     program.scheduleType === "WEEKLY" &&
                     typeof schedule.day === "string"
                 ) {
-                    localizedSchedule.day = localizeEnumField(
+                    localizedSchedule.day = resolveLocalizedEnum(
                         "DAYS_OF_WEEK",
                         schedule.day,
                         language,

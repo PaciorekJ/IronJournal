@@ -9,10 +9,12 @@ import {
     validateLocalizedField,
 } from "../localization/utils";
 import { ISetPrototype, SetPrototypeSchema } from "./set-prototype";
+import { LanguageKey, LANGUAGE } from "../constants/language";
 
 interface IWorkoutPrototype extends Document {
     _id: mongoose.Schema.Types.ObjectId;
     name: localizedField<string>;
+    originalLanguage: LanguageKey;
     description?: localizedField<string>;
     sets: ISetPrototype[];
     userId: mongoose.Schema.Types.ObjectId;
@@ -40,6 +42,12 @@ const WorkoutPrototypeSchema: Schema<IWorkoutPrototype> = new Schema(
                 validator: validateLocalizedField,
                 message: 'Invalid language key in "description" field.',
             },
+        },
+        originalLanguage: {
+            type: String,
+            enum: Object.keys(LANGUAGE),
+            required: true,
+            default: "en",
         },
         sets: {
             type: [SetPrototypeSchema],

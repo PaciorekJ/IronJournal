@@ -1,14 +1,27 @@
-import { localizeEnumField } from './utils.js';
+import { resolveLocalizedEnum } from './utils.js';
 
-function localizeSetPrototypeConstants(setPrototype, language) {
+/**
+ * Returns a localized version of the given `ISetPrototype` for the given `language`.
+ *
+ * Localizes the following fields:
+ * - `type` (to a string representation of the `SET_TYPE` enum)
+ * - `weightSelection.method` (to a string representation of the `WEIGHT_SELECTION_METHOD` enum, for Straight Set)
+ * - `drops[].weightSelection.method` (to a string representation of the `WEIGHT_SELECTION_METHOD` enum, for Drop Set)
+ * - `exercises[].weightSelection.method` (to a string representation of the `WEIGHT_SELECTION_METHOD` enum, for Superset)
+ *
+ * @param setPrototype The `ISetPrototype` to localize
+ * @param language The language to localize to
+ * @returns The localized `ILocalizedSetPrototype`
+ */
+function resolveLocalizedSetPrototype(setPrototype, language) {
     const localizedSetPrototype = { ...setPrototype };
     // Localize 'type' field
-    localizedSetPrototype.type = localizeEnumField("SET_TYPE", setPrototype.type, language);
+    localizedSetPrototype.type = resolveLocalizedEnum("SET_TYPE", setPrototype.type, language);
     // Localize 'weightSelection.method' for Straight Set
     if (setPrototype.weightSelection) {
         localizedSetPrototype.weightSelection = {
             ...setPrototype.weightSelection,
-            method: localizeEnumField("WEIGHT_SELECTION_METHOD", setPrototype.weightSelection.method, language),
+            method: resolveLocalizedEnum("WEIGHT_SELECTION_METHOD", setPrototype.weightSelection.method, language),
         };
     }
     // Localize 'drops[].weightSelection.method' for Drop Set
@@ -17,7 +30,7 @@ function localizeSetPrototypeConstants(setPrototype, language) {
             ...drop,
             weightSelection: {
                 ...drop.weightSelection,
-                method: localizeEnumField("WEIGHT_SELECTION_METHOD", drop.weightSelection.method, language),
+                method: resolveLocalizedEnum("WEIGHT_SELECTION_METHOD", drop.weightSelection.method, language),
             },
         }));
     }
@@ -27,12 +40,12 @@ function localizeSetPrototypeConstants(setPrototype, language) {
             ...exercise,
             weightSelection: {
                 ...exercise.weightSelection,
-                method: localizeEnumField("WEIGHT_SELECTION_METHOD", exercise.weightSelection.method, language),
+                method: resolveLocalizedEnum("WEIGHT_SELECTION_METHOD", exercise.weightSelection.method, language),
             },
         }));
     }
     return localizedSetPrototype;
 }
 
-export { localizeSetPrototypeConstants };
+export { resolveLocalizedSetPrototype };
 //# sourceMappingURL=set-prototype.js.map

@@ -2,6 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 import { CATEGORY } from '../constants/category.js';
 import { EQUIPMENT } from '../constants/equipment.js';
 import { FORCE } from '../constants/force.js';
+import { LANGUAGE } from '../constants/language.js';
 import { LEVEL } from '../constants/level.js';
 import { MECHANIC } from '../constants/mechanic.js';
 import { MUSCLE_GROUP } from '../constants/muscle-group.js';
@@ -16,6 +17,12 @@ const ExerciseSchema = new Schema({
             validator: validateLocalizedField,
             message: 'Invalid language key in "name" field.',
         },
+    },
+    originalLanguage: {
+        type: String,
+        enum: Object.keys(LANGUAGE),
+        required: true,
+        default: "en",
     },
     instructions: {
         type: [
