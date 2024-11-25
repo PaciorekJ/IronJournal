@@ -53,17 +53,17 @@ export const createExercise = async (
 
 export const updateExercise = async (
     user: IUser,
-    workoutId: string,
+    exerciseId: string,
     updateData: IExerciseUpdateDTO,
 ): Promise<ServiceResult<IExercise>> => {
     try {
-        const workout = await Exercise.findOne({
-            _id: workoutId,
+        const exercise = await Exercise.findOne({
+            _id: exerciseId,
             userId: user._id,
         });
 
-        if (!workout) {
-            throw json({ error: "Workout not found" }, { status: 404 });
+        if (!exercise) {
+            throw json({ error: "Exercise not found" }, { status: 404 });
         }
 
         const { data: localizedUpdateData, queueTranslationTask } =
@@ -76,7 +76,7 @@ export const updateExercise = async (
 
         // Use findByIdAndUpdate for atomic update
         const updatedExercise = await Exercise.findByIdAndUpdate(
-            workoutId,
+            exerciseId,
             {
                 $set: {
                     ...localizedUpdateData,
@@ -87,7 +87,7 @@ export const updateExercise = async (
         );
 
         if (!updatedExercise) {
-            throw json({ error: "Failed to update workout" }, { status: 500 });
+            throw json({ error: "Failed to update Exercise" }, { status: 500 });
         }
 
         // Cancel any pending translation tasks before queuing a new one
@@ -104,8 +104,38 @@ export const updateExercise = async (
         await queueTranslationTask(updatedExercise._id);
 
         return {
-            message: "Workout updated successfully",
+            message: "Exercise updated successfully",
             data: updatedExercise,
+        };
+    } catch (error) {
+        throw handleError(error);
+    }
+};
+
+export const deleteExercise = async (
+    user: IUser,
+    exerciseId: string,
+): Promise<ServiceResult<undefined>> => {
+    try {
+        const exercise = await Exercise.findOne({ _id: exerciseId }).lean();
+
+        if (!exercise) {
+            throw json({ error: "Exercise not found" }, { status: 404 });
+        }
+
+        await Exercise.deleteOne({ _id: exerciseId });
+
+        await TranslationTask.updateMany(
+            {
+                documentId: exercise._id,
+                documentType: "EXERCISE",
+                status: { $in: ["PENDING", "IN_PROGRESS"] },
+            },
+            { $set: { status: "CANCELED" } },
+        );
+
+        return {
+            message: "Exercise deleted successfully",
         };
     } catch (error) {
         throw handleError(error);

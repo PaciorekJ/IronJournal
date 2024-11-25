@@ -21,16 +21,12 @@ const languages = Object.keys(LANGUAGE);
  * @param translatedLanguage - The language to translate to.
  */
 function resolveLocalizedField(field, originalLanguage, translatedLanguage) {
-    if (Array.isArray(field)) {
-        return field.map((f) => resolveLocalizedField(f, originalLanguage, translatedLanguage));
-    }
     if (!field?.[originalLanguage]) {
-        return field;
+        console.error("No original language found for field", field, originalLanguage, translatedLanguage);
     }
     return {
-        original: field?.[originalLanguage] || "No Original Available",
-        translated: field?.[translatedLanguage] ||
-            "No Translation Available",
+        original: field?.[originalLanguage],
+        translated: field?.[translatedLanguage],
     };
 }
 /**
@@ -67,7 +63,7 @@ const validateLocalizedField = (value) => {
  * @param defaultValue - The default value to assign to each language key. Defaults to an empty string.
  * @returns An object with language keys mapped to the given default value.
  */
-const defaultLocalizedField = (defaultValue = "") => {
+const defaultLocalizedField = (defaultValue) => {
     const defaultObject = {};
     languages.forEach((lang) => {
         defaultObject[lang] = defaultValue;

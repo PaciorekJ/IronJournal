@@ -3,13 +3,13 @@ import {
     INTENSITY_LEVEL,
     IntensityLevelKey,
 } from "../constants/intensity-level";
+import { LANGUAGE, LanguageKey } from "../constants/language";
 import {
     defaultLocalizedField,
     localizedField,
     validateLocalizedField,
 } from "../localization/utils";
 import { ISetPrototype, SetPrototypeSchema } from "./set-prototype";
-import { LanguageKey, LANGUAGE } from "../constants/language";
 
 interface IWorkoutPrototype extends Document {
     _id: mongoose.Schema.Types.ObjectId;
@@ -37,7 +37,7 @@ const WorkoutPrototypeSchema: Schema<IWorkoutPrototype> = new Schema(
         description: {
             type: Map,
             of: String,
-            default: defaultLocalizedField(),
+            default: defaultLocalizedField(""),
             validate: {
                 validator: validateLocalizedField,
                 message: 'Invalid language key in "description" field.',

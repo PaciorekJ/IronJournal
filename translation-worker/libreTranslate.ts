@@ -18,7 +18,21 @@ async function translateText(text: string, source: string, targets: string[]) {
                 q: text,
                 source,
                 target,
+                alternatives: 3,
             });
+
+            const translatedText = response.data.translatedText;
+
+            // Attempt to find a translation that differs from the original
+            if (translatedText === text) {
+                const alternative = response.data.alternatives.find(
+                    (alt: string) => alt !== text,
+                );
+                if (alternative) {
+                    return { [target]: alternative };
+                }
+            }
+
             return { [target]: response.data.translatedText };
         });
 

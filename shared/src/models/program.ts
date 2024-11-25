@@ -55,7 +55,7 @@ const ProgramSchema: Schema<IProgram> = new Schema(
         description: {
             type: Map,
             of: String,
-            default: defaultLocalizedField(),
+            default: defaultLocalizedField(""),
             validate: {
                 validator: validateLocalizedField,
                 message: 'Invalid language key in "description" field.',

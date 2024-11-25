@@ -139,9 +139,16 @@ export function handleError(error: unknown) {
         });
     }
 
+    if (error instanceof Error) {
+        console.error(error);
+        return json({ error: error.message }, { status: 500 });
+    }
+
     if (error instanceof Response) {
         return error;
     }
+
+    console.error(error);
 
     return json({ error: "An unexpected error occurred" }, { status: 500 });
 }

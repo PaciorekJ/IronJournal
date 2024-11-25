@@ -103,11 +103,34 @@ async function startTranslationWorker() {
                         [sourceLanguage]: fieldValue,
                     };
 
-                    const translations = await translateText(
-                        fieldValue,
-                        sourceLanguage,
-                        targetLanguages,
-                    );
+                    let translations: any = {};
+                    if (Array.isArray(fieldValue)) {
+                        const rawTranslations = await Promise.all(
+                            fieldValue.map((value) =>
+                                translateText(
+                                    value,
+                                    sourceLanguage,
+                                    targetLanguages,
+                                ),
+                            ),
+                        );
+
+                        translations = targetLanguages.reduce(
+                            (acc: any, targetLang: string) => {
+                                acc[targetLang] = rawTranslations.map(
+                                    (translation) => translation[targetLang],
+                                );
+                                return acc;
+                            },
+                            {},
+                        );
+                    } else {
+                        translations = await translateText(
+                            fieldValue,
+                            sourceLanguage,
+                            targetLanguages,
+                        );
+                    }
 
                     for (const targetLanguage of targetLanguages) {
                         updates[field][targetLanguage] =

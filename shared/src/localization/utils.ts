@@ -39,22 +39,19 @@ export function resolveLocalizedField(
     field: { [key: string]: string },
     originalLanguage: LanguageKey,
     translatedLanguage: LanguageKey,
-): IResolvedField | string | IResolvedField[] | string[] | any {
-    if (Array.isArray(field)) {
-        return field.map((f) =>
-            resolveLocalizedField(f, originalLanguage, translatedLanguage),
+): IResolvedField | string {
+    if (!field?.[originalLanguage]) {
+        console.error(
+            "No original language found for field",
+            field,
+            originalLanguage,
+            translatedLanguage,
         );
     }
 
-    if (!field?.[originalLanguage]) {
-        return field;
-    }
-
     return {
-        original: field?.[originalLanguage] || "No Original Available",
-        translated:
-            field?.[translatedLanguage as LanguageKey] ||
-            "No Translation Available",
+        original: field?.[originalLanguage],
+        translated: field?.[translatedLanguage],
     };
 }
 
@@ -100,8 +97,8 @@ export const validateLocalizedField = (value: Map<string, string>) => {
  * @param defaultValue - The default value to assign to each language key. Defaults to an empty string.
  * @returns An object with language keys mapped to the given default value.
  */
-export const defaultLocalizedField = (defaultValue = "") => {
-    const defaultObject: Record<string, string> = {};
+export const defaultLocalizedField = (defaultValue: string | string[]) => {
+    const defaultObject: Record<string, string | string[]> = {};
 
     languages.forEach((lang) => {
         defaultObject[lang] = defaultValue;

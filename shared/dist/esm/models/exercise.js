@@ -25,19 +25,14 @@ const ExerciseSchema = new Schema({
         default: "en",
     },
     instructions: {
-        type: [
-            {
-                type: Map,
-                of: String,
-                required: true,
-                default: defaultLocalizedField(),
-                validate: {
-                    validator: validateLocalizedField,
-                    message: 'Invalid language key in "instructions" field.',
-                },
-            },
-        ],
+        type: Map,
+        of: [String],
         required: true,
+        default: defaultLocalizedField([""]),
+        validate: {
+            validator: validateLocalizedField,
+            message: 'Invalid language key in "instructions" field.',
+        },
     },
     level: { type: String, enum: Object.keys(LEVEL), required: true },
     primaryMuscles: {

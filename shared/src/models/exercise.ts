@@ -16,7 +16,7 @@ interface IExercise extends Document {
     _id: mongoose.Schema.Types.ObjectId;
     name: localizedField<string>;
     originalLanguage: LanguageKey;
-    instructions: localizedField<string>[];
+    instructions: localizedField<string[]>;
     level: LevelKey;
     force?: ForceKey;
     mechanic?: MechanicKey;
@@ -45,20 +45,16 @@ const ExerciseSchema: Schema<IExercise> = new Schema({
         default: "en",
     },
     instructions: {
-        type: [
-            {
-                type: Map,
-                of: String,
-                required: true,
-                default: defaultLocalizedField(),
-                validate: {
-                    validator: validateLocalizedField,
-                    message: 'Invalid language key in "instructions" field.',
-                },
-            },
-        ],
+        type: Map,
+        of: [String],
         required: true,
+        default: defaultLocalizedField([""]),
+        validate: {
+            validator: validateLocalizedField,
+            message: 'Invalid language key in "instructions" field.',
+        },
     },
+
     level: { type: String, enum: Object.keys(LEVEL), required: true },
     primaryMuscles: {
         type: [String],
