@@ -491,7 +491,7 @@ SetSchema.pre<ISet>("validate", function (next) {
     }
 
     // Ensure only allowed fields are present
-    const keys = Object.keys(this);
+    const keys = Object.keys(this.toObject());
     const unexpectedFields = keys.filter((key) => !allowedFields.includes(key));
     if (unexpectedFields.length > 0) {
         return next(
