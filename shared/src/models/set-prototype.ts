@@ -6,170 +6,301 @@ import {
 } from "../constants/weight-selection";
 import { IExercise } from "./exercise";
 
-export type NumberOrRange = number | [number, number];
+type NumberOrRange = number | [number, number];
 
-export interface Tempo {
+interface ITempo {
     eccentric: number;
     bottomPause: number;
     concentric: number;
     topPause: number;
 }
 
-interface ISetPrototype {
-    type: SetTypeKey;
-    exerciseId: IExercise["_id"];
-    alternatives?: IExercise["_id"][];
-    restDurationInSeconds?: number;
-
-    // Fields specific to Straight Set
-    reps?: NumberOrRange;
-    sets?: NumberOrRange;
-    tempo?: Tempo;
-    weightSelection?: {
-        method: WeightSelectionMethodKey;
-        value: number;
-    };
-
-    // Fields specific to Drop Set
-    drops?: {
-        tempo?: Tempo;
-        weightSelection: {
-            method: WeightSelectionMethodKey;
-            value: number;
-        };
-        reps: NumberOrRange;
-    }[];
-
-    // Fields specific to Superset
-    exercises?: {
-        tempo?: Tempo;
-        exercise: IExercise["_id"];
-        reps: NumberOrRange;
-        restDurationInSeconds?: number;
-        weightSelection: {
-            method: WeightSelectionMethodKey;
-            value: number;
-        };
-    }[];
+interface IWeightSelection {
+    method: WeightSelectionMethodKey;
+    value: number;
 }
 
-const SetPrototypeSchema = new Schema<ISetPrototype>(
+interface IStraightSet {
+    exercise: IExercise["_id"];
+    reps: NumberOrRange;
+    sets: NumberOrRange;
+    tempo?: ITempo;
+    weightSelection: IWeightSelection;
+}
+
+interface IDrop {
+    loadReductionPercent: number;
+    tempo?: ITempo;
+    assisted?: boolean;
+}
+
+interface IDropSet {
+    exercise: IExercise["_id"];
+    initialWeightSelection: IWeightSelection;
+    drops: IDrop[];
+}
+
+interface ISupersetExercise {
+    exercise: IExercise["_id"];
+    tempo?: ITempo;
+    reps: NumberOrRange;
+    restDurationInSeconds?: number;
+    weightSelection: IWeightSelection;
+}
+
+interface ISuperset {
+    exercises: ISupersetExercise[];
+}
+
+interface ISet {
+    type: SetTypeKey;
+    restDurationInSeconds?: number;
+
+    straightSet?: IStraightSet;
+    dropSet?: IDropSet;
+    superSet?: ISuperset;
+}
+
+// NumberOrRange Schema
+const NumberOrRangeSchema = new Schema<number | [number, number]>(
     {
-        type: { type: String, enum: Object.keys(SET_TYPE), required: true },
-        exerciseId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Exercise",
-        },
-        alternatives: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Exercise",
-                default: [],
-            },
-        ],
-        restDurationInSeconds: { type: Number },
-
-        // Fields specific to Straight Set
-        reps: { type: Schema.Types.Mixed },
-        sets: { type: Schema.Types.Mixed },
-        tempo: {
-            eccentric: { type: Number },
-            bottomPause: { type: Number },
-            concentric: { type: Number },
-            topPause: { type: Number },
-        },
-        weightSelection: {
-            method: {
-                type: String,
-                enum: Object.keys(WEIGHT_SELECTION_METHOD),
-            },
-            value: { type: Number },
-        },
-
-        // Fields specific to Drop Set
-        drops: [
-            {
-                tempo: {
-                    eccentric: { type: Number },
-                    bottomPause: { type: Number },
-                    concentric: { type: Number },
-                    topPause: { type: Number },
-                },
-                weightSelection: {
-                    method: {
-                        type: String,
-                        enum: Object.keys(WEIGHT_SELECTION_METHOD),
-                    },
-                    value: { type: Number },
-                },
-                reps: { type: Schema.Types.Mixed },
-            },
-        ],
-
-        // Fields specific to Superset
-        exercises: [
-            {
-                tempo: {
-                    eccentric: { type: Number },
-                    bottomPause: { type: Number },
-                    concentric: { type: Number },
-                    topPause: { type: Number },
-                },
-                exercise: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: "Exercise",
-                },
-                reps: { type: Schema.Types.Mixed },
-                restDurationInSeconds: { type: Number },
-                weightSelection: {
-                    method: {
-                        type: String,
-                        enum: Object.keys(WEIGHT_SELECTION_METHOD),
-                    },
-                    value: { type: Number },
-                },
-            },
-        ],
+        value: { type: Schema.Types.Mixed, required: true },
     },
     { _id: false },
 );
 
-SetPrototypeSchema.pre<ISetPrototype>("validate", function (next) {
-    switch (SET_TYPE[this.type]) {
-        case SET_TYPE.SET_PROTOTYPE_STRAIGHT_SET:
-            if (!this.reps || !this.sets || !this.weightSelection) {
+NumberOrRangeSchema.pre("validate", function (next) {
+    const value = this.value;
+    if (typeof value === "number") return next();
+    if (
+        Array.isArray(value) &&
+        value.length === 2 &&
+        value[0] <= value[1] && // Validate ascending order
+        value.every((v) => typeof v === "number")
+    ) {
+        return next();
+    }
+    return next(
+        new Error(
+            "Value must be a single number or an array of two numbers in ascending order.",
+        ),
+    );
+});
+
+// Tempo Schema
+const TempoSchema = new Schema<ITempo>(
+    {
+        eccentric: { type: Number, min: 0, required: true },
+        bottomPause: { type: Number, min: 0, required: true },
+        concentric: { type: Number, min: 0, required: true },
+        topPause: { type: Number, min: 0, required: true },
+    },
+    { _id: false },
+);
+
+// Weight Selection Schema
+const WeightSelectionSchema = new Schema<IWeightSelection>(
+    {
+        method: {
+            type: String,
+            enum: Object.keys(WEIGHT_SELECTION_METHOD),
+            required: true,
+        },
+        value: { type: Number, required: true },
+    },
+    { _id: false },
+);
+
+// Straight Set Schema
+const StraightSetSchema = new Schema<IStraightSet>(
+    {
+        exercise: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Exercise",
+            required: true,
+        },
+        reps: { type: NumberOrRangeSchema, required: true },
+        sets: { type: NumberOrRangeSchema, required: true },
+        tempo: { type: TempoSchema },
+        weightSelection: { type: WeightSelectionSchema, required: true },
+    },
+    { _id: false },
+);
+
+// Drop Schema
+const DropSchema = new Schema<IDrop>(
+    {
+        loadReductionPercent: {
+            type: Number,
+            min: 0,
+            max: 100,
+            required: true,
+        },
+        tempo: { type: TempoSchema },
+        assisted: { type: Boolean, default: false },
+    },
+    { _id: false },
+);
+
+// Drop Set Schema
+const DropSetSchema = new Schema<IDropSet>(
+    {
+        exercise: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Exercise",
+            required: true,
+        },
+        initialWeightSelection: { type: WeightSelectionSchema, required: true },
+        drops: { type: [DropSchema], required: true },
+    },
+    { _id: false },
+);
+
+// Superset Exercise Schema
+const SupersetExerciseSchema = new Schema<ISupersetExercise>(
+    {
+        exercise: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Exercise",
+            required: true,
+        },
+        reps: { type: NumberOrRangeSchema, required: true },
+        tempo: { type: TempoSchema },
+        weightSelection: { type: WeightSelectionSchema, required: true },
+    },
+    { _id: false },
+);
+
+// Superset Schema
+const SupersetSchema = new Schema<ISuperset>(
+    {
+        exercises: { type: [SupersetExerciseSchema], required: true },
+    },
+    { _id: false },
+);
+
+// Main Set Schema
+const SetSchema = new Schema<ISet>(
+    {
+        type: { type: String, enum: Object.keys(SET_TYPE), required: true },
+        restDurationInSeconds: { type: Number, default: 0 },
+
+        // Subfields for specific set types
+        straightSet: { type: StraightSetSchema },
+        dropSet: { type: DropSetSchema },
+        superSet: { type: SupersetSchema },
+    },
+    { _id: false },
+);
+
+SetSchema.pre<ISet>("validate", function (next) {
+    // Define allowed fields based on the set type
+    const allowedFields = ["type", "restDurationInSeconds"];
+
+    switch (this.type) {
+        case "SET_PROTOTYPE_STRAIGHT_SET":
+            if (!this.straightSet) {
                 return next(
                     new Error(
-                        "Straight Set must have reps, sets, and weightSelection.",
+                        "Straight Set is missing its 'straightSet' data.",
+                    ),
+                );
+            }
+            // Ensure only 'straightSet' is present
+            allowedFields.push("straightSet");
+            if (this.dropSet || this.superSet) {
+                return next(
+                    new Error(
+                        "Straight Set should not have 'dropSet' or 'superSet' data.",
                     ),
                 );
             }
             break;
-        case SET_TYPE.SET_PROTOTYPE_DROP_SET:
+
+        case "SET_PROTOTYPE_DROP_SET":
             if (
-                !this.drops ||
-                !Array.isArray(this.drops) ||
-                this.drops.length === 0
-            ) {
-                return next(new Error("Drop Set must have at least one drop."));
-            }
-            break;
-        case SET_TYPE.SET_PROTOTYPE_SUPER_SET:
-            if (
-                !this.exercises ||
-                !Array.isArray(this.exercises) ||
-                this.exercises.length === 0
+                !this.dropSet ||
+                !this.dropSet.drops ||
+                this.dropSet.drops.length === 0
             ) {
                 return next(
-                    new Error("Superset must have at least one exercise."),
+                    new Error(
+                        "Drop Set is missing drops. Ensure at least one drop is defined in 'dropSet.drops'.",
+                    ),
+                );
+            }
+            // Ensure only 'dropSet' is present
+            allowedFields.push("dropSet");
+            if (this.straightSet || this.superSet) {
+                return next(
+                    new Error(
+                        "Drop Set should not have 'straightSet' or 'superSet' data.",
+                    ),
                 );
             }
             break;
+
+        case "SET_PROTOTYPE_SUPER_SET":
+            if (
+                !this.superSet ||
+                !this.superSet.exercises ||
+                this.superSet.exercises.length === 0
+            ) {
+                return next(
+                    new Error(
+                        "Superset is missing exercises. Ensure at least one exercise is defined in 'superSet.exercises'.",
+                    ),
+                );
+            }
+            // Ensure only 'superSet' is present
+            allowedFields.push("superSet");
+            if (this.straightSet || this.dropSet) {
+                return next(
+                    new Error(
+                        "Superset should not have 'straightSet' or 'dropSet' data.",
+                    ),
+                );
+            }
+            break;
+
         default:
-            return next(new Error("Invalid set type."));
+            return next(
+                new Error(
+                    `Invalid set type: ${
+                        this.type
+                    }. Ensure 'type' is one of ${Object.keys(SET_TYPE).join(
+                        ", ",
+                    )}.`,
+                ),
+            );
     }
+
+    // Check for unexpected fields
+    const keys = Object.keys(this);
+    const unexpectedFields = keys.filter((key) => !allowedFields.includes(key));
+    if (unexpectedFields.length > 0) {
+        return next(
+            new Error(
+                `Unexpected fields for set type '${
+                    this.type
+                }': ${unexpectedFields.join(", ")}.`,
+            ),
+        );
+    }
+
     next();
 });
 
-export { SetPrototypeSchema };
-export type { ISetPrototype };
+export { SetSchema };
+export type {
+    IDrop,
+    IDropSet,
+    ISet,
+    IStraightSet,
+    ISuperset,
+    ISupersetExercise,
+    ITempo,
+    IWeightSelection,
+};
+
+// TODO: Add Pyramid Sets, Rest-Pause Sets, and Circuit Sets, Isometric Sets, AMRAP Sets

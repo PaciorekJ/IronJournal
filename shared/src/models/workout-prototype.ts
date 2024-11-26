@@ -9,14 +9,14 @@ import {
     localizedField,
     validateLocalizedField,
 } from "../localization/utils";
-import { ISetPrototype, SetPrototypeSchema } from "./set-prototype";
+import { ISet, SetSchema } from "./set-prototype";
 
 interface IWorkoutPrototype extends Document {
     _id: mongoose.Schema.Types.ObjectId;
     name: localizedField<string>;
     originalLanguage: LanguageKey;
     description?: localizedField<string>;
-    sets: ISetPrototype[];
+    sets: ISet[];
     userId: mongoose.Schema.Types.ObjectId;
     intensityLevel?: IntensityLevelKey;
     createdAt: Date;
@@ -47,10 +47,9 @@ const WorkoutPrototypeSchema: Schema<IWorkoutPrototype> = new Schema(
             type: String,
             enum: Object.keys(LANGUAGE),
             required: true,
-            default: "en",
         },
         sets: {
-            type: [SetPrototypeSchema],
+            type: [SetSchema],
             required: true,
         },
         userId: {
