@@ -7,7 +7,7 @@ import {
 import { IExercise } from "./exercise";
 
 // NumberOrRange type
-type NumberOrRange = number | [number, number];
+export type NumberOrRange = number | [number, number];
 
 // Interfaces
 
@@ -29,7 +29,6 @@ interface IWeightSelection {
 interface IStraightSetEntry {
     reps: NumberOrRange;
     weightSelection?: IWeightSelection;
-    tempo?: ITempo;
 }
 
 // Straight Set interface
@@ -41,7 +40,6 @@ interface IStraightSet {
 // Drop Set Entry interface
 interface IDropSetEntry {
     loadReductionPercent: number;
-    tempo?: ITempo;
     assisted?: boolean;
 }
 
@@ -61,16 +59,14 @@ interface IRestPauseSetEntry {
 // Rest-Pause Set interface
 interface IRestPauseSet {
     exercise: IExercise["_id"];
-    sets: IRestPauseSetEntry[];
     weightSelection?: IWeightSelection;
-    tempo?: ITempo;
+    sets: IRestPauseSetEntry[];
 }
 
 // Pyramid Set Entry interface
 interface IPyramidSetEntry {
     reps: NumberOrRange;
     weightSelection?: IWeightSelection;
-    tempo?: ITempo;
 }
 
 // Pyramid Set interface
@@ -106,13 +102,12 @@ interface IAmrapSet {
 // Superset interface
 interface ISuperset {
     sets: ISet[];
-    rounds: NumberOrRange;
 }
 
 // Main Set interface
 interface ISet {
     type: SetTypeKey;
-    restDurationInSeconds?: NumberOrRange;
+    tempo?: ITempo;
 
     straightSet?: IStraightSet;
     dropSet?: IDropSet;
@@ -178,7 +173,6 @@ const StraightSetEntrySchema = new Schema<IStraightSetEntry>(
     {
         reps: { type: Schema.Types.Mixed, required: true },
         weightSelection: { type: WeightSelectionSchema },
-        tempo: { type: TempoSchema },
     },
     { _id: false },
 );
@@ -208,7 +202,6 @@ const DropSetEntrySchema = new Schema<IDropSetEntry>(
             max: 100,
             required: true,
         },
-        tempo: { type: TempoSchema },
         assisted: { type: Boolean, default: false },
     },
     { _id: false },
@@ -251,7 +244,6 @@ const RestPauseSetSchema = new Schema<IRestPauseSet>(
         },
         sets: { type: [RestPauseSetEntrySchema], required: true },
         weightSelection: { type: WeightSelectionSchema },
-        tempo: { type: TempoSchema },
     },
     { _id: false },
 );
@@ -261,7 +253,6 @@ const PyramidSetEntrySchema = new Schema<IPyramidSetEntry>(
     {
         reps: { type: Schema.Types.Mixed, required: true },
         weightSelection: { type: WeightSelectionSchema },
-        tempo: { type: TempoSchema },
     },
     { _id: false },
 );
@@ -341,18 +332,16 @@ const SupersetSchema = new Schema<ISuperset>(
             ],
             required: true,
         },
-        rounds: { type: Schema.Types.Mixed, required: true },
     },
     { _id: false },
 );
 
-// Set the path for 'rounds' to use NumberOrRangeSchema
-SupersetSchema.path("rounds", NumberOrRangeSchema);
+// Note: Removed 'rounds' field as it's not present in the ISuperset interface
 
 // Main Set Schema
 const SetSchemaFields = {
     type: { type: String, enum: Object.values(SET_TYPE), required: true },
-    restDurationInSeconds: { type: Schema.Types.Mixed },
+    tempo: { type: TempoSchema },
     straightSet: { type: StraightSetSchema },
     dropSet: { type: DropSetSchema },
     restPauseSet: { type: RestPauseSetSchema },
@@ -364,16 +353,13 @@ const SetSchemaFields = {
 
 const SetSchema = new Schema<ISet>(SetSchemaFields, { _id: false });
 
-// Set the path for 'restDurationInSeconds' to use NumberOrRangeSchema
-SetSchema.path("restDurationInSeconds", NumberOrRangeSchema);
-
-// Replace placeholders to resolve circular references
+// Resolve circular references
 SupersetSchema.path("sets", [SetSchema]);
 SetSchema.add({ superSet: { type: SupersetSchema } });
 
 // Validation Logic
 SetSchema.pre<ISet>("validate", function (next) {
-    const allowedFields = ["type", "restDurationInSeconds"];
+    const allowedFields = ["type", "tempo"];
     const setType = this.type;
 
     switch (setType) {

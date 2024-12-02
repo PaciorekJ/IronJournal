@@ -6,6 +6,7 @@ import {
 } from "@paciorekj/iron-journal-shared/constants";
 import { z } from "zod";
 
+// Common types and constants
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 const objectIdSchema = z.string().regex(objectIdRegex, "Invalid ObjectId");
 
@@ -16,17 +17,11 @@ const numberOrRangeSchema = z
     ])
     .refine(
         (val) => {
-            if (typeof val === "number") {
-                return val > 0;
-            } else if (Array.isArray(val)) {
-                return val[0] > 0 && val[1] > 0 && val[0] <= val[1];
-            }
+            if (typeof val === "number") return true;
+            if (Array.isArray(val)) return val[0] <= val[1];
             return false;
         },
-        {
-            message:
-                "Value must be a positive number or a range of positive numbers where the first is less than or equal to the second",
-        },
+        { message: "Must be a positive number or an ascending range." },
     );
 
 const tempoSchema = z
@@ -51,95 +46,168 @@ const weightSelectionSchema = z
     })
     .strict();
 
-const baseSetPrototypeSchema = z
-    .object({
-        type: z.enum(Object.keys(SET_TYPE) as [SetTypeKey, ...SetTypeKey[]]),
-        exerciseId: objectIdSchema.optional(),
-        alternatives: z.array(objectIdSchema).optional().default([]),
-        restDurationInSeconds: z.number().nonnegative().optional(),
-    })
-    .strict();
+const straightSetEntrySchema = z.object({
+    reps: numberOrRangeSchema,
+    weightSelection: weightSelectionSchema.optional(),
+});
 
-const setPrototypeSchema = baseSetPrototypeSchema
-    .extend({
-        // Fields for Straight Set
-        reps: numberOrRangeSchema.optional(),
-        sets: numberOrRangeSchema.optional(),
-        tempo: tempoSchema.optional(),
-        weightSelection: weightSelectionSchema.optional(),
+const dropSetEntrySchema = z.object({
+    loadReductionPercent: z.number().min(0).max(100),
+    assisted: z.boolean().optional(),
+});
 
-        // Fields for Drop Set
-        drops: z
-            .array(
-                z.object({
-                    tempo: tempoSchema.optional(),
-                    weightSelection: weightSelectionSchema.optional(),
-                    reps: numberOrRangeSchema,
-                }),
-            )
-            .optional(),
+const restPauseSetEntrySchema = z.object({
+    reps: numberOrRangeSchema,
+    restDurationInSeconds: numberOrRangeSchema,
+});
 
-        // Fields for Superset
-        exercises: z
-            .array(
-                z.object({
-                    tempo: tempoSchema.optional(),
-                    exerciseId: objectIdSchema,
-                    reps: numberOrRangeSchema,
-                    restDurationInSeconds: z.number().nonnegative().optional(),
-                    weightSelection: weightSelectionSchema.optional(),
-                }),
-            )
-            .optional(),
-    })
-    .strict();
+const pyramidSetEntrySchema = z.object({
+    reps: numberOrRangeSchema,
+    weightSelection: weightSelectionSchema.optional(),
+});
+
+const isometricSetEntrySchema = z.object({
+    durationInSeconds: numberOrRangeSchema,
+    weightSelection: weightSelectionSchema.optional(),
+});
+
+const amrapSetEntrySchema = z.object({
+    timeFrameInSeconds: numberOrRangeSchema.optional(),
+    weightSelection: weightSelectionSchema.optional(),
+});
+
+// Define setPrototypeSchema initially without recursion
+const baseSetPrototypeSchema = z.object({
+    type: z.enum(Object.keys(SET_TYPE) as [SetTypeKey, ...SetTypeKey[]]),
+    tempo: tempoSchema.optional(),
+
+    straightSet: z
+        .object({
+            exercise: objectIdSchema,
+            sets: z.array(straightSetEntrySchema),
+        })
+        .optional(),
+
+    dropSet: z
+        .object({
+            exercise: objectIdSchema,
+            initialWeightSelection: weightSelectionSchema,
+            sets: z.array(dropSetEntrySchema),
+        })
+        .optional(),
+
+    restPauseSet: z
+        .object({
+            exercise: objectIdSchema,
+            weightSelection: weightSelectionSchema.optional(),
+            sets: z.array(restPauseSetEntrySchema),
+        })
+        .optional(),
+
+    pyramidSet: z
+        .object({
+            exercise: objectIdSchema,
+            sets: z.array(pyramidSetEntrySchema),
+        })
+        .optional(),
+
+    isometricSet: z
+        .object({
+            exercise: objectIdSchema,
+            sets: z.array(isometricSetEntrySchema),
+        })
+        .optional(),
+
+    amrapSet: z
+        .object({
+            exercise: objectIdSchema,
+            sets: z.array(amrapSetEntrySchema),
+        })
+        .optional(),
+});
+
+// Extend base schema with recursive superset
+const setPrototypeSchema = baseSetPrototypeSchema.extend({
+    superSet: z
+        .object({
+            sets: z.array(z.lazy(() => baseSetPrototypeSchema)),
+        })
+        .optional(),
+});
 
 export const createSetPrototypeSchema = setPrototypeSchema.superRefine(
     (data, ctx) => {
         switch (SET_TYPE[data.type]) {
-            case SET_TYPE.SET_PROTOTYPE_STRAIGHT_SET:
-                if (!data.exerciseId) {
-                    ctx.addIssue({
-                        code: z.ZodIssueCode.custom,
-                        message: "Straight Set must have 'exerciseId'.",
-                    });
-                }
-                if (data.reps === undefined || data.sets === undefined) {
+            case SET_TYPE.STRAIGHT_SET:
+                if (!data.straightSet?.exercise || !data.straightSet?.sets) {
                     ctx.addIssue({
                         code: z.ZodIssueCode.custom,
                         message:
-                            "Straight Set must have 'reps', 'sets', and 'weightSelection'.",
+                            "Straight Set must have 'exercise' and 'sets'.",
                     });
                 }
                 break;
-            case SET_TYPE.SET_PROTOTYPE_DROP_SET:
-                if (!data.exerciseId) {
-                    ctx.addIssue({
-                        code: z.ZodIssueCode.custom,
-                        message: "Drop Set must have 'exerciseId'.",
-                    });
-                }
-                if (!data.drops || data.drops.length === 0) {
+            case SET_TYPE.DROP_SET:
+                if (
+                    !data.dropSet?.exercise ||
+                    !data.dropSet?.initialWeightSelection ||
+                    !data.dropSet?.sets
+                ) {
                     ctx.addIssue({
                         code: z.ZodIssueCode.custom,
                         message:
-                            "Drop Set must have at least one 'drop' with 'reps' and 'weightSelection'.",
+                            "Drop Set must have 'exercise', 'initialWeightSelection', and 'sets'.",
                     });
                 }
                 break;
-            case SET_TYPE.SET_PROTOTYPE_SUPER_SET:
-                if (!data.exercises || data.exercises.length === 0) {
+            case SET_TYPE.REST_PAUSE_SET:
+                if (!data.restPauseSet?.exercise || !data.restPauseSet?.sets) {
                     ctx.addIssue({
                         code: z.ZodIssueCode.custom,
                         message:
-                            "Superset must have at least one 'exercise' with 'reps' and 'weightSelection'.",
+                            "Rest-Pause Set must have 'exercise' and 'sets'.",
+                    });
+                }
+                break;
+            case SET_TYPE.PYRAMID_SET:
+            case SET_TYPE.REVERSE_PYRAMID_SET:
+            case SET_TYPE.NON_LINEAR_PYRAMID_SET:
+                if (!data.pyramidSet?.exercise || !data.pyramidSet?.sets) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message: "Pyramid Set must have 'exercise' and 'sets'.",
+                    });
+                }
+                break;
+            case SET_TYPE.ISOMETRIC_SET:
+                if (!data.isometricSet?.exercise || !data.isometricSet?.sets) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message:
+                            "Isometric Set must have 'exercise' and 'sets'.",
+                    });
+                }
+                break;
+            case SET_TYPE.AMRAP_SET:
+                if (!data.amrapSet?.exercise || !data.amrapSet?.sets) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message: "AMRAP Set must have 'exercise' and 'sets'.",
+                    });
+                }
+                break;
+            case SET_TYPE.SUPER_SET:
+                if (!data.superSet?.sets || data.superSet?.sets.length === 0) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message: "Superset must have at least one 'set'.",
                     });
                 }
                 break;
             default:
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
-                    message: "Invalid 'type' field.",
+                    message: `Invalid set type '${data.type}'.`,
                 });
                 break;
         }

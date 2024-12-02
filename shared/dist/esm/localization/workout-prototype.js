@@ -1,4 +1,4 @@
-import { resolveLocalizedSetPrototype } from './set-prototype.js';
+import { resolveLocalizedSet } from './set-prototype.js';
 import { resolveLocalizedField, resolveLocalizedEnum } from './utils.js';
 
 function resolveLocalizedWorkout(workout, language) {
@@ -11,7 +11,7 @@ function resolveLocalizedWorkout(workout, language) {
         localizedWorkout.intensityLevel = resolveLocalizedEnum("INTENSITY_LEVEL", workout.intensityLevel, language);
     }
     // Localize 'sets' array
-    localizedWorkout.sets = workout.sets.map((set) => resolveLocalizedSetPrototype(set, language));
+    localizedWorkout.sets = workout.sets.map((set) => resolveLocalizedSet(set, language));
     return localizedWorkout;
 }
 

@@ -2,7 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 import { INTENSITY_LEVEL } from '../constants/intensity-level.js';
 import { LANGUAGE } from '../constants/language.js';
 import { validateLocalizedField, defaultLocalizedField } from '../localization/utils.js';
-import { SetPrototypeSchema } from './set-prototype.js';
+import { SetSchema } from './set-prototype.js';
 
 const WorkoutPrototypeSchema = new Schema({
     name: {
@@ -27,10 +27,9 @@ const WorkoutPrototypeSchema = new Schema({
         type: String,
         enum: Object.keys(LANGUAGE),
         required: true,
-        default: "en",
     },
     sets: {
-        type: [SetPrototypeSchema],
+        type: [SetSchema],
         required: true,
     },
     userId: {

@@ -1,51 +1,118 @@
 import { resolveLocalizedEnum } from './utils.js';
 
 /**
- * Returns a localized version of the given `ISetPrototype` for the given `language`.
+ * Returns a localized version of the given `ISet` for the given `language`.
  *
  * Localizes the following fields:
  * - `type` (to a string representation of the `SET_TYPE` enum)
- * - `weightSelection.method` (to a string representation of the `WEIGHT_SELECTION_METHOD` enum, for Straight Set)
- * - `drops[].weightSelection.method` (to a string representation of the `WEIGHT_SELECTION_METHOD` enum, for Drop Set)
- * - `exercises[].weightSelection.method` (to a string representation of the `WEIGHT_SELECTION_METHOD` enum, for Superset)
+ * - `weightSelection.method` fields in all set types where applicable
  *
- * @param setPrototype The `ISetPrototype` to localize
+ * @param set The `ISet` to localize
  * @param language The language to localize to
  * @returns The localized `ILocalizedSetPrototype`
  */
-function resolveLocalizedSetPrototype(setPrototype, language) {
-    const localizedSetPrototype = { ...setPrototype };
+function resolveLocalizedSet(set, language) {
+    const localizedSetPrototype = { ...set };
     // Localize 'type' field
-    localizedSetPrototype.type = resolveLocalizedEnum("SET_TYPE", setPrototype.type, language);
-    // Localize 'weightSelection.method' for Straight Set
-    if (setPrototype.weightSelection) {
-        localizedSetPrototype.weightSelection = {
-            ...setPrototype.weightSelection,
-            method: resolveLocalizedEnum("WEIGHT_SELECTION_METHOD", setPrototype.weightSelection.method, language),
+    localizedSetPrototype.type = resolveLocalizedEnum("SET_TYPE", set.type, language);
+    // Localize 'tempo' if present (assuming no localization needed for numerical values)
+    if (set.tempo) {
+        localizedSetPrototype.tempo = { ...set.tempo };
+    }
+    // Handle Straight Set
+    if (set.straightSet) {
+        localizedSetPrototype.straightSet = {
+            ...set.straightSet,
+            sets: set.straightSet.sets.map((entry) => ({
+                ...entry,
+                weightSelection: entry.weightSelection
+                    ? {
+                        ...entry.weightSelection,
+                        method: resolveLocalizedEnum("WEIGHT_SELECTION_METHOD", entry.weightSelection.method, language),
+                    }
+                    : undefined,
+            })),
         };
     }
-    // Localize 'drops[].weightSelection.method' for Drop Set
-    if (setPrototype.drops) {
-        localizedSetPrototype.drops = setPrototype.drops.map((drop) => ({
-            ...drop,
-            weightSelection: {
-                ...drop.weightSelection,
-                method: resolveLocalizedEnum("WEIGHT_SELECTION_METHOD", drop.weightSelection.method, language),
+    // Handle Drop Set
+    if (set.dropSet) {
+        localizedSetPrototype.dropSet = {
+            ...set.dropSet,
+            initialWeightSelection: {
+                ...set.dropSet.initialWeightSelection,
+                method: resolveLocalizedEnum("WEIGHT_SELECTION_METHOD", set.dropSet.initialWeightSelection.method, language),
             },
-        }));
+            // Entries in Drop Set do not have weightSelection
+            sets: set.dropSet.sets.map((entry) => ({ ...entry })),
+        };
     }
-    // Localize 'exercises[].weightSelection.method' for Superset
-    if (setPrototype.exercises) {
-        localizedSetPrototype.exercises = setPrototype.exercises.map((exercise) => ({
-            ...exercise,
-            weightSelection: {
-                ...exercise.weightSelection,
-                method: resolveLocalizedEnum("WEIGHT_SELECTION_METHOD", exercise.weightSelection.method, language),
-            },
-        }));
+    // Handle Rest-Pause Set
+    if (set.restPauseSet) {
+        localizedSetPrototype.restPauseSet = {
+            ...set.restPauseSet,
+            weightSelection: set.restPauseSet.weightSelection
+                ? {
+                    ...set.restPauseSet.weightSelection,
+                    method: resolveLocalizedEnum("WEIGHT_SELECTION_METHOD", set.restPauseSet.weightSelection.method, language),
+                }
+                : undefined,
+            sets: set.restPauseSet.sets.map((entry) => ({ ...entry })),
+        };
+    }
+    // Handle Pyramid Set
+    if (set.pyramidSet) {
+        localizedSetPrototype.pyramidSet = {
+            ...set.pyramidSet,
+            sets: set.pyramidSet.sets.map((entry) => ({
+                ...entry,
+                weightSelection: entry.weightSelection
+                    ? {
+                        ...entry.weightSelection,
+                        method: resolveLocalizedEnum("WEIGHT_SELECTION_METHOD", entry.weightSelection.method, language),
+                    }
+                    : undefined,
+            })),
+        };
+    }
+    // Handle Isometric Set
+    if (set.isometricSet) {
+        localizedSetPrototype.isometricSet = {
+            ...set.isometricSet,
+            sets: set.isometricSet.sets.map((entry) => ({
+                ...entry,
+                weightSelection: entry.weightSelection
+                    ? {
+                        ...entry.weightSelection,
+                        method: resolveLocalizedEnum("WEIGHT_SELECTION_METHOD", entry.weightSelection.method, language),
+                    }
+                    : undefined,
+            })),
+        };
+    }
+    // Handle AMRAP Set
+    if (set.amrapSet) {
+        localizedSetPrototype.amrapSet = {
+            ...set.amrapSet,
+            sets: set.amrapSet.sets.map((entry) => ({
+                ...entry,
+                weightSelection: entry.weightSelection
+                    ? {
+                        ...entry.weightSelection,
+                        method: resolveLocalizedEnum("WEIGHT_SELECTION_METHOD", entry.weightSelection.method, language),
+                    }
+                    : undefined,
+            })),
+        };
+    }
+    // Handle Superset
+    if (set.superSet) {
+        localizedSetPrototype.superSet = {
+            ...set.superSet,
+            sets: set.superSet.sets.map((subSet) => resolveLocalizedSet(subSet, language)),
+        };
     }
     return localizedSetPrototype;
 }
 
-export { resolveLocalizedSetPrototype };
+export { resolveLocalizedSet };
 //# sourceMappingURL=set-prototype.js.map

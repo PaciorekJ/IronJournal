@@ -1,9 +1,6 @@
 import { LanguageKey } from "../constants/language";
 import { IWorkoutPrototype } from "../models/workout-prototype";
-import {
-    ILocalizedSetPrototype,
-    resolveLocalizedSetPrototype,
-} from "./set-prototype";
+import { ILocalizedSet, resolveLocalizedSet } from "./set-prototype";
 import { resolveLocalizedEnum, resolveLocalizedField } from "./utils";
 
 export interface ILocalizedWorkoutPrototype
@@ -14,7 +11,7 @@ export interface ILocalizedWorkoutPrototype
     name: string;
     description?: string;
     intensityLevel?: string;
-    sets: ILocalizedSetPrototype[];
+    sets: ILocalizedSet[];
 }
 
 export function resolveLocalizedWorkout(
@@ -47,7 +44,7 @@ export function resolveLocalizedWorkout(
 
     // Localize 'sets' array
     localizedWorkout.sets = workout.sets.map((set) =>
-        resolveLocalizedSetPrototype(set, language),
+        resolveLocalizedSet(set, language),
     );
 
     return localizedWorkout as ILocalizedWorkoutPrototype;
