@@ -1,13 +1,14 @@
-import { LanguageKey } from "../constants/language";
-import { IWorkoutPrototype } from "../models/workout-prototype";
-import { ILocalizedSet, resolveLocalizedSet } from "./set-prototype";
-import { resolveLocalizedEnum, resolveLocalizedField } from "./utils";
+import { IUser } from "../models/user";
+import { IWorkout } from "../models/workout";
+import { ILocalizedSet, resolveLocalizedSet } from "./set";
+import {
+    localizeDate,
+    resolveLocalizedEnum,
+    resolveLocalizedField,
+} from "./utils";
 
-export interface ILocalizedWorkoutPrototype
-    extends Omit<
-        IWorkoutPrototype,
-        "name" | "description" | "intensityLevel" | "sets"
-    > {
+export interface ILocalizedWorkout
+    extends Omit<IWorkout, "name" | "description" | "intensityLevel" | "sets"> {
     name: string;
     description?: string;
     intensityLevel?: string;
@@ -15,9 +16,9 @@ export interface ILocalizedWorkoutPrototype
 }
 
 export function resolveLocalizedWorkout(
-    workout: IWorkoutPrototype,
-    language: LanguageKey,
-): ILocalizedWorkoutPrototype {
+    workout: IWorkout,
+    { languagePreference: language, timezone }: IUser,
+): ILocalizedWorkout {
     const localizedWorkout = { ...workout } as any;
 
     localizedWorkout.name = resolveLocalizedField(
@@ -47,5 +48,17 @@ export function resolveLocalizedWorkout(
         resolveLocalizedSet(set, language),
     );
 
-    return localizedWorkout as ILocalizedWorkoutPrototype;
+    localizedWorkout.createdAt = localizeDate(
+        localizedWorkout.createdAt,
+        language,
+        timezone,
+    );
+
+    localizedWorkout.updatedAt = localizeDate(
+        localizedWorkout.updatedAt,
+        language,
+        timezone,
+    );
+
+    return localizedWorkout as ILocalizedWorkout;
 }

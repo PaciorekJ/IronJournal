@@ -1,7 +1,7 @@
-import { resolveLocalizedSet } from './set-prototype.js';
-import { resolveLocalizedField, resolveLocalizedEnum } from './utils.js';
+import { resolveLocalizedSet } from './set.js';
+import { resolveLocalizedField, resolveLocalizedEnum, localizeDate } from './utils.js';
 
-function resolveLocalizedWorkout(workout, language) {
+function resolveLocalizedWorkout(workout, { languagePreference: language, timezone }) {
     const localizedWorkout = { ...workout };
     localizedWorkout.name = resolveLocalizedField(localizedWorkout.name, workout.originalLanguage, language);
     if (workout.description) {
@@ -12,8 +12,10 @@ function resolveLocalizedWorkout(workout, language) {
     }
     // Localize 'sets' array
     localizedWorkout.sets = workout.sets.map((set) => resolveLocalizedSet(set, language));
+    localizedWorkout.createdAt = localizeDate(localizedWorkout.createdAt, language, timezone);
+    localizedWorkout.updatedAt = localizeDate(localizedWorkout.updatedAt, language, timezone);
     return localizedWorkout;
 }
 
 export { resolveLocalizedWorkout };
-//# sourceMappingURL=workout-prototype.js.map
+//# sourceMappingURL=workout.js.map

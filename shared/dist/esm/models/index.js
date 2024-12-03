@@ -3,5 +3,5 @@ export { Program } from './program.js';
 export { SetSchema } from './set-prototype.js';
 export { TranslationTask } from './translationTask.js';
 export { User } from './user.js';
-export { WorkoutPrototype } from './workout-prototype.js';
+export { Workout } from './workout.js';
 //# sourceMappingURL=index.js.map

@@ -11,7 +11,7 @@ import {
 } from "../localization/utils";
 import { ISet, SetSchema } from "./set-prototype";
 
-interface IWorkoutPrototype extends Document {
+interface IWorkout extends Document {
     _id: mongoose.Schema.Types.ObjectId;
     name: localizedField<string>;
     originalLanguage: LanguageKey;
@@ -23,7 +23,7 @@ interface IWorkoutPrototype extends Document {
     updatedAt: Date;
 }
 
-const WorkoutPrototypeSchema: Schema<IWorkoutPrototype> = new Schema(
+const WorkoutSchema: Schema<IWorkout> = new Schema(
     {
         name: {
             type: Map,
@@ -62,12 +62,9 @@ const WorkoutPrototypeSchema: Schema<IWorkoutPrototype> = new Schema(
     { timestamps: true },
 );
 
-WorkoutPrototypeSchema.index({ userId: 1 });
+WorkoutSchema.index({ userId: 1 });
 
-const WorkoutPrototype = mongoose.model<IWorkoutPrototype>(
-    "WorkoutPrototype",
-    WorkoutPrototypeSchema,
-);
+const Workout = mongoose.model<IWorkout>("WorkoutPrototype", WorkoutSchema);
 
-export { WorkoutPrototype };
-export type { IWorkoutPrototype };
+export { Workout };
+export type { IWorkout };

@@ -15,14 +15,14 @@ export { TARGET_AUDIENCE } from './constants/target-audience.js';
 export { WEIGHT_SELECTION_METHOD } from './constants/weight-selection.js';
 export { resolveLocalizedExercise } from './localization/exercise.js';
 export { resolveLocalizedProgram } from './localization/program.js';
-export { resolveLocalizedSet } from './localization/set-prototype.js';
+export { resolveLocalizedSet } from './localization/set.js';
 export { resolveLocalizedUser } from './localization/user.js';
-export { defaultLocalizedField, getLocalizedConstants, resolveLocalizedEnum, resolveLocalizedField, validateLocalizedField } from './localization/utils.js';
-export { resolveLocalizedWorkout } from './localization/workout-prototype.js';
+export { defaultLocalizedField, getLocalizedConstants, localizeDate, resolveLocalizedEnum, resolveLocalizedField, validateLocalizedField } from './localization/utils.js';
+export { resolveLocalizedWorkout } from './localization/workout.js';
 export { Exercise } from './models/exercise.js';
 export { Program } from './models/program.js';
 export { SetSchema } from './models/set-prototype.js';
 export { TranslationTask } from './models/translationTask.js';
 export { User } from './models/user.js';
-export { WorkoutPrototype } from './models/workout-prototype.js';
+export { Workout } from './models/workout.js';
 //# sourceMappingURL=index.js.map

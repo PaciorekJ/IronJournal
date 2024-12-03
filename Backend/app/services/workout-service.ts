@@ -176,8 +176,8 @@ export const readWorkouts = async (
 
         const workouts = (await queryObj.lean().exec()) as IWorkout[];
 
-        const localizedWorkouts: ILocalizedWorkout[] = workouts.map(
-            (workout) => resolveLocalizedWorkout(workout, user),
+        const localizedWorkouts: ILocalizedWorkout[] = workouts.map((workout) =>
+            resolveLocalizedWorkout(workout, user),
         );
 
         const totalCount = await Workout.countDocuments(query).exec();

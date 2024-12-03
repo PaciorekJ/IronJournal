@@ -9,19 +9,19 @@ import { resolveLocalizedEnum } from './utils.js';
  *
  * @param set The `ISet` to localize
  * @param language The language to localize to
- * @returns The localized `ILocalizedSetPrototype`
+ * @returns The localized `ILocalizedSet`
  */
 function resolveLocalizedSet(set, language) {
-    const localizedSetPrototype = { ...set };
+    const localizedSet = { ...set };
     // Localize 'type' field
-    localizedSetPrototype.type = resolveLocalizedEnum("SET_TYPE", set.type, language);
+    localizedSet.type = resolveLocalizedEnum("SET_TYPE", set.type, language);
     // Localize 'tempo' if present (assuming no localization needed for numerical values)
     if (set.tempo) {
-        localizedSetPrototype.tempo = { ...set.tempo };
+        localizedSet.tempo = { ...set.tempo };
     }
     // Handle Straight Set
     if (set.straightSet) {
-        localizedSetPrototype.straightSet = {
+        localizedSet.straightSet = {
             ...set.straightSet,
             sets: set.straightSet.sets.map((entry) => ({
                 ...entry,
@@ -36,7 +36,7 @@ function resolveLocalizedSet(set, language) {
     }
     // Handle Drop Set
     if (set.dropSet) {
-        localizedSetPrototype.dropSet = {
+        localizedSet.dropSet = {
             ...set.dropSet,
             initialWeightSelection: {
                 ...set.dropSet.initialWeightSelection,
@@ -48,7 +48,7 @@ function resolveLocalizedSet(set, language) {
     }
     // Handle Rest-Pause Set
     if (set.restPauseSet) {
-        localizedSetPrototype.restPauseSet = {
+        localizedSet.restPauseSet = {
             ...set.restPauseSet,
             weightSelection: set.restPauseSet.weightSelection
                 ? {
@@ -61,7 +61,7 @@ function resolveLocalizedSet(set, language) {
     }
     // Handle Pyramid Set
     if (set.pyramidSet) {
-        localizedSetPrototype.pyramidSet = {
+        localizedSet.pyramidSet = {
             ...set.pyramidSet,
             sets: set.pyramidSet.sets.map((entry) => ({
                 ...entry,
@@ -76,7 +76,7 @@ function resolveLocalizedSet(set, language) {
     }
     // Handle Isometric Set
     if (set.isometricSet) {
-        localizedSetPrototype.isometricSet = {
+        localizedSet.isometricSet = {
             ...set.isometricSet,
             sets: set.isometricSet.sets.map((entry) => ({
                 ...entry,
@@ -91,7 +91,7 @@ function resolveLocalizedSet(set, language) {
     }
     // Handle AMRAP Set
     if (set.amrapSet) {
-        localizedSetPrototype.amrapSet = {
+        localizedSet.amrapSet = {
             ...set.amrapSet,
             sets: set.amrapSet.sets.map((entry) => ({
                 ...entry,
@@ -106,13 +106,13 @@ function resolveLocalizedSet(set, language) {
     }
     // Handle Superset
     if (set.superSet) {
-        localizedSetPrototype.superSet = {
+        localizedSet.superSet = {
             ...set.superSet,
             sets: set.superSet.sets.map((subSet) => resolveLocalizedSet(subSet, language)),
         };
     }
-    return localizedSetPrototype;
+    return localizedSet;
 }
 
 export { resolveLocalizedSet };
-//# sourceMappingURL=set-prototype.js.map
+//# sourceMappingURL=set.js.map

@@ -15,6 +15,8 @@ Spin up docker image for libreTranslate: `docker run -d --hostname libretranslat
 
 ## Planning
 
+* All values will be normalized to the metric system. If a users preference measurementPreference is set to Imperial, then we convert the values to metric.
+
 ```
 IWorkoutData
 
@@ -44,7 +46,6 @@ IDailyData
 IBodyMeasurement 
 
 {
-    units: DistanceUnitKey;
     neck: Number;
     bicepLeft: Number;
     bicepRight: Number;
@@ -79,7 +80,6 @@ IOneRepMax
 {
     exercise: mongoose.Schema.Types.ObjectId;
     weight: Number;
-    units: WeightUnitKey;
 }
 
 export const WEIGHT_UNITS = {
@@ -95,7 +95,6 @@ export const DISTANCE_UNITS = {
 export type DistanceUnitKey = keyof typeof DISTANCE_UNITS
 
 ```
-
 
 ## NOTES
 

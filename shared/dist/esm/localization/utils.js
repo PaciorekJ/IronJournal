@@ -1,5 +1,7 @@
 import { LANGUAGE } from '../constants/language.js';
 import CONSTANT_LOCALIZATIONS from './constant-localization.js';
+import DateTime from '../node_modules/luxon/src/datetime.js';
+import '../node_modules/luxon/src/duration.js';
 
 const languages = Object.keys(LANGUAGE);
 /**
@@ -85,6 +87,23 @@ const getLocalizedConstants = (constantMap, userLanguage) => {
     });
     return localizedConstants;
 };
+/**
+ * Localizes a date to the user's preferred language and time zone.
+ *
+ * @param {Date} date - The UTC date to localize.
+ * @param {IUser["languagePreference"]} language - The user's preferred language (e.g., "en", "es").
+ * @param {IUser["timezone"]} timezone - The user's time zone (e.g., "America/New_York").
+ * @returns {string} The localized date as a string.
+ */
+function localizeDate(date, language, timezone) {
+    if (!date || !timezone || !language) {
+        throw new Error("Missing required parameters for date localization.");
+    }
+    const localizedDate = DateTime.fromJSDate(date)
+        .setZone(timezone)
+        .setLocale(language);
+    return localizedDate.toLocaleString(DateTime.DATETIME_FULL);
+}
 
-export { defaultLocalizedField, getLocalizedConstants, resolveLocalizedEnum, resolveLocalizedField, validateLocalizedField };
+export { defaultLocalizedField, getLocalizedConstants, localizeDate, resolveLocalizedEnum, resolveLocalizedField, validateLocalizedField };
 //# sourceMappingURL=utils.js.map

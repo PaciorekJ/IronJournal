@@ -4,7 +4,7 @@ import { LANGUAGE } from '../constants/language.js';
 import { validateLocalizedField, defaultLocalizedField } from '../localization/utils.js';
 import { SetSchema } from './set-prototype.js';
 
-const WorkoutPrototypeSchema = new Schema({
+const WorkoutSchema = new Schema({
     name: {
         type: Map,
         of: String,
@@ -39,8 +39,8 @@ const WorkoutPrototypeSchema = new Schema({
     },
     intensityLevel: { type: String, enum: Object.keys(INTENSITY_LEVEL) },
 }, { timestamps: true });
-WorkoutPrototypeSchema.index({ userId: 1 });
-const WorkoutPrototype = mongoose.model("WorkoutPrototype", WorkoutPrototypeSchema);
+WorkoutSchema.index({ userId: 1 });
+const Workout = mongoose.model("WorkoutPrototype", WorkoutSchema);
 
-export { WorkoutPrototype };
-//# sourceMappingURL=workout-prototype.js.map
+export { Workout };
+//# sourceMappingURL=workout.js.map
