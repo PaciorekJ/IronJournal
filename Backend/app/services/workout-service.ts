@@ -1,13 +1,13 @@
 import {
-    ILocalizedWorkoutPrototype,
+    ILocalizedWorkout,
     IUser,
-    IWorkoutPrototype,
+    IWorkout,
     LanguageKey,
     resolveLocalizedWorkout,
     TranslationTask,
-    WorkoutPrototype,
+    Workout,
 } from "@paciorekj/iron-journal-shared";
-import { json } from "@remix-run/node";
+import { data } from "@remix-run/node";
 import { ServiceResult } from "~/interfaces/service-result";
 import { localizeDataInput } from "~/utils/localization.server";
 import {
@@ -18,13 +18,13 @@ import {
 import { handleError } from "~/utils/util.server";
 import {
     IWorkoutPrototypeCreateDTO,
-    IWorkoutPrototypeUpdateDTO,
+    IWorkoutPrototypeUpdateDTO as IWorkoutUpdateDTO,
 } from "~/validation/workout-prototype";
 
 export const createWorkoutPrototype = async (
     user: IUser,
     data: IWorkoutPrototypeCreateDTO,
-): Promise<ServiceResult<IWorkoutPrototype>> => {
+): Promise<ServiceResult<IWorkout>> => {
     try {
         const { data: localizedCreateData, queueTranslationTask } =
             localizeDataInput(
@@ -34,7 +34,7 @@ export const createWorkoutPrototype = async (
                 "WORKOUT-PROTOTYPE" as any,
             );
 
-        const newWorkout = await WorkoutPrototype.create({
+        const newWorkout = await Workout.create({
             ...localizedCreateData,
             originalLanguage: user.languagePreference as LanguageKey,
             userId: user._id,
@@ -55,16 +55,16 @@ export const createWorkoutPrototype = async (
 export const updateWorkoutPrototype = async (
     user: IUser,
     workoutId: string,
-    updateData: IWorkoutPrototypeUpdateDTO,
-): Promise<ServiceResult<IWorkoutPrototype>> => {
+    updateData: IWorkoutUpdateDTO,
+): Promise<ServiceResult<IWorkout>> => {
     try {
-        const workout = await WorkoutPrototype.findOne({
+        const workout = await Workout.findOne({
             _id: workoutId,
             userId: user._id,
         });
 
         if (!workout) {
-            throw json({ error: "Workout not found" }, { status: 404 });
+            throw data({ error: "Workout not found" }, { status: 404 });
         }
 
         const { data: localizedUpdateData, queueTranslationTask } =
@@ -76,7 +76,7 @@ export const updateWorkoutPrototype = async (
             );
 
         // Use findByIdAndUpdate for atomic update
-        const updatedWorkout = await WorkoutPrototype.findByIdAndUpdate(
+        const updatedWorkout = await Workout.findByIdAndUpdate(
             workoutId,
             {
                 $set: {
@@ -88,7 +88,7 @@ export const updateWorkoutPrototype = async (
         );
 
         if (!updatedWorkout) {
-            throw json({ error: "Failed to update workout" }, { status: 500 });
+            throw data({ error: "Failed to update workout" }, { status: 500 });
         }
 
         // Cancel any pending translation tasks before queuing a new one
@@ -118,13 +118,13 @@ export const deleteWorkoutPrototype = async (
     workoutId: string,
 ): Promise<ServiceResult<undefined>> => {
     try {
-        const workout = await WorkoutPrototype.findOne({
+        const workout = await Workout.findOne({
             _id: workoutId,
             userId: user._id,
         });
 
         if (!workout) {
-            throw json({ error: "Workout not found" }, { status: 404 });
+            throw data({ error: "Workout not found" }, { status: 404 });
         }
 
         await workout.deleteOne();
@@ -146,13 +146,13 @@ export const deleteWorkoutPrototype = async (
     }
 };
 
-export const readWorkoutPrototypes = async (
+export const readWorkouts = async (
     user: IUser,
     searchParams: URLSearchParams,
-): Promise<ServiceResult<ILocalizedWorkoutPrototype[]>> => {
+): Promise<ServiceResult<ILocalizedWorkout[]>> => {
     try {
         const { query, limit, offset, sortBy, sortOrder } =
-            buildQueryFromSearchParams<IWorkoutPrototype>(
+            buildQueryFromSearchParams<IWorkout>(
                 searchParams,
                 workoutPrototypeQueryConfig,
                 user.languagePreference as LanguageKey,
@@ -164,9 +164,7 @@ export const readWorkoutPrototypes = async (
             ? { [sortBy]: sortOrder as 1 | -1 }
             : null;
 
-        const language = user.languagePreference as LanguageKey;
-
-        let queryObj = WorkoutPrototype.find(query)
+        let queryObj = Workout.find(query)
             .sort(sortOption)
             .skip(offset)
             .limit(limit);
@@ -176,13 +174,13 @@ export const readWorkoutPrototypes = async (
             queryObj = queryObj.populate(option);
         });
 
-        const workouts = (await queryObj.lean().exec()) as IWorkoutPrototype[];
+        const workouts = (await queryObj.lean().exec()) as IWorkout[];
 
-        const localizedWorkouts: ILocalizedWorkoutPrototype[] = workouts.map(
-            (workout) => resolveLocalizedWorkout(workout, language),
+        const localizedWorkouts: ILocalizedWorkout[] = workouts.map(
+            (workout) => resolveLocalizedWorkout(workout, user),
         );
 
-        const totalCount = await WorkoutPrototype.countDocuments(query).exec();
+        const totalCount = await Workout.countDocuments(query).exec();
         const hasMore = offset + workouts.length < totalCount;
 
         return { data: localizedWorkouts, hasMore };
@@ -195,25 +193,23 @@ export const readWorkoutPrototypeById = async (
     user: IUser,
     workoutId: string,
     searchParams: URLSearchParams,
-): Promise<ServiceResult<ILocalizedWorkoutPrototype>> => {
+): Promise<ServiceResult<ILocalizedWorkout>> => {
     try {
-        const language = user.languagePreference as LanguageKey;
-
-        let queryObj = WorkoutPrototype.findById(workoutId);
+        let queryObj = Workout.findById(workoutId);
 
         const populateOptions = buildPopulateOptions(searchParams, "populate");
         populateOptions.forEach((option) => {
             queryObj = queryObj.populate(option);
         });
 
-        const workout = (await queryObj.lean().exec()) as IWorkoutPrototype;
+        const workout = (await queryObj.lean().exec()) as IWorkout;
 
         if (!workout) {
-            throw json({ error: "Workout not found" }, { status: 404 });
+            throw data({ error: "Workout not found" }, { status: 404 });
         }
 
         if (workout.userId.toString() !== user._id.toString()) {
-            throw json(
+            throw data(
                 {
                     error: "Forbidden: You do not have access to this workout",
                 },
@@ -221,7 +217,7 @@ export const readWorkoutPrototypeById = async (
             );
         }
 
-        const localizedWorkout = resolveLocalizedWorkout(workout, language);
+        const localizedWorkout = resolveLocalizedWorkout(workout, user);
 
         return { data: localizedWorkout };
     } catch (error) {

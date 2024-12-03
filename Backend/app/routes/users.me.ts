@@ -1,4 +1,4 @@
-import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
+import { ActionFunctionArgs, data, LoaderFunctionArgs } from "@remix-run/node";
 import {
     createUser,
     deleteUser,
@@ -12,7 +12,7 @@ import { createUserSchema, updateUserSchema } from "~/validation/user.server";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const { user } = await requirePredicate(request, { user: true });
     const result = await readUserById(user, user._id.toString());
-    return json(result, { status: 200 });
+    return data(result, { status: 200 });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -33,7 +33,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 });
 
                 result = await createUser(validatedData);
-                return json(result, { status: 201 });
+                return data(result, { status: 201 });
 
             case "PATCH":
                 const { user: patchUser } = await requirePredicate(request, {
@@ -47,7 +47,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                     validatedPatchData,
                 );
 
-                return json(result, { status: 200 });
+                return data(result, { status: 200 });
 
             case "DELETE":
                 const { user: deleteUserAccount } = await requirePredicate(
@@ -55,10 +55,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                     { user: true },
                 );
                 result = await deleteUser(deleteUserAccount._id.toString());
-                return json(result, { status: 200 });
+                return data(result, { status: 200 });
 
             default:
-                return json({ error: "Method not allowed" }, { status: 405 });
+                return data({ error: "Method not allowed" }, { status: 405 });
         }
     } catch (error) {
         return handleError(error);

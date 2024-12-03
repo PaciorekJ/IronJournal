@@ -5,7 +5,7 @@ import {
     SCHEDULE_TYPE,
     TARGET_AUDIENCE,
 } from "@paciorekj/iron-journal-shared";
-import { json, LoaderFunctionArgs } from "@remix-run/node";
+import { LoaderFunctionArgs } from "@remix-run/node";
 import { requirePredicate } from "~/utils/auth.server";
 import { validateLanguagePreference } from "~/utils/util.server";
 
@@ -23,5 +23,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     const data = getLocalizedConstants(PROGRAM_CONSTANT_MAP, userLanguage);
 
-    return json({ data });
+    return { data };
 };

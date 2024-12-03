@@ -1,4 +1,4 @@
-import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import { ActionFunction, data, LoaderFunction } from "@remix-run/node";
 import { createProgram, readPrograms } from "~/services/program-service";
 import { requirePredicate } from "~/utils/auth.server";
 import { handleError, validateRequestBody } from "~/utils/util.server";
@@ -11,7 +11,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     const searchParams = new URLSearchParams(url.search);
 
     const result = await readPrograms(user, searchParams);
-    return json(result, { status: 200 });
+    return data(result, { status: 200 });
 };
 
 export const action: ActionFunction = async ({ request }) => {
@@ -26,10 +26,10 @@ export const action: ActionFunction = async ({ request }) => {
                 const requestData = await validateRequestBody(request);
                 const validatedData = createProgramSchema.parse(requestData);
                 result = await createProgram(user, validatedData);
-                return json(result, { status: 201 });
+                return data(result, { status: 201 });
 
             default:
-                return json({ error: "Method not allowed" }, { status: 405 });
+                return data({ error: "Method not allowed" }, { status: 405 });
         }
     } catch (error) {
         return handleError(error);

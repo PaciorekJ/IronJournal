@@ -5,7 +5,7 @@ import {
     resolveLocalizedUser,
     User,
 } from "@paciorekj/iron-journal-shared";
-import { json } from "@remix-run/node";
+import { data, json } from "@remix-run/node";
 import { ServiceResult } from "~/interfaces/service-result";
 import {
     buildQueryFromSearchParams,
@@ -21,7 +21,7 @@ export const createUser = async (
         const { username, firebaseId } = createData;
 
         if (!username || !firebaseId) {
-            throw json(
+            throw data(
                 { error: "Username and Firebase ID are required" },
                 { status: 400 },
             );
@@ -34,11 +34,11 @@ export const createUser = async (
             .lean();
 
         if (existingUser?.firebaseId === firebaseId) {
-            throw json({ error: "User already exists" }, { status: 409 });
+            throw data({ error: "User already exists" }, { status: 409 });
         }
 
         if (existingUser?.username === username) {
-            throw json({ error: "Username is already taken" }, { status: 409 });
+            throw data({ error: "Username is already taken" }, { status: 409 });
         }
 
         const newUser = await User.create(createData);
@@ -66,7 +66,7 @@ export const updateUser = async (
                 .lean());
 
         if (existingUser && (existingUser as IUser)._id.toString() !== userId) {
-            throw json({ error: "Username is already taken" }, { status: 409 });
+            throw data({ error: "Username is already taken" }, { status: 409 });
         }
 
         const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
@@ -74,7 +74,7 @@ export const updateUser = async (
             runValidators: true,
         }).select("-firebaseId");
         if (!updatedUser) {
-            throw json({ error: "User not found" }, { status: 404 });
+            throw data({ error: "User not found" }, { status: 404 });
         }
 
         return {
@@ -94,7 +94,7 @@ export const deleteUser = async (
             .select("_id")
             .lean();
         if (!deletedUser) {
-            throw json({ error: "User not found" }, { status: 404 });
+            throw data({ error: "User not found" }, { status: 404 });
         }
 
         return { message: "User deleted successfully" };

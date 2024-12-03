@@ -1,5 +1,4 @@
-import { ActionFunction, LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/react";
+import { ActionFunction, data, LoaderFunctionArgs } from "@remix-run/node";
 import { createExercise, readExercises } from "~/services/exercise-service";
 import { requirePredicate } from "~/utils/auth.server";
 import { handleError, validateRequestBody } from "~/utils/util.server";
@@ -13,7 +12,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     const result = await readExercises(user, searchParams);
 
-    return json(result, { status: 200 });
+    return data(result, { status: 200 });
 };
 
 export const action: ActionFunction = async ({ request }) => {
@@ -28,10 +27,10 @@ export const action: ActionFunction = async ({ request }) => {
                 const requestData = await validateRequestBody(request);
                 const validatedData = createExerciseSchema.parse(requestData);
                 result = await createExercise(user, validatedData);
-                return json(result, { status: 201 });
+                return data(result, { status: 201 });
 
             default:
-                return json({ error: "Method not allowed" }, { status: 405 });
+                return data({ error: "Method not allowed" }, { status: 405 });
         }
     } catch (error) {
         console.error(error);

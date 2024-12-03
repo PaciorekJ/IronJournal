@@ -7,7 +7,7 @@ import {
     resolveLocalizedExercise,
     TranslationTask,
 } from "@paciorekj/iron-journal-shared";
-import { json } from "@remix-run/node";
+import { data, json } from "@remix-run/node";
 import { RootFilterQuery } from "mongoose";
 import { ServiceResult } from "~/interfaces/service-result";
 import { localizeDataInput } from "~/utils/localization.server";
@@ -63,7 +63,7 @@ export const updateExercise = async (
         });
 
         if (!exercise) {
-            throw json({ error: "Exercise not found" }, { status: 404 });
+            throw data({ error: "Exercise not found" }, { status: 404 });
         }
 
         const { data: localizedUpdateData, queueTranslationTask } =
@@ -87,7 +87,7 @@ export const updateExercise = async (
         );
 
         if (!updatedExercise) {
-            throw json({ error: "Failed to update Exercise" }, { status: 500 });
+            throw data({ error: "Failed to update Exercise" }, { status: 500 });
         }
 
         // Cancel any pending translation tasks before queuing a new one
@@ -120,7 +120,7 @@ export const deleteExercise = async (
         const exercise = await Exercise.findOne({ _id: exerciseId }).lean();
 
         if (!exercise) {
-            throw json({ error: "Exercise not found" }, { status: 404 });
+            throw data({ error: "Exercise not found" }, { status: 404 });
         }
 
         await Exercise.deleteOne({ _id: exerciseId });

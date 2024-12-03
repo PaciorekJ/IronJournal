@@ -1,5 +1,5 @@
 import { LanguageKey } from "@paciorekj/iron-journal-shared/constants";
-import { json } from "@remix-run/node";
+import { data } from "@remix-run/node";
 import mongoose, { MongooseError } from "mongoose";
 import { z } from "zod";
 import { languagePreferenceSchema } from "~/validation/user.server";
@@ -31,7 +31,7 @@ export async function validateRequestBody(request: Request) {
     // Check for content type
     const contentType = request.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
-        throw json(
+        throw data(
             { error: "Invalid content type. Expecting application/json" },
             { status: 400 },
         );
@@ -40,7 +40,7 @@ export async function validateRequestBody(request: Request) {
     // Check for Content-Length or empty body
     const contentLength = request.headers.get("content-length");
     if (!contentLength || parseInt(contentLength, 10) === 0) {
-        throw json(
+        throw data(
             {
                 error: "Request body is missing or empty. A valid JSON body is required.",
             },
@@ -53,7 +53,7 @@ export async function validateRequestBody(request: Request) {
     try {
         rawBody = await request.text(); // Read body as plain text first
     } catch (e) {
-        throw json(
+        throw data(
             { error: "Failed to read the request body." },
             { status: 400 },
         );
@@ -64,7 +64,7 @@ export async function validateRequestBody(request: Request) {
     try {
         requestData = JSON.parse(rawBody); // Convert the raw text into JSON
     } catch (e) {
-        throw json(
+        throw data(
             { error: "Invalid JSON body. Please provide valid JSON." },
             { status: 400 },
         );
@@ -72,7 +72,7 @@ export async function validateRequestBody(request: Request) {
 
     // Ensure the parsed body is a non-null object
     if (typeof requestData !== "object" || requestData === null) {
-        throw json(
+        throw data(
             {
                 error: "Invalid JSON body. Please provide a non-empty JSON object.",
             },
@@ -82,7 +82,7 @@ export async function validateRequestBody(request: Request) {
 
     // Ensure the parsed body is not empty
     if (Object.keys(requestData).length === 0) {
-        throw json(
+        throw data(
             {
                 error: "Request body is empty. Request body is required to update a program.",
             },
@@ -95,7 +95,7 @@ export async function validateRequestBody(request: Request) {
 
 export function validateDatabaseId(id: string) {
     if (!id || !mongoose.isValidObjectId(id)) {
-        throw json(
+        throw data(
             { error: "No id provided, or an invalid Id has been provided." },
             { status: 400 },
         );
@@ -125,7 +125,7 @@ export function validateLanguagePreference(language: LanguageKey) {
  */
 export function handleError(error: unknown) {
     if (error instanceof z.ZodError) {
-        return json(
+        return data(
             { error: "Validation failed", details: error.errors },
             { status: 400 },
         );
@@ -133,7 +133,7 @@ export function handleError(error: unknown) {
 
     if (error instanceof MongooseError) {
         console.error(error);
-        throw json({
+        throw data({
             status: 500,
             error: "An unexpected error occurred with the database.",
         });
@@ -141,7 +141,7 @@ export function handleError(error: unknown) {
 
     if (error instanceof Error) {
         console.error(error);
-        return json({ error: error.message }, { status: 500 });
+        return data({ error: error.message }, { status: 500 });
     }
 
     if (error instanceof Response) {
@@ -150,5 +150,5 @@ export function handleError(error: unknown) {
 
     console.error(error);
 
-    return json({ error: "An unexpected error occurred" }, { status: 500 });
+    return data({ error: "An unexpected error occurred" }, { status: 500 });
 }
