@@ -66,3 +66,6 @@ serviceAccountKey.json
 
 # RabbitMQ
 /data
+
+# NPM Package Builds
+dist/*

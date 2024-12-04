@@ -1,6 +1,6 @@
 {
     "name": "@paciorekj/iron-journal-shared",
-    "version": "1.2.19",
+    "version": "1.2.20",
     "description": "Shared library for Iron Journal.",
     "author": "Jason Paciorek <jason@paciorekwebsolutions.com>",
     "license": "ISC",

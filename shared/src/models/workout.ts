@@ -9,7 +9,7 @@ import {
     localizedField,
     validateLocalizedField,
 } from "../localization/utils";
-import { ISet, SetSchema } from "./set-prototype";
+import { ISet, SetSchema } from "./set";
 
 interface IWorkout extends Document {
     _id: mongoose.Schema.Types.ObjectId;

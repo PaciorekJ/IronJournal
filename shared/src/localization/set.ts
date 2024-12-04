@@ -1,6 +1,6 @@
 import { LanguageKey } from "../constants/language";
 import { IExercise } from "../models/exercise";
-import { ISet, ITempo, NumberOrRange } from "../models/set-prototype";
+import { ISet, ITempo, NumberOrRange } from "../models/set";
 import { resolveLocalizedEnum } from "./utils";
 
 export interface ILocalizedSet

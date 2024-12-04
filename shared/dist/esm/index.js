@@ -21,7 +21,7 @@ export { defaultLocalizedField, getLocalizedConstants, localizeDate, resolveLoca
 export { resolveLocalizedWorkout } from './localization/workout.js';
 export { Exercise } from './models/exercise.js';
 export { Program } from './models/program.js';
-export { SetSchema } from './models/set-prototype.js';
+export { SetSchema } from './models/set.js';
 export { TranslationTask } from './models/translationTask.js';
 export { User } from './models/user.js';
 export { Workout } from './models/workout.js';

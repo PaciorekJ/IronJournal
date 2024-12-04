@@ -2,7 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 import { INTENSITY_LEVEL } from '../constants/intensity-level.js';
 import { LANGUAGE } from '../constants/language.js';
 import { validateLocalizedField, defaultLocalizedField } from '../localization/utils.js';
-import { SetSchema } from './set-prototype.js';
+import { SetSchema } from './set.js';
 
 const WorkoutSchema = new Schema({
     name: {
