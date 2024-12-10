@@ -1,6 +1,6 @@
 {
     "name": "@paciorekj/iron-journal-shared",
-    "version": "1.2.14",
+    "version": "1.2.20",
     "description": "Shared library for Iron Journal.",
     "author": "Jason Paciorek <jason@paciorekwebsolutions.com>",
     "license": "ISC",
@@ -9,8 +9,7 @@
     "types": "./dist/types/index.d.ts",
     "scripts": {
         "build": "npm run clean && rollup -c",
-        "clean": "rimraf dist",
-        "publish": "npm publish --access restricted"
+        "clean": "rimraf dist"
     },
     "exports": {
         ".": {
@@ -62,6 +61,7 @@
         "amqplib": "^0.10.4",
         "axios": "^1.7.7",
         "dotenv": "^16.4.5",
+        "luxon": "^3.5.0",
         "mongoose": "^8.8.0",
         "uuid": "^11.0.2"
     },
@@ -69,6 +69,7 @@
         "@rollup/plugin-commonjs": "^28.0.1",
         "@rollup/plugin-node-resolve": "^15.3.0",
         "@types/amqplib": "^0.10.5",
+        "@types/luxon": "^3.4.2",
         "@types/node": "^18.19.64",
         "@types/uuid": "^10.0.0",
         "fast-glob": "^3.3.2",

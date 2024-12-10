@@ -7,9 +7,9 @@ import {
     Program,
     resolveLocalizedProgram,
     TranslationTask,
-    WorkoutPrototype,
+    Workout,
 } from "@paciorekj/iron-journal-shared";
-import { json } from "@remix-run/node";
+import { data, json } from "@remix-run/node";
 import mongoose from "mongoose";
 import { ServiceResult } from "~/interfaces/service-result";
 import { localizeDataInput } from "~/utils/localization.server";
@@ -38,7 +38,7 @@ export const createProgram = async (
             .flatMap((item) => item.workoutIds || [])
             .filter((id): id is mongoose.Schema.Types.ObjectId => !!id);
 
-        const validWorkouts = await WorkoutPrototype.find({
+        const validWorkouts = await Workout.find({
             _id: { $in: workoutIds },
             userId: user._id,
         })
@@ -163,11 +163,11 @@ export const deleteProgram = async (
         const program = await Program.findOne({ _id: programId }).lean();
 
         if (!program) {
-            throw json({ error: "Program not found" }, { status: 404 });
+            throw data({ error: "Program not found" }, { status: 404 });
         }
 
         if (program.userId.toString() !== user._id.toString()) {
-            throw json(
+            throw data(
                 {
                     error: "You are not authorized to delete this program",
                 },
@@ -222,8 +222,6 @@ export const readPrograms = async (
             ? { [sortBy]: sortOrder as 1 | -1 }
             : null;
 
-        const language = user.languagePreference as LanguageKey;
-
         let queryObj = Program.find(query)
             .sort(sortOption)
             .skip(offset)
@@ -237,7 +235,7 @@ export const readPrograms = async (
         const programs = (await queryObj.lean().exec()) as IProgram[];
 
         const localizedPrograms: ILocalizedProgram[] = programs.map((program) =>
-            resolveLocalizedProgram(program, language),
+            resolveLocalizedProgram(program, user),
         );
 
         const totalCount = await Program.countDocuments(query).exec();
@@ -256,8 +254,6 @@ export const readProgramById = async (
     searchParams: URLSearchParams,
 ): Promise<ServiceResult<ILocalizedProgram>> => {
     try {
-        const language = user.languagePreference as LanguageKey;
-
         let queryObj = Program.findById(programId);
 
         const populateOptions = buildPopulateOptions(searchParams, "populate");
@@ -268,14 +264,14 @@ export const readProgramById = async (
         const program = (await queryObj.lean().exec()) as IProgram;
 
         if (!program) {
-            throw json({ error: "Program not found" }, { status: 404 });
+            throw data({ error: "Program not found" }, { status: 404 });
         }
 
         if (
             !program.isPublic &&
             program.userId.toString() !== user._id.toString()
         ) {
-            throw json(
+            throw data(
                 {
                     error: "Forbidden: You do not have access to this program",
                 },
@@ -283,7 +279,7 @@ export const readProgramById = async (
             );
         }
 
-        const localizedProgram = resolveLocalizedProgram(program, language);
+        const localizedProgram = resolveLocalizedProgram(program, user);
 
         return { data: localizedProgram };
     } catch (error) {

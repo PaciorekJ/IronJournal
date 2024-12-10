@@ -1,4 +1,4 @@
-import { ActionFunctionArgs, json } from "@remix-run/node";
+import { ActionFunctionArgs, data, json } from "@remix-run/node";
 import { readUsers } from "~/services/user-service";
 import { requirePredicate } from "~/utils/auth.server";
 
@@ -10,5 +10,5 @@ export const loader = async ({ request }: ActionFunctionArgs) => {
 
     const result = await readUsers(user, searchParams);
 
-    return json(result, { status: 200 });
+    return data(result, { status: 200 });
 };

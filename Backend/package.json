@@ -23,14 +23,16 @@
         "endOfLine": "lf"
     },
     "dependencies": {
-        "@paciorekj/iron-journal-shared": "1.2.14",
+        "@paciorekj/iron-journal-shared": "1.2.20",
         "@remix-run/node": "^2.9.2",
         "@remix-run/react": "^2.9.2",
         "@remix-run/serve": "^2.9.2",
+        "@types/convert-units": "^2.3.11",
         "@types/mongoose": "^5.11.97",
         "@types/uuid": "^10.0.0",
         "amqplib": "^0.10.4",
         "axios": "^1.7.7",
+        "convert-units": "^3.0.0-beta.7",
         "dotenv": "^16.4.5",
         "firebase-admin": "^12.5.0",
         "isbot": "^4.1.0",

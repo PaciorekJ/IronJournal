@@ -1,9 +1,13 @@
-import { LanguageKey } from "../constants/language";
+import { IUser } from "../models";
 import { IProgram, IWorkoutSchedule } from "../models/program";
-import { resolveLocalizedEnum, resolveLocalizedField } from "./utils";
+import {
+    localizeDate,
+    resolveLocalizedEnum,
+    resolveLocalizedField,
+} from "./utils";
 
 interface ILocalizedWorkoutSchedule extends Omit<IWorkoutSchedule, "day"> {
-    day: string | number; // 'number' for 'CYCLE', 'string' for localized day
+    day: string | number;
 }
 
 export interface ILocalizedProgram
@@ -30,7 +34,7 @@ export interface ILocalizedProgram
  *
  * The function resolves and translates fields such as `name`, `description`,
  * `scheduleType`, `targetAudience`, `focusAreas`, and elements within
- * `workoutSchedule` based on the provided target `language`. 
+ * `workoutSchedule` based on the provided target `language`.
  *
  * - `name` and `description` are translated using `resolveLocalizedField`.
  * - Enum fields like `scheduleType` and `targetAudience` are translated
@@ -44,7 +48,7 @@ export interface ILocalizedProgram
  */
 export function resolveLocalizedProgram(
     program: IProgram,
-    language: LanguageKey,
+    { languagePreference: language, timezone }: IUser,
 ): ILocalizedProgram {
     const localizedProgram = { ...program } as any;
 
@@ -109,6 +113,12 @@ export function resolveLocalizedProgram(
             },
         );
     }
+
+    localizedProgram.createdAt = localizeDate(
+        program.createdAt,
+        language,
+        timezone,
+    );
 
     return localizedProgram as ILocalizedProgram;
 }

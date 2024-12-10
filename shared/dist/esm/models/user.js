@@ -9,6 +9,11 @@ const UserSchema = new Schema({
         enum: Object.keys(LANGUAGE),
         required: true,
     },
+    measurementSystemPreference: {
+        type: String,
+        enum: ["METRIC", "IMPERIAL"],
+        required: true,
+    },
 }, { timestamps: true });
 const User = mongoose.model("User", UserSchema);
 

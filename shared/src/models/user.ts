@@ -6,6 +6,8 @@ interface IUser extends Document {
     username: string;
     firebaseId: string;
     languagePreference: LanguageKey;
+    measurementSystemPreference: "METRIC" | "IMPERIAL";
+    timezone: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -17,6 +19,11 @@ const UserSchema: Schema<IUser> = new Schema(
         languagePreference: {
             type: String,
             enum: Object.keys(LANGUAGE),
+            required: true,
+        },
+        measurementSystemPreference: {
+            type: String,
+            enum: ["METRIC", "IMPERIAL"],
             required: true,
         },
     },

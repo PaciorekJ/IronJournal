@@ -3,7 +3,7 @@ import {
     SET_TYPE,
     WEIGHT_SELECTION_METHOD,
 } from "@paciorekj/iron-journal-shared";
-import { json, LoaderFunctionArgs } from "@remix-run/node";
+import { LoaderFunctionArgs } from "@remix-run/node";
 import { requirePredicate } from "~/utils/auth.server";
 import { validateLanguagePreference } from "~/utils/util.server";
 
@@ -19,5 +19,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     const data = getLocalizedConstants(SET_CONSTANT_MAP, userLanguage);
 
-    return json({ data });
+    return { data };
 };

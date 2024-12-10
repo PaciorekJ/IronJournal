@@ -1,11 +1,11 @@
 import { getLocalizedConstants } from "@paciorekj/iron-journal-shared";
-import { json, LoaderFunctionArgs } from "@remix-run/node";
+import { LoaderFunctionArgs } from "@remix-run/node";
 import { requirePredicate } from "~/utils/auth.server";
 import { validateLanguagePreference } from "~/utils/util.server";
 import { EXERCISE_CONSTANT_MAP } from "./constants.exercises";
-import { languageArray } from "./constants.languages";
 import { PROGRAM_CONSTANT_MAP } from "./constants.programs";
 import { SET_CONSTANT_MAP } from "./constants.sets";
+import { languageArray } from "./constants.user";
 import { WORKOUT_CONSTANT_MAP } from "./constants.workouts";
 
 export const ALL_CONSTANT_MAP: Record<string, string[]> = {
@@ -23,10 +23,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     const data = getLocalizedConstants(ALL_CONSTANT_MAP, userLanguage);
 
-    return json({
+    return {
         data: {
             LANGUAGE: languageArray,
             ...data,
         },
-    });
+    };
 };

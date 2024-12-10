@@ -104,9 +104,22 @@ interface ISuperset {
     sets: ISet[];
 }
 
+interface ICardioSetEntry {
+    distance?: NumberOrRange;
+    durationInSeconds?: NumberOrRange;
+    restDuration?: NumberOrRange;
+    weight?: number; // Weight in kilograms
+}
+
+interface ICardioSet {
+    exercise: IExercise["_id"];
+    sets: ICardioSetEntry[];
+}
+
 // Main Set interface
 interface ISet {
     type: SetTypeKey;
+    restDurationInSeconds?: NumberOrRange; // Rest time for after the set
     tempo?: ITempo;
 
     straightSet?: IStraightSet;
@@ -115,6 +128,7 @@ interface ISet {
     pyramidSet?: IPyramidSet;
     isometricSet?: IIsometricSet;
     amrapSet?: IAmrapSet;
+    cardioSet?: ICardioSet;
     superSet?: ISuperset;
 }
 
@@ -142,6 +156,52 @@ NumberOrRangeSchema.pre("validate", function (next) {
             "Value must be a single number or an array of two numbers in ascending order.",
         ),
     );
+});
+
+// Cardio Set Entry Schema
+const CardioSetEntrySchema = new Schema<ICardioSetEntry>(
+    {
+        distance: { type: Schema.Types.Mixed }, // NumberOrRange
+        durationInSeconds: { type: Schema.Types.Mixed }, // NumberOrRange
+        restDuration: { type: Schema.Types.Mixed }, // NumberOrRange
+        weight: { type: Number }, // Normalized to KG
+    },
+    { _id: false },
+);
+
+// Validate 'distance' and 'durationInSeconds' to be NumberOrRange
+CardioSetEntrySchema.path("distance", NumberOrRangeSchema);
+CardioSetEntrySchema.path("durationInSeconds", NumberOrRangeSchema);
+CardioSetEntrySchema.path("restDuration", NumberOrRangeSchema);
+
+// Cardio Set Schema
+const CardioSetSchema = new Schema<ICardioSet>(
+    {
+        exercise: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Exercise",
+            required: true,
+        },
+        sets: { type: [CardioSetEntrySchema], required: true },
+    },
+    { _id: false },
+);
+
+// Ensure that either 'distance' or 'durationInSeconds' is provided in each CardioSetEntry
+CardioSetSchema.pre("validate", function (next) {
+    const setsArray = this.sets as unknown as ICardioSetEntry[];
+
+    for (const set of setsArray) {
+        if (!set.distance && !set.durationInSeconds) {
+            return next(
+                new Error(
+                    "Each CardioSetEntry must have either 'distance' or 'durationInSeconds' defined.",
+                ),
+            );
+        }
+    }
+
+    next();
 });
 
 // Tempo Schema
@@ -342,16 +402,19 @@ const SupersetSchema = new Schema<ISuperset>(
 const SetSchemaFields = {
     type: { type: String, enum: Object.values(SET_TYPE), required: true },
     tempo: { type: TempoSchema },
+    restDurationInSeconds: { type: Schema.Types.Mixed, min: 0 },
     straightSet: { type: StraightSetSchema },
     dropSet: { type: DropSetSchema },
     restPauseSet: { type: RestPauseSetSchema },
     pyramidSet: { type: PyramidSetSchema },
     isometricSet: { type: IsometricSetSchema },
     amrapSet: { type: AmrapSetSchema },
+    cardioSet: { type: CardioSetSchema },
     // 'superSet' will be added later
 };
 
 const SetSchema = new Schema<ISet>(SetSchemaFields, { _id: false });
+StraightSetEntrySchema.path("restDurationInSeconds", NumberOrRangeSchema);
 
 // Resolve circular references
 SupersetSchema.path("sets", [SetSchema]);
@@ -497,6 +560,8 @@ export { SetSchema };
 export type {
     IAmrapSet,
     IAmrapSetEntry,
+    ICardioSet,
+    ICardioSetEntry,
     IDropSet,
     IDropSetEntry,
     IIsometricSet,

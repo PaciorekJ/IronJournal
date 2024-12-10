@@ -17,6 +17,36 @@ NumberOrRangeSchema.pre("validate", function (next) {
     }
     return next(new Error("Value must be a single number or an array of two numbers in ascending order."));
 });
+// Cardio Set Entry Schema
+const CardioSetEntrySchema = new Schema({
+    distance: { type: Schema.Types.Mixed }, // NumberOrRange
+    durationInSeconds: { type: Schema.Types.Mixed }, // NumberOrRange
+    restDuration: { type: Schema.Types.Mixed }, // NumberOrRange
+    weight: { type: Number }, // Normalized to KG
+}, { _id: false });
+// Validate 'distance' and 'durationInSeconds' to be NumberOrRange
+CardioSetEntrySchema.path("distance", NumberOrRangeSchema);
+CardioSetEntrySchema.path("durationInSeconds", NumberOrRangeSchema);
+CardioSetEntrySchema.path("restDuration", NumberOrRangeSchema);
+// Cardio Set Schema
+const CardioSetSchema = new Schema({
+    exercise: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Exercise",
+        required: true,
+    },
+    sets: { type: [CardioSetEntrySchema], required: true },
+}, { _id: false });
+// Ensure that either 'distance' or 'durationInSeconds' is provided in each CardioSetEntry
+CardioSetSchema.pre("validate", function (next) {
+    const setsArray = this.sets;
+    for (const set of setsArray) {
+        if (!set.distance && !set.durationInSeconds) {
+            return next(new Error("Each CardioSetEntry must have either 'distance' or 'durationInSeconds' defined."));
+        }
+    }
+    next();
+});
 // Tempo Schema
 const TempoSchema = new Schema({
     eccentric: { type: Number, min: 0, required: true },
@@ -149,15 +179,18 @@ const SupersetSchema = new Schema({
 const SetSchemaFields = {
     type: { type: String, enum: Object.values(SET_TYPE), required: true },
     tempo: { type: TempoSchema },
+    restDurationInSeconds: { type: Schema.Types.Mixed, min: 0 },
     straightSet: { type: StraightSetSchema },
     dropSet: { type: DropSetSchema },
     restPauseSet: { type: RestPauseSetSchema },
     pyramidSet: { type: PyramidSetSchema },
     isometricSet: { type: IsometricSetSchema },
     amrapSet: { type: AmrapSetSchema },
+    cardioSet: { type: CardioSetSchema },
     // 'superSet' will be added later
 };
 const SetSchema = new Schema(SetSchemaFields, { _id: false });
+StraightSetEntrySchema.path("restDurationInSeconds", NumberOrRangeSchema);
 // Resolve circular references
 SupersetSchema.path("sets", [SetSchema]);
 SetSchema.add({ superSet: { type: SupersetSchema } });
@@ -237,4 +270,4 @@ SetSchema.pre("validate", function (next) {
 });
 
 export { SetSchema };
-//# sourceMappingURL=set-prototype.js.map
+//# sourceMappingURL=set.js.map

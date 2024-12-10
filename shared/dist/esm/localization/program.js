@@ -1,4 +1,4 @@
-import { resolveLocalizedField, resolveLocalizedEnum } from './utils.js';
+import { resolveLocalizedField, resolveLocalizedEnum, localizeDate } from './utils.js';
 
 /**
  * Localizes fields of an `IProgram` object to a specific language and returns
@@ -18,7 +18,7 @@ import { resolveLocalizedField, resolveLocalizedEnum } from './utils.js';
  * @param language - The target language for localization.
  * @returns A localized version of the program.
  */
-function resolveLocalizedProgram(program, language) {
+function resolveLocalizedProgram(program, { languagePreference: language, timezone }) {
     const localizedProgram = { ...program };
     // Localize 'name' field
     if (program.name) {
@@ -51,6 +51,7 @@ function resolveLocalizedProgram(program, language) {
             return localizedSchedule;
         });
     }
+    localizedProgram.createdAt = localizeDate(program.createdAt, language, timezone);
     return localizedProgram;
 }
 

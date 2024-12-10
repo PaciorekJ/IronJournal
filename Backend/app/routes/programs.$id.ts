@@ -1,4 +1,4 @@
-import { json, LoaderFunctionArgs } from "@remix-run/node";
+import { data, LoaderFunctionArgs } from "@remix-run/node";
 import {
     deleteProgram,
     readProgramById,
@@ -21,7 +21,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     const searchParams = new URLSearchParams(url.search);
 
     const result = await readProgramById(user, id, searchParams);
-    return json(result, { status: 200 });
+    return data(result, { status: 200 });
 };
 
 export const action = async ({ request, params }: LoaderFunctionArgs) => {
@@ -37,14 +37,14 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
                 const requestData = await validateRequestBody(request);
                 const validatedData = updateProgramSchema.parse(requestData);
                 result = await updateProgram(user, id, validatedData);
-                return json(result, { status: 200 });
+                return data(result, { status: 200 });
 
             case "DELETE":
                 result = await deleteProgram(user, id);
-                return json(result, { status: 200 });
+                return data(result, { status: 200 });
 
             default:
-                return json({ error: "Method not allowed" }, { status: 405 });
+                return data({ error: "Method not allowed" }, { status: 405 });
         }
     } catch (error) {
         return handleError(error);
