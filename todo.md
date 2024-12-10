@@ -30,6 +30,8 @@ IDailyData
     createdAt: Date; // This should be force to be the beginning of the day according to the user's time zone, unless there's a better way of doing this like just setting it to a Date without time as it's a dailyData entry then we simply grab the one at the beginning of the day if it exists and update it
 }
 
+Should rest periods be a set or should they be attached an exercise?
+
 IBodyMeasurement 
 
 {

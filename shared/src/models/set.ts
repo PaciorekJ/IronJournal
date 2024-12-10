@@ -117,7 +117,7 @@ interface ICardioSet {
 }
 
 // Main Set interface
-interface ISet {
+interface ISet { // Each one of these are single sets
     type: SetTypeKey;
     restDurationInSeconds?: NumberOrRange; // Rest time for after the set
     tempo?: ITempo;

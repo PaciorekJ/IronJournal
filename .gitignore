@@ -68,4 +68,5 @@ serviceAccountKey.json
 /data
 
 # NPM Package Builds
-dist/*
+dist
+dist/
