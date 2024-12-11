@@ -170,7 +170,7 @@
   },
   {
       "name": {
-          "en": "Adductor/Groin"
+          "en": "Adductor / Groin"
       },
       "force": "STATIC",
       "level": "INTERMEDIATE",
@@ -11133,7 +11133,7 @@
   },
   {
       "name": {
-          "en": "Gorilla Chin/Crunch"
+          "en": "Gorilla Chin / Crunch"
       },
       "force": "PULL",
       "level": "INTERMEDIATE",
@@ -14181,7 +14181,7 @@
   },
   {
       "name": {
-          "en": "Knee/Hip Raise On Parallel Bars"
+          "en": "Knee / Hip Raise On Parallel Bars"
       },
       "force": "PULL",
       "level": "BEGINNER",
@@ -21968,7 +21968,7 @@
   },
   {
       "name": {
-          "en": "Rocky Pull-Ups/Pulldowns"
+          "en": "Rocky Pull-Ups / Pulldowns"
       },
       "force": "PULL",
       "level": "INTERMEDIATE",
@@ -29876,7 +29876,7 @@
   },
   {
       "name": {
-          "en": "Trail Running/Walking"
+          "en": "Trail Running / Walking"
       },
       "force": null,
       "level": "BEGINNER",

@@ -21,6 +21,7 @@ const UserSchema: Schema<IUser> = new Schema(
             enum: Object.keys(LANGUAGE),
             required: true,
         },
+        timezone: { type: String, required: true },
         measurementSystemPreference: {
             type: String,
             enum: ["METRIC", "IMPERIAL"],

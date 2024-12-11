@@ -1,3 +1,4 @@
+// WARNING: Always keep keys and values the same
 export const SET_TYPE = {
     STRAIGHT_SET: "STRAIGHT_SET",
     DROP_SET: "DROP_SET",
@@ -9,6 +10,7 @@ export const SET_TYPE = {
     ISOMETRIC_SET: "ISOMETRIC_SET",
     CARDIO_SET: "CARDIO_SET",
     AMRAP_SET: "AMRAP_SET",
+    REST_SET: "REST_SET",
 } as const;
 
 export type SetTypeKey = keyof typeof SET_TYPE;
