@@ -1,95 +1,46 @@
 import { LanguageKey } from "../constants/language";
-import { IExercise } from "../models/exercise";
-import { ISet, ITempo, NumberOrRange } from "../models/set";
+import { SET_TYPE } from "../constants/set-type";
+import {
+    IAmrapSet,
+    IAmrapSetEntry,
+    ICardioSetEntry,
+    IDropSet,
+    IDropSetEntry,
+    IIsometricSet,
+    IIsometricSetEntry,
+    IPyramidSet,
+    IPyramidSetEntry,
+    IRestPauseSet,
+    IRestPauseSetEntry,
+    IStraightSet,
+    IStraightSetEntry,
+    ISuperset,
+} from "../validation";
+import { ISet } from "../validation/sets";
 import { resolveLocalizedEnum } from "./utils";
 
-export interface ILocalizedSet
-    extends Omit<
-        ISet,
-        | "type"
-        | "straightSet"
-        | "dropSet"
-        | "restPauseSet"
-        | "pyramidSet"
-        | "isometricSet"
-        | "amrapSet"
-        | "superSet"
-    > {
+// Sets are the same types for localization, but this is guaranteed to localized
+
+interface IAmrapSetLocalizedEntry extends IAmrapSetEntry {}
+interface ICardioSetLocalizedEntry extends ICardioSetEntry {}
+interface IRestPauseSetLocalizedEntry extends IRestPauseSetEntry {}
+interface IStraightSetLocalizedEntry extends IStraightSetEntry {}
+interface IDropSetLocalizedEntry extends IDropSetEntry {}
+interface IPyramidSetLocalizedEntry extends IPyramidSetEntry {}
+interface IIsometricSetLocalizedEntry extends IIsometricSetEntry {}
+
+type ILocalizedSetEntry =
+    | IAmrapSetLocalizedEntry
+    | ICardioSetLocalizedEntry
+    | IRestPauseSetLocalizedEntry
+    | IStraightSetLocalizedEntry
+    | IDropSetLocalizedEntry
+    | IPyramidSetLocalizedEntry
+    | IIsometricSetLocalizedEntry;
+
+export interface ILocalizedSet extends Omit<ISet, "type" | "sets"> {
     type: string; // Localized 'type' field
-
-    tempo?: ITempo;
-
-    straightSet?: {
-        exercise: IExercise["_id"];
-        sets: {
-            reps: NumberOrRange;
-            weightSelection?: {
-                method: string; // Localized 'method'
-                value: number;
-            };
-        }[];
-    };
-
-    dropSet?: {
-        exercise: IExercise["_id"];
-        initialWeightSelection: {
-            method: string; // Localized 'method'
-            value: number;
-        };
-        sets: {
-            loadReductionPercent: number;
-            assisted?: boolean;
-        }[];
-    };
-
-    restPauseSet?: {
-        exercise: IExercise["_id"];
-        weightSelection?: {
-            method: string; // Localized 'method'
-            value: number;
-        };
-        sets: {
-            reps: NumberOrRange;
-            restDurationInSeconds: NumberOrRange;
-        }[];
-    };
-
-    pyramidSet?: {
-        exercise: IExercise["_id"];
-        sets: {
-            reps: NumberOrRange;
-            weightSelection?: {
-                method: string; // Localized 'method'
-                value: number;
-            };
-        }[];
-    };
-
-    isometricSet?: {
-        exercise: IExercise["_id"];
-        sets: {
-            durationInSeconds: NumberOrRange;
-            weightSelection?: {
-                method: string; // Localized 'method'
-                value: number;
-            };
-        }[];
-    };
-
-    amrapSet?: {
-        exercise: IExercise["_id"];
-        sets: {
-            timeFrameInSeconds?: NumberOrRange;
-            weightSelection?: {
-                method: string; // Localized 'method'
-                value: number;
-            };
-        }[];
-    };
-
-    superSet?: {
-        sets: ILocalizedSet[]; // Recursive definition to handle nested supersets
-    };
+    sets: [ILocalizedSetEntry];
 }
 
 /**
@@ -107,140 +58,73 @@ export function resolveLocalizedSet(
     set: ISet,
     language: LanguageKey,
 ): ILocalizedSet {
-    const localizedSet = { ...set } as any;
+    const localizedSet = set as any;
 
-    // Localize 'type' field
     localizedSet.type = resolveLocalizedEnum("SET_TYPE", set.type, language);
 
-    // Localize 'tempo' if present (assuming no localization needed for numerical values)
-    if (set.tempo) {
-        localizedSet.tempo = { ...set.tempo };
-    }
-
-    // Handle Straight Set
-    if (set.straightSet) {
-        localizedSet.straightSet = {
-            ...set.straightSet,
-            sets: set.straightSet.sets.map((entry) => ({
-                ...entry,
-                weightSelection: entry.weightSelection
-                    ? {
-                          ...entry.weightSelection,
-                          method: resolveLocalizedEnum(
-                              "WEIGHT_SELECTION_METHOD",
-                              entry.weightSelection.method,
-                              language,
-                          ),
-                      }
-                    : undefined,
-            })),
-        };
-    }
-
-    // Handle Drop Set
-    if (set.dropSet) {
-        localizedSet.dropSet = {
-            ...set.dropSet,
-            initialWeightSelection: {
-                ...set.dropSet.initialWeightSelection,
-                method: resolveLocalizedEnum(
+    if (
+        set.type === SET_TYPE.AMRAP_SET ||
+        set.type === SET_TYPE.ISOMETRIC_SET ||
+        set.type === SET_TYPE.PYRAMID_SET ||
+        set.type === SET_TYPE.REVERSE_PYRAMID_SET ||
+        set.type === SET_TYPE.NON_LINEAR_PYRAMID_SET ||
+        set.type === SET_TYPE.STRAIGHT_SET
+    ) {
+        const amrapSet = localizedSet as
+            | IAmrapSet
+            | IIsometricSet
+            | IPyramidSet
+            | IStraightSet;
+        amrapSet.sets.map((setEntry) => {
+            if (setEntry.weightSelection) {
+                setEntry.weightSelection.method = resolveLocalizedEnum(
                     "WEIGHT_SELECTION_METHOD",
-                    set.dropSet.initialWeightSelection.method,
+                    setEntry.weightSelection.method,
                     language,
-                ),
-            },
-            // Entries in Drop Set do not have weightSelection
-            sets: set.dropSet.sets.map((entry) => ({ ...entry })),
-        };
+                );
+            }
+            return setEntry;
+        });
+
+        return amrapSet as unknown as ILocalizedSet;
     }
 
-    // Handle Rest-Pause Set
-    if (set.restPauseSet) {
-        localizedSet.restPauseSet = {
-            ...set.restPauseSet,
-            weightSelection: set.restPauseSet.weightSelection
-                ? {
-                      ...set.restPauseSet.weightSelection,
-                      method: resolveLocalizedEnum(
-                          "WEIGHT_SELECTION_METHOD",
-                          set.restPauseSet.weightSelection.method,
-                          language,
-                      ),
-                  }
-                : undefined,
-            sets: set.restPauseSet.sets.map((entry) => ({ ...entry })),
-        };
+    if (set.type === SET_TYPE.DROP_SET) {
+        const dropSet = localizedSet as IDropSet;
+        dropSet.initialWeightSelection.method = resolveLocalizedEnum(
+            "WEIGHT_SELECTION_METHOD",
+            dropSet.initialWeightSelection.method,
+            language,
+        );
+
+        return dropSet as unknown as ILocalizedSet;
     }
 
-    // Handle Pyramid Set
-    if (set.pyramidSet) {
-        localizedSet.pyramidSet = {
-            ...set.pyramidSet,
-            sets: set.pyramidSet.sets.map((entry) => ({
-                ...entry,
-                weightSelection: entry.weightSelection
-                    ? {
-                          ...entry.weightSelection,
-                          method: resolveLocalizedEnum(
-                              "WEIGHT_SELECTION_METHOD",
-                              entry.weightSelection.method,
-                              language,
-                          ),
-                      }
-                    : undefined,
-            })),
-        };
+    if (set.type === SET_TYPE.REST_PAUSE_SET) {
+        const restPauseSet = localizedSet as IRestPauseSet;
+        if (restPauseSet.weightSelection) {
+            restPauseSet.weightSelection.method = resolveLocalizedEnum(
+                "WEIGHT_SELECTION_METHOD",
+                restPauseSet.weightSelection.method,
+                language,
+            );
+        }
+
+        return restPauseSet as unknown as ILocalizedSet;
     }
 
-    // Handle Isometric Set
-    if (set.isometricSet) {
-        localizedSet.isometricSet = {
-            ...set.isometricSet,
-            sets: set.isometricSet.sets.map((entry) => ({
-                ...entry,
-                weightSelection: entry.weightSelection
-                    ? {
-                          ...entry.weightSelection,
-                          method: resolveLocalizedEnum(
-                              "WEIGHT_SELECTION_METHOD",
-                              entry.weightSelection.method,
-                              language,
-                          ),
-                      }
-                    : undefined,
-            })),
-        };
+    if (set.type === SET_TYPE.SUPER_SET) {
+        const superset = localizedSet as ISuperset;
+        superset.sets.map((setEntry) => {
+            resolveLocalizedSet(setEntry, language);
+            return setEntry;
+        });
+
+        return superset as unknown as ILocalizedSet;
     }
 
-    // Handle AMRAP Set
-    if (set.amrapSet) {
-        localizedSet.amrapSet = {
-            ...set.amrapSet,
-            sets: set.amrapSet.sets.map((entry) => ({
-                ...entry,
-                weightSelection: entry.weightSelection
-                    ? {
-                          ...entry.weightSelection,
-                          method: resolveLocalizedEnum(
-                              "WEIGHT_SELECTION_METHOD",
-                              entry.weightSelection.method,
-                              language,
-                          ),
-                      }
-                    : undefined,
-            })),
-        };
-    }
-
-    // Handle Superset
-    if (set.superSet) {
-        localizedSet.superSet = {
-            ...set.superSet,
-            sets: set.superSet.sets.map((subSet) =>
-                resolveLocalizedSet(subSet, language),
-            ),
-        };
-    }
+    // Cardio set needs no Localizations
+    // Rest set need no Localizations
 
     return localizedSet as ILocalizedSet;
 }

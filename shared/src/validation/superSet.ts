@@ -5,4 +5,4 @@ export const SupersetSchema = z.object({
     sets: z.array(z.lazy(() => SetSchema)),
 });
 
-export type Superset = z.infer<typeof SupersetSchema>;
+export type ISuperset = z.infer<typeof SupersetSchema>;

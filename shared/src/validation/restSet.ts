@@ -6,4 +6,4 @@ export const RestSetSchema = z.object({
     restDurationInSeconds: NumberOrRangeSchema.optional(),
 });
 
-export type IRestSet0 = z.infer<typeof RestSetSchema>;
+export type IRestSet = z.infer<typeof RestSetSchema>;

@@ -8,7 +8,7 @@ import { PyramidSetSchema } from "./pyramidSet";
 import { RestPauseSetSchema } from "./restPauseSet";
 import { StraightSetSchema } from "./straightSet";
 import { SupersetSchema } from "./superSet";
-import { NumberOrRangeSchema, TempoSchema } from "./utils";
+import { NumberOrRangeSchema, TempoSchema, WeightSelectionSchema } from "./utils";
 
 export const SET_VALIDATION_MAP: Record<string, z.ZodTypeAny> = {
     [SET_TYPE.STRAIGHT_SET]: StraightSetSchema,
@@ -24,6 +24,7 @@ export const SET_VALIDATION_MAP: Record<string, z.ZodTypeAny> = {
 export const SetSchema = z.object({
     type: z.enum(Object.values(SET_TYPE) as [string, ...string[]]),
     restDurationInSeconds: NumberOrRangeSchema.optional(),
+    initialWeightSelection: WeightSelectionSchema.optional(),
     tempo: TempoSchema.optional(),
     sets: z.array(
         z.union([
