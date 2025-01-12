@@ -156,6 +156,24 @@ export const userQueryConfig: IBuildQueryConfig = addPaginationAndSorting({
     },
 });
 
+export const oneRepMaxQueryConfig = addPaginationAndSorting({
+    exercise: {
+        isArray: false,
+        constructor: String,
+        schema: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId"),
+    },
+    weight: {
+        isArray: false,
+        constructor: Number,
+        schema: z.number().min(0, "Weight must be non-negative"),
+    },
+    updatedAt: {
+        isArray: false,
+        constructor: Date,
+        schema: z.date(),
+    },
+});
+
 // Workout Prototype Query Configuration
 export const workoutPrototypeQueryConfig: IBuildQueryConfig =
     addPaginationAndSorting({
@@ -186,7 +204,7 @@ export const workoutPrototypeQueryConfig: IBuildQueryConfig =
 export const buildQueryFromSearchParams = <T>(
     searchParams: URLSearchParams,
     config: IBuildQueryConfig,
-    language: LanguageKey,
+    language?: LanguageKey,
 ) => {
     const query: IQuery<T> = {};
     let limit = 10; // default limit
