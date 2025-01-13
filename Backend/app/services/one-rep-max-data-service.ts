@@ -4,6 +4,7 @@ import { ServiceResult } from "~/interfaces/service-result";
 import OneRepMaxData, { IOneRepMaxData } from "~/models/OneRepMaxData";
 import { normalizeWeight } from "~/utils/noramlizeUnits.server";
 import {
+    buildPopulateOptions,
     buildQueryFromSearchParams,
     oneRepMaxQueryConfig,
 } from "~/utils/query.server";
@@ -60,12 +61,17 @@ export const readOneRepMaxData = async (
 
         query.userId = user._id;
 
-        const data = await OneRepMaxData.find(query)
+        let queryObj = OneRepMaxData.find(query)
             .sort({ [sortBy || "updatedAt"]: sortOrder })
             .skip(offset)
-            .limit(limit)
-            .exec();
+            .limit(limit);
 
+        const populateOptions = buildPopulateOptions(searchParams, "populate");
+        populateOptions.forEach((option) => {
+            queryObj = queryObj.populate(option);
+        });
+
+        const data = await queryObj.exec();
         const totalCount = await OneRepMaxData.countDocuments(query).exec();
 
         return {
@@ -99,6 +105,43 @@ export const deleteOneRepMaxData = async (
         return {
             message: "One-rep max data deleted successfully.",
         };
+    } catch (error) {
+        throw handleError(error);
+    }
+};
+
+export const readOneRepMaxDataById = async (
+    user: IUser,
+    oneRepMaxDataId: string,
+    searchParams: URLSearchParams,
+): Promise<ServiceResult<IOneRepMaxData>> => {
+    try {
+        let queryObj = OneRepMaxData.findById(oneRepMaxDataId);
+
+        // Populate options (e.g., exercise details)
+        const populateOptions = buildPopulateOptions(searchParams, "populate");
+        populateOptions.forEach((option) => {
+            queryObj = queryObj.populate(option);
+        });
+
+        const oneRepMaxData = (await queryObj.lean().exec()) as IOneRepMaxData;
+
+        if (!oneRepMaxData) {
+            throw data(
+                { error: "One-rep max data not found" },
+                { status: 404 },
+            );
+        }
+
+        // Ensure the user has access to the data
+        if (oneRepMaxData.userId.toString() !== user._id.toString()) {
+            throw data(
+                { error: "Forbidden: You do not have access to this data" },
+                { status: 403 },
+            );
+        }
+
+        return { data: oneRepMaxData };
     } catch (error) {
         throw handleError(error);
     }

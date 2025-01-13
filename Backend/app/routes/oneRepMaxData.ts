@@ -1,15 +1,10 @@
 import { ActionFunctionArgs, data, LoaderFunctionArgs } from "@remix-run/node";
 import {
     createOneRepMaxData,
-    deleteOneRepMaxData,
     readOneRepMaxData,
 } from "~/services/one-rep-max-data-service";
 import { requirePredicate } from "~/utils/auth.server";
-import {
-    handleError,
-    validateDatabaseId,
-    validateRequestBody,
-} from "~/utils/util.server";
+import { handleError, validateRequestBody } from "~/utils/util.server";
 import { createOneRepMaxDataSchema } from "~/validation/one-rep-max-data.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -27,7 +22,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
 };
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
     const { user } = await requirePredicate(request, { user: true });
     const method = request.method.toUpperCase();
 
@@ -45,13 +40,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
                 );
 
                 return data(result, { status: 201 });
-            }
-
-            case "DELETE": {
-                const id = validateDatabaseId(params.id || "");
-                const result = await deleteOneRepMaxData(user, id);
-
-                return data(result, { status: 200 });
             }
 
             default:
