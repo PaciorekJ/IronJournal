@@ -31,7 +31,8 @@ mongooseSetSchema.pre("validate", function (this, next) {
         // *** Apply Parent Schema ***
         SetSchema.parse(this);
 
-        const type = this.type;
+        type SetType = ISet["type"];
+        const type: SetType = this.type;
 
         // *** Apply Child Schema (The Specific Set Schema) ***
         const schema = SET_VALIDATION_MAP[type];
