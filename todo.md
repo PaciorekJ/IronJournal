@@ -17,6 +17,10 @@
 
 ## Planning Server
 
+- User's should have specific goals
+- MyFitnessPal integration, to obtains additional data for neo4j
+- Ensure that all references to delete documents are removed, find an efficient approach for this
+
 - create Endpoint that Creates IOneRepMaxData, (MAX 1 per exercise per user)
   - Create Database Model for IOneRepMaxData
   - GET     (oneRepMaxData/?exerciseId=value)   gets all IoneRepMaxData or get a IOneRepMaxData by exerciseId for a specific user
@@ -81,6 +85,7 @@
   - POST    (setData/:workoutId)     Create a route for creating ISetData
   - PATCH   (setData/:workoutId)     Update a ISetdata inside of the specified IWorkoutData
 
+- Add RPE to user sets so they can state how they felt they performed
 
 ```typescript
 
