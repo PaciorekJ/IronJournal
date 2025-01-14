@@ -54,6 +54,22 @@ type IQuery<T> = {
 
 type IBuildQueryConfig = Record<string, IFieldConfig>;
 
+// Daily Data Query Configuration
+export const dailyDataQueryConfig: IBuildQueryConfig = addPaginationAndSorting({
+    createdAt: {
+        isArray: false,
+        constructor: (value: string) => {
+            const date = new Date(value);
+            return new Date(
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate(),
+            );
+        },
+        schema: z.date(),
+    },
+});
+
 // Exercise Query Configuration
 export const exerciseQueryConfig: IBuildQueryConfig = addPaginationAndSorting({
     name: {

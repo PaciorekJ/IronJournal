@@ -1,3 +1,4 @@
+import { ObjectIdSchema } from "@paciorekj/iron-journal-shared";
 import {
     DAYS_OF_WEEK,
     DaysOfWeekKey,
@@ -9,9 +10,6 @@ import {
     TargetAudienceKey,
 } from "@paciorekj/iron-journal-shared/constants";
 import { z } from "zod";
-
-const objectIdRegex = /^[0-9a-fA-F]{24}$/;
-const objectIdSchema = z.string().regex(objectIdRegex, "Invalid ObjectId");
 
 const cardioRecommendationSchema = z
     .object({
@@ -32,7 +30,7 @@ const workoutScheduleItemSchema = z
             ),
             z.number(),
         ]),
-        workoutIds: z.array(objectIdSchema).optional(),
+        workoutIds: z.array(ObjectIdSchema).optional(),
         isRestDay: z.boolean().optional(),
     })
     .strict()
@@ -52,7 +50,7 @@ const workoutScheduleItemSchema = z
 const tempCreateProgramSchema = z
     .object({
         name: z.string(),
-        userId: objectIdSchema,
+        userId: ObjectIdSchema,
         description: z.string().optional(),
         workoutSchedule: z.array(workoutScheduleItemSchema).optional(),
         repetitions: z.number().nonnegative().optional().default(0),
