@@ -21,7 +21,7 @@ const mongooseSetSchema = new Schema<ISet>(
             concentric: { type: Number, min: 0 },
             topPause: { type: Number, min: 0 },
         },
-        sets: { type: [new Schema({}, { strict: false })], required: true }, // Set to Object because the schema is dynamic according to type
+        sets: { type: [Schema], required: true },
     },
     { _id: false },
 );
@@ -31,8 +31,7 @@ mongooseSetSchema.pre("validate", function (this, next) {
         // *** Apply Parent Schema ***
         SetSchema.parse(this);
 
-        type SetType = ISet["type"];
-        const type: SetType = this.type;
+        const type = this.type as string;
 
         // *** Apply Child Schema (The Specific Set Schema) ***
         const schema = SET_VALIDATION_MAP[type];

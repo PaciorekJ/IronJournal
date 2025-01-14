@@ -8,7 +8,11 @@ import { PyramidSetSchema } from "./pyramidSet";
 import { RestPauseSetSchema } from "./restPauseSet";
 import { StraightSetSchema } from "./straightSet";
 import { SupersetSchema } from "./superSet";
-import { NumberOrRangeSchema, TempoSchema, WeightSelectionSchema } from "./utils";
+import {
+    NumberOrRangeSchema,
+    TempoSchema,
+    WeightSelectionSchema,
+} from "./utils";
 
 export const SET_VALIDATION_MAP: Record<string, z.ZodTypeAny> = {
     [SET_TYPE.STRAIGHT_SET]: StraightSetSchema,

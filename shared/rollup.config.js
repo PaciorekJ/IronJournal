@@ -13,6 +13,8 @@ const inputFiles = [
     "src/rabbitMQ/index.ts",
     "src/localization/index.ts",
     ...fg.sync("src/localization/*.ts"),
+    "src/validation/index.ts",
+    ...fg.sync("src/validation/*.ts"),
 ];
 
 export default {

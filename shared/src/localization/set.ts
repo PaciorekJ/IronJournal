@@ -115,7 +115,7 @@ export function resolveLocalizedSet(
 
     if (set.type === SET_TYPE.SUPER_SET) {
         const superset = localizedSet as ISuperset;
-        superset.sets.map((setEntry) => {
+        superset.sets.map((setEntry: ISet) => {
             resolveLocalizedSet(setEntry, language);
             return setEntry;
         });
