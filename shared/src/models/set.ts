@@ -1,17 +1,25 @@
 import mongoose, { Schema } from "mongoose";
 import { SET_TYPE } from "../constants/set-type";
 import { WEIGHT_SELECTION_METHOD } from "../constants/weight-selection";
+import { NumberOrRangeSchema } from "../validation";
 import { ISet, SET_VALIDATION_MAP, SetSchema } from "../validation/sets";
 
 const mongooseSetSchema = new Schema<ISet>(
     {
         type: { type: String, enum: Object.values(SET_TYPE), required: true },
-        restDurationInSeconds: { type: Number, min: 0 },
+        restDurationInSeconds: { type: NumberOrRangeSchema, min: 0 },
+        exercise: { type: Schema.Types.ObjectId, ref: "Exercise" },
         initialWeightSelection: {
             method: {
                 type: String,
                 enum: Object.values(WEIGHT_SELECTION_METHOD),
-                required: true,
+            },
+            value: { type: Number, min: 0 },
+        },
+        weightSelection: {
+            method: {
+                type: String,
+                enum: Object.values(WEIGHT_SELECTION_METHOD),
             },
             value: { type: Number, min: 0 },
         },

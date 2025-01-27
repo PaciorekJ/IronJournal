@@ -3,11 +3,10 @@ import { NumberOrRangeSchema, ObjectIdSchema } from "./utils";
 
 export const CardioSetEntrySchema = z
     .object({
-        distance: NumberOrRangeSchema.optional(),
+        distanceInCentimeters: NumberOrRangeSchema.optional(), // TODO: This needs to be converted to the user preferred units
         durationInSeconds: NumberOrRangeSchema.optional(),
-        restDuration: NumberOrRangeSchema.optional(),
     })
-    .refine((entry) => entry.distance || entry.durationInSeconds, {
+    .refine((entry) => entry.distanceInCentimeters || entry.durationInSeconds, {
         message:
             "Each CardioSetEntry must have either 'distance' or 'durationInSeconds'.",
     });

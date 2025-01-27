@@ -3,10 +3,16 @@
 ## Important Steps
 
 - Use date-fns to localize times returned based on the user's preference for timezone (Probably during app development)
+- Handle conversion of times returned in mobile app, convert seconds to nice times, hours, minutes, seconds
+- Add Conversions upon return for weights, volumes, and distance for set templates, and set data!
+- Consider making Sets independent from workouts, as sets could be reusable by user's
+- Add regression model with neo4j, To predict the optimal weight for exercises, a common algorithm approach would be to use a regression model based on historical training data, incorporating factors like previous weight lifted, sets and reps performed, rest periods, muscle group targeted, and overall fitness level
+- ML algorithm for, A prediction algorithm for adjusting a workout program would typically use machine learning techniques to analyze data like past workout performance, heart rate, sleep patterns, nutrition, and other relevant metrics to predict when and how to adjust training variables like intensity, volume, exercise selection, or rest days
 
 ## LOW PRIORITY
 
 - Each User have one active program.
+- Make so assisted sets are accounted for, using assisted equipment for example
 - Add Accessory-Equipment to both the Iset, ISetDataEntry, and IOneRepMaxData
 
 ## Planning (For Additional Sets)
@@ -93,12 +99,12 @@
 
     // ***Workout Tracking***
 
-    interface ISetDataEntry {
+    interface ISetDataEntry { // All Data inside this is the actual!
         reps: number;
         weight: number; // Non-negative, normalized to KG
+        rpe?: number; // 1-10, 10 being Max Effort, 1 being very light activity while 0 means Effortless, optional metric to log
         restDurationInSeconds?: number;
-        failure: boolean;
-        distanceInMeters?: number;
+        distanceInCentimeters?: number;
         durationInSeconds?: number;
     }
 
@@ -111,6 +117,8 @@
             concentric: number;
             topPause: number;
         };
+        weight: number; // Non-negative, normalized to KG, for restPause
+        initialWeightSelection: number; // Non-negative, normalized to KG, for dropSets
         exercise: IExercise["_id"];
         setData: ISetDataEntry[];
     }

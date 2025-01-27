@@ -23,9 +23,8 @@ export const action: ActionFunction = async ({ request }) => {
             case "POST":
                 const requestData = await validateRequestBody(request);
                 const validatedData = createDailyDataSchema.parse(requestData);
-                result = await createOrUpdateDailyData(
+                const result = await createOrUpdateDailyData(
                     user,
-                    null,
                     validatedData,
                 );
                 return data(result, { status: 201 });

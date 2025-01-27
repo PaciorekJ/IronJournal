@@ -6,7 +6,7 @@ import {
 } from "./utils";
 
 export const AmrapSetEntrySchema = z.object({
-    timeFrameInSeconds: NumberOrRangeSchema.optional(),
+    durationInSeconds: NumberOrRangeSchema.optional(),
     weightSelection: WeightSelectionSchema.optional(),
 });
 

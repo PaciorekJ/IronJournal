@@ -6,9 +6,9 @@ import { handleError, validateDatabaseId } from "~/utils/util.server";
 export const loader: LoaderFunction = async ({ request, params }) => {
     const { user } = await requirePredicate(request, { user: true });
 
-    const dailyDataId = validateDatabaseId(params.id || "");
+    const id = validateDatabaseId(params.id || "");
 
-    const result = await readDailyDataById(user, dailyDataId);
+    const result = await readDailyDataById(user, id);
     return data(result, { status: 200 });
 };
 
