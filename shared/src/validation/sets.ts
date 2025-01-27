@@ -10,6 +10,7 @@ import { StraightSetSchema } from "./straightSet";
 import { SupersetSchema } from "./superSet";
 import {
     NumberOrRangeSchema,
+    ObjectIdSchema,
     TempoSchema,
     WeightSelectionSchema,
 } from "./utils";
@@ -28,7 +29,9 @@ export const SET_VALIDATION_MAP: Record<string, z.ZodTypeAny> = {
 export const SetSchema = z.object({
     type: z.enum(Object.values(SET_TYPE) as [string, ...string[]]),
     restDurationInSeconds: NumberOrRangeSchema.optional(),
+    exercise: ObjectIdSchema.optional(),
     initialWeightSelection: WeightSelectionSchema.optional(),
+    weightSelection: WeightSelectionSchema.optional(),
     tempo: TempoSchema.optional(),
     sets: z.array(
         z.union([
