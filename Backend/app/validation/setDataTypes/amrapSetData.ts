@@ -3,7 +3,7 @@ import { z } from "zod";
 import { durationSchema, repsSchema, weightUnitsSchema } from "../utils";
 
 export const AmrapSetDataEntrySchema = z.object({
-    durationInSeconds: durationSchema.optional(),
+    duration: durationSchema.optional(),
     reps: repsSchema,
 });
 

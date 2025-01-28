@@ -6,8 +6,8 @@ export interface ISetDataEntry {
     weight: number; // Non-negative, normalized to KG
     rpe?: number; // 1-10 scale
     restDurationInSeconds?: number;
-    distanceInCentimeters?: number;
-    durationInSeconds?: number;
+    distance?: number; // Non-negative, Standardized to centimeters
+    duration?: number; // Non-negative, Standardized to seconds
 }
 
 export interface ISetData extends Document {
@@ -19,10 +19,14 @@ export interface ISetData extends Document {
         concentric: number;
         topPause: number;
     };
+    rpe: number;
+    restDurationInSeconds: number;
     weight: number;
     initialWeightSelection: number;
     exercise: mongoose.Types.ObjectId;
     setData: ISetDataEntry[];
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 // Subdocument Schema for ISetDataEntry
@@ -44,47 +48,59 @@ const SetDataEntrySchema = new Schema<ISetDataEntry>({
         type: Number,
         min: 0,
     },
-    distanceInCentimeters: {
+    distance: {
         type: Number,
         min: 0,
     },
-    durationInSeconds: {
+    duration: {
         type: Number,
         min: 0,
     },
 });
 
 // Main Schema for ISetData
-const mongooseSetDataSchema = new Schema<ISetData>({
-    userId: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
+const mongooseSetDataSchema = new Schema<ISetData>(
+    {
+        userId: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+        type: {
+            type: String,
+            enum: Object.keys(SET_TYPE),
+            required: true,
+        },
+        tempo: {
+            eccentric: { type: Number, min: 0 },
+            bottomPause: { type: Number, min: 0 },
+            concentric: { type: Number, min: 0 },
+            topPause: { type: Number, min: 0 },
+        },
+        restDurationInSeconds: {
+            type: Number,
+            min: 0,
+        },
+        rpe: {
+            type: Number,
+            min: 1,
+            max: 10,
+        },
+        weight: {
+            type: Number,
+            min: 0,
+        },
+        exercise: {
+            type: Schema.Types.ObjectId,
+            ref: "Exercise",
+        },
+        setData: {
+            type: [SetDataEntrySchema],
+            required: true,
+        },
     },
-    type: {
-        type: String,
-        enum: Object.keys(SET_TYPE),
-        required: true,
-    },
-    tempo: {
-        eccentric: { type: Number, min: 0 },
-        bottomPause: { type: Number, min: 0 },
-        concentric: { type: Number, min: 0 },
-        topPause: { type: Number, min: 0 },
-    },
-    weight: {
-        type: Number,
-        min: 0,
-    },
-    exercise: {
-        type: Schema.Types.ObjectId,
-        ref: "Exercise",
-    },
-    setData: {
-        type: [SetDataEntrySchema],
-        required: true,
-    },
-});
+    { timestamps: true },
+);
 
 const SetData = model<ISetData>("SetData", mongooseSetDataSchema);
 

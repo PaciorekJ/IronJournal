@@ -1,3 +1,4 @@
+// @ts-ignore
 import { vitePlugin as remix } from "@remix-run/dev";
 import path from "path"; // Import the 'path' module
 import { defineConfig } from "vite";

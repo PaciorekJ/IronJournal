@@ -1,5 +1,4 @@
 import { LANGUAGE } from "@paciorekj/iron-journal-shared";
-import { LoaderFunctionArgs } from "@remix-run/node";
 
 export const languageArray = Object.entries(LANGUAGE).map(([key, value]) => ({
     key: key,
@@ -8,7 +7,7 @@ export const languageArray = Object.entries(LANGUAGE).map(([key, value]) => ({
 
 const timeZones = Intl.supportedValuesOf("timeZone");
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async () => {
     return {
         data: {
             LANGUAGE: languageArray,

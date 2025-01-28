@@ -32,7 +32,7 @@ import {
     StraightSetDataEntrySchema,
     StraightSetDataSchema,
 } from "./setDataTypes/straightSetData";
-import { SupersetDataSchema } from "./setDataTypes/SupersetData";
+import { SupersetDataSchema } from "./setDataTypes/supersetData";
 import { durationSchema, rpeSchema, weightUnitsSchema } from "./utils";
 
 export const SET_DATA_VALIDATION_MAP: Record<string, z.ZodTypeAny> = {

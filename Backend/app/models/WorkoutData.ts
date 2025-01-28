@@ -2,10 +2,20 @@ import { IUser, IWorkout } from "@paciorekj/iron-journal-shared";
 import mongoose, { Schema } from "mongoose";
 import { ISetData } from "./SetData";
 
+const WORKOUT_DATA_STATUS = {
+    ACTIVE: "Active",
+    IN_PROGRESS: "In Progress",
+    COMPLETED: "Completed",
+} as const;
+
+type WORKOUT_DATA_STATUS =
+    (typeof WORKOUT_DATA_STATUS)[keyof typeof WORKOUT_DATA_STATUS];
+
 export interface IWorkoutData extends Document {
     userId: IUser["_id"];
     workout: IWorkout["_id"] | null;
-    sets: ISetData["_id"][];
+    setsData: ISetData["_id"][];
+    status: WORKOUT_DATA_STATUS;
     createdAt: Date;
 }
 
@@ -21,12 +31,16 @@ const WorkoutDataSchema = new Schema<IWorkoutData>(
             ref: "Workout",
             default: null,
         },
-        sets: [
+        setsData: [
             {
                 type: Schema.Types.ObjectId,
                 ref: "SetData",
             },
         ],
+        status: {
+            enum: Object.values(WORKOUT_DATA_STATUS),
+            default: WORKOUT_DATA_STATUS.ACTIVE,
+        },
         createdAt: {
             type: Date,
             default: Date.now,

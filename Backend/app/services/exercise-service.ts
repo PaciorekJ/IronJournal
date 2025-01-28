@@ -113,7 +113,7 @@ export const updateExercise = async (
 };
 
 export const deleteExercise = async (
-    user: IUser,
+    _user: IUser,
     exerciseId: string,
 ): Promise<ServiceResult<undefined>> => {
     try {

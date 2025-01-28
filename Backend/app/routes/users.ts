@@ -1,4 +1,4 @@
-import { ActionFunctionArgs, data, json } from "@remix-run/node";
+import { ActionFunctionArgs, data } from "@remix-run/node";
 import { readUsers } from "~/services/user-service";
 import { requirePredicate } from "~/utils/auth.server";
 
