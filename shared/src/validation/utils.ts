@@ -9,10 +9,10 @@ export const NumberOrRangeSchema = z.union([
 ]);
 
 export const TempoSchema = z.object({
-    eccentric: z.number().min(0),
-    bottomPause: z.number().min(0),
-    concentric: z.number().min(0),
-    topPause: z.number().min(0),
+    eccentric: z.number().min(0, "Eccentric tempo must be non-negative"),
+    bottomPause: z.number().min(0, "Bottom pause must be non-negative"),
+    concentric: z.number().min(0, "Concentric tempo must be non-negative"),
+    topPause: z.number().min(0, "Top pause must be non-negative"),
 });
 
 export const WeightSelectionSchema = z.object({

@@ -1,32 +1,9 @@
 import { z } from "zod";
-
-// Validation schema for IUnitsDistance
-const distanceUnitsSchema = z
-    .object({
-        cm: z.number().nonnegative().optional(),
-        m: z.number().nonnegative().optional(),
-        km: z.number().nonnegative().optional(),
-        inches: z.number().nonnegative().optional(),
-        ft: z.number().nonnegative().optional(),
-        mi: z.number().nonnegative().optional(),
-    })
-    .strict();
-
-const weightUnitsSchema = z
-    .object({
-        kg: z.number().nonnegative().optional(),
-        lb: z.number().nonnegative().optional(),
-    })
-    .strict();
-
-const volumeUnitsSchema = z
-    .object({
-        ml: z.number().nonnegative().optional(),
-        l: z.number().nonnegative().optional(),
-        fluidOz: z.number().nonnegative().optional(),
-        gal: z.number().nonnegative().optional(),
-    })
-    .strict();
+import {
+    distanceUnitsSchema,
+    volumeUnitsSchema,
+    weightUnitsSchema,
+} from "./utils";
 
 const bodyMeasurementSchema = z
     .object({

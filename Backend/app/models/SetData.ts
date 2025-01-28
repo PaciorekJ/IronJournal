@@ -1,4 +1,4 @@
-import { SetTypeKey } from "@paciorekj/iron-journal-shared";
+import { SET_TYPE, SetTypeKey } from "@paciorekj/iron-journal-shared";
 import mongoose, { Document, model, Schema } from "mongoose";
 
 export interface ISetDataEntry {
@@ -29,12 +29,10 @@ export interface ISetData extends Document {
 const SetDataEntrySchema = new Schema<ISetDataEntry>({
     reps: {
         type: Number,
-        required: true,
         min: 0,
     },
     weight: {
         type: Number,
-        required: true,
         min: 0,
     },
     rpe: {
@@ -64,7 +62,8 @@ const SetDataSchema = new Schema<ISetData>({
         required: true,
     },
     type: {
-        type: String, // Replace with an Enum type if applicable
+        type: String,
+        enum: Object.keys(SET_TYPE),
         required: true,
     },
     tempo: {
@@ -75,18 +74,11 @@ const SetDataSchema = new Schema<ISetData>({
     },
     weight: {
         type: Number,
-        required: true,
-        min: 0,
-    },
-    initialWeightSelection: {
-        type: Number,
-        required: true,
         min: 0,
     },
     exercise: {
         type: Schema.Types.ObjectId,
         ref: "Exercise",
-        required: true,
     },
     setData: {
         type: [SetDataEntrySchema],
