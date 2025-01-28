@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { durationInSecondsSchema } from "../utils";
+import { durationSchema } from "../utils";
 
-export const RestSetSchema = z.object({
-    restDurationInSeconds: durationInSecondsSchema,
+export const RestSetDataSchema = z.object({
+    restDurationInSeconds: durationSchema,
 });

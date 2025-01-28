@@ -14,5 +14,5 @@ export const DropSetDataEntrySchema = z.object({
 export const DropSetDataSchema = z.object({
     type: z.literal(SET_TYPE.DROP_SET),
     exercise: ObjectIdSchema,
-    sets: z.array(DropSetEntrySchema),
+    setData: z.array(DropSetEntrySchema),
 });

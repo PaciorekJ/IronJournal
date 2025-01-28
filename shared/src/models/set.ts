@@ -6,7 +6,7 @@ import { ISet, SET_VALIDATION_MAP, SetSchema } from "../validation/sets";
 
 const mongooseSetSchema = new Schema<ISet>(
     {
-        type: { type: String, enum: Object.values(SET_TYPE), required: true },
+        type: { type: String, enum: Object.keys(SET_TYPE), required: true },
         restDurationInSeconds: { type: NumberOrRangeSchema, min: 0 },
         exercise: { type: Schema.Types.ObjectId, ref: "Exercise" },
         initialWeightSelection: {

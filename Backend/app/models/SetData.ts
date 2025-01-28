@@ -55,7 +55,7 @@ const SetDataEntrySchema = new Schema<ISetDataEntry>({
 });
 
 // Main Schema for ISetData
-const SetDataSchema = new Schema<ISetData>({
+const mongooseSetDataSchema = new Schema<ISetData>({
     userId: {
         type: Schema.Types.ObjectId,
         ref: "User",
@@ -86,6 +86,6 @@ const SetDataSchema = new Schema<ISetData>({
     },
 });
 
-const SetData = model<ISetData>("SetData", SetDataSchema);
+const SetData = model<ISetData>("SetData", mongooseSetDataSchema);
 
 export default SetData;

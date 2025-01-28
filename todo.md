@@ -14,6 +14,7 @@
 - Each User have one active program.
 - Make so assisted sets are accounted for, using assisted equipment for example
 - Add Accessory-Equipment to both the Iset, ISetDataEntry, and IOneRepMaxData
+- Add Rest Pause Drop Sets
 
 ## Planning (For Additional Sets)
 

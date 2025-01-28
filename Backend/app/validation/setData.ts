@@ -33,7 +33,7 @@ import {
     StraightSetDataSchema,
 } from "./setDataTypes/straightSetData";
 import { SupersetDataSchema } from "./setDataTypes/SupersetData";
-import { weightUnitsSchema } from "./utils";
+import { durationSchema, rpeSchema, weightUnitsSchema } from "./utils";
 
 export const SET_DATA_VALIDATION_MAP: Record<string, z.ZodTypeAny> = {
     [SET_TYPE.STRAIGHT_SET]: StraightSetDataSchema,
@@ -48,12 +48,14 @@ export const SET_DATA_VALIDATION_MAP: Record<string, z.ZodTypeAny> = {
     [SET_TYPE.SUPER_SET]: SupersetDataSchema,
 };
 
-export const mongooseSetDataSchema = z
+export const SetDataSchema = z
     .object({
         type: z.enum(Object.keys(SET_TYPE) as [string, ...string[]]),
         tempo: TempoSchema.optional(),
         weight: weightUnitsSchema.optional(),
         exercise: ObjectIdSchema.optional(),
+        restDurationInSeconds: durationSchema.optional(),
+        rpe: rpeSchema.optional(),
         setData: z
             .array(
                 z.union([
@@ -70,8 +72,8 @@ export const mongooseSetDataSchema = z
     })
     .strict();
 
-export const createSetDataSchema = mongooseSetDataSchema;
-export const updateSetDataSchema = mongooseSetDataSchema.partial();
+export const createSetDataSchema = SetDataSchema;
+export const updateSetDataSchema = SetDataSchema.partial();
 
 export type ISetDataCreateDTO = z.infer<typeof createSetDataSchema>;
 export type ISetDataUpdateDTO = z.infer<typeof updateSetDataSchema>;

@@ -39,10 +39,15 @@ export const volumeUnitsSchema = z
         { message: "At least one volume unit must have a non-falsy value" },
     );
 
-export const durationInSecondsSchema = z
+export const durationSchema = z
     .number()
     .min(0, "Duration must be a non-negative number");
 
 export const repsSchema = z
     .number()
     .min(0, "Reps must be a non-negative number");
+
+export const rpeSchema = z
+    .number()
+    .min(1, "RPE must be between 1 and 10")
+    .max(10, "RPE must be between 1 and 10");

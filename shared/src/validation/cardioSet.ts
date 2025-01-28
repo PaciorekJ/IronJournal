@@ -3,7 +3,7 @@ import { NumberOrRangeSchema, ObjectIdSchema } from "./utils";
 
 export const CardioSetEntrySchema = z
     .object({
-        distanceInCentimeters: NumberOrRangeSchema.optional(),
+        distanceInCentimeters: NumberOrRangeSchema.optional(), // TODO: This needs to be converted to the user preferred units
         durationInSeconds: NumberOrRangeSchema.optional(),
     })
     .refine((entry) => entry.distanceInCentimeters || entry.durationInSeconds, {

@@ -6,14 +6,13 @@ import {
 } from "./utils";
 
 // Straight Set Entry Validator
-export const StraightSetEntrySchema = z.object({
-    reps: NumberOrRangeSchema,
-    weightSelection: WeightSelectionSchema.optional(),
-});
+export const StraightSetEntrySchema = z.object({});
 
 // Straight Set Validator
 export const StraightSetSchema = z.object({
     exercise: ObjectIdSchema,
+    reps: NumberOrRangeSchema,
+    weightSelection: WeightSelectionSchema.optional(),
     sets: z.array(StraightSetEntrySchema),
 });
 
