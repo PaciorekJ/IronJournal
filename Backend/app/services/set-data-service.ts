@@ -20,7 +20,7 @@ export const deleteSetData = async (
         const updateWorkoutResult = await WorkoutData.updateOne(
             { userId: user._id, workout: workoutDataId },
             { $pull: { setsData: setDataId } },
-        );
+        ).session(session);
 
         if (updateWorkoutResult.modifiedCount === 0) {
             throw data(
@@ -34,7 +34,7 @@ export const deleteSetData = async (
         const deleteSetResult = await SetData.deleteOne({
             _id: setDataId,
             userId: user._id,
-        });
+        }).session(session);
 
         if (deleteSetResult.deletedCount === 0) {
             throw data(
@@ -68,13 +68,13 @@ export const createSetData = async (
     try {
         session.startTransaction();
 
-        const newSet = await SetData.create(setData);
+        const newSet = (await SetData.create([setData], { session }))[0];
 
         const { modifiedCount } = await WorkoutData.updateOne(
             { userId: user._id, _id: workoutId },
             { $push: { setsData: newSet._id } },
             { runValidators: true },
-        );
+        ).session(session);
 
         if (!modifiedCount) {
             throw data(

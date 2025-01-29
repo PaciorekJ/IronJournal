@@ -1,3 +1,4 @@
+import { ObjectIdSchema } from "@paciorekj/iron-journal-shared";
 import {
     CATEGORY,
     CategoryKey,
@@ -176,7 +177,7 @@ export const oneRepMaxQueryConfig = addPaginationAndSorting({
     exercise: {
         isArray: false,
         constructor: String,
-        schema: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId"),
+        schema: ObjectIdSchema,
     },
     weight: {
         isArray: false,
@@ -213,7 +214,7 @@ export const workoutPrototypeQueryConfig: IBuildQueryConfig =
         userId: {
             isArray: false,
             constructor: String,
-            schema: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId"),
+            schema: ObjectIdSchema,
         },
     });
 

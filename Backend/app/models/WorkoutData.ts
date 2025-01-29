@@ -2,13 +2,13 @@ import { IUser, IWorkout } from "@paciorekj/iron-journal-shared";
 import mongoose, { Schema } from "mongoose";
 import { ISetData } from "./SetData";
 
-const WORKOUT_DATA_STATUS = {
+export const WORKOUT_DATA_STATUS = {
     ACTIVE: "Active",
     IN_PROGRESS: "In Progress",
     COMPLETED: "Completed",
-} as const;
+};
 
-type WORKOUT_DATA_STATUS =
+export type WORKOUT_DATA_STATUS =
     (typeof WORKOUT_DATA_STATUS)[keyof typeof WORKOUT_DATA_STATUS];
 
 export interface IWorkoutData extends Document {
