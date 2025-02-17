@@ -1,137 +1,98 @@
 # TODO
 
+## Primary Initiative
+
+1. Set up a Redis instance in Docker
+   - Create a **Redis container** using Docker.
+   - Ensure it is **accessible from the backend**.
+
+2. Create a `ProfanityFilterService`
+   - Accepts **field value** and **key** as input.
+   - Checks Redis for cached profanity-filtered results.
+   - If cache is missing:
+     - Apply **profanity filtering** in both the **original language** and the **user’s native language**.
+     - Store the censored result in Redis.
+
+3. Implement Redis caching for profanity-filtered results
+   - Store results in Redis using the following key format:
+
+     ```plaintext
+     workoutdata/{workoutId}
+     programdata/{programId}
+     ```
+
+   - Implement **cache invalidation** when a workout/program is updated:
+
+     ```typescript
+     await redisClient.del(`workoutdata/${workoutId}`);
+     await redisClient.del(`programdata/${programId}`);
+     ```
+
+   - Set a **TTL (Time-To-Live)** on cached entries for automatic expiration.
+
+4. Ensure profanity filtering applies to multiple content types
+   - Implement filtering for:
+     - **Workout names & descriptions**
+     - **Program names & descriptions**
+     - **Future user-provided fields (scalable design)**
+
+5. Implement profanity filtering on data fetching
+   - When retrieving workout/program data:
+     - **Check Redis** for cached profanity-filtered results.
+     - If **cache hit**, return the cached version.
+     - If **cache miss**:
+       - Run the **profanity filter for all languages**.
+       - Save the censored result to Redis.
+       - Return the censored version.
+
+6. Ensure the `ProfanityFilterService` is reusable across different fields
+   - Accepts **only the field value & cache key**.
+   - Makes **separate calls** for:
+     - **Original language filtering**
+     - **User’s native language filtering**
+   - Stores **only the censored version** in Redis to **avoid duplicate processing**.
+
+7. Implement cache clearing when:
+   - A **workout or program is updated**.
+   - **Filtering rules change**, requiring old results to be reprocessed.
+
+8. Expand profanity filtering to additional user-provided fields
+   - Maintain scalability by ensuring the `ProfanityFilterService` is generic.
+
+9. Optimize caching for better performance
+   - Implement **batch deletion** when multiple entries need invalidation.
+   - Set **TTL** for automatically clearing old cached data.
+
+10. Consider an admin review system for flagged content
+    - Allow admins to **review and override** filtered content when necessary.
+
 ## Important Steps
 
-- Use date-fns to localize times returned based on the user's preference for timezone (Probably during app development)
-- Handle conversion of times returned in mobile app, convert seconds to nice times, hours, minutes, seconds
-- Add Conversions upon return for weights, volumes, and distance for set templates, and set data!
-- Consider making Sets independent from workouts, as sets could be reusable by user's
-- Add regression model with neo4j, To predict the optimal weight for exercises, a common algorithm approach would be to use a regression model based on historical training data, incorporating factors like previous weight lifted, sets and reps performed, rest periods, muscle group targeted, and overall fitness level
-- ML algorithm for, A prediction algorithm for adjusting a workout program would typically use machine learning techniques to analyze data like past workout performance, heart rate, sleep patterns, nutrition, and other relevant metrics to predict when and how to adjust training variables like intensity, volume, exercise selection, or rest days
+- useLocalizeDate function upon get/retrieving model data that contains dates
+- Make Sets independent from workouts, as sets could be reusable by user's
+- Move constants out of package and require client to request them to interface with the server (Decrease bundle size)
+- Add localization to workoutData specifically the status field.
+- Add denormalizing for all data metrics to users preferred metric system.
 
 ## LOW PRIORITY
 
-- Each User have one active program.
 - Make so assisted sets are accounted for, using assisted equipment for example
 - Add Accessory-Equipment to both the Iset, ISetDataEntry, and IOneRepMaxData
-- Add Rest Pause Drop Sets
-
-## Planning (For Additional Sets)
-
-- Users have essentially 2 choices, Pick a Set Variation or add Rest time
-- Rest Time's easy to Add
-- If a Sets added A sheet is created where sets can be added for a specific exercise or whatever the variation calls for.
 
 ## Planning Server
 
-- User's should have specific goals
-- MyFitnessPal integration, to obtains additional data for neo4j
 - Ensure that all references to delete documents are removed, find an efficient approach for this
 
-- create Endpoint that Creates IOneRepMaxData, (MAX 1 per exercise per user)
-  - Create Database Model for IOneRepMaxData
-  - GET     (oneRepMaxData/?exerciseId=value)   gets all IoneRepMaxData or get a IOneRepMaxData by exerciseId for a specific user
-  - POST    (oneRepMaxData/)                    route that will updateOne with upsert search by exerciseID, userID and update weight
-  - DELETE  (oneRepMaxData/:oneRepMaxDataId)    delete a IoneRepMaxData by ID
-
-```typescript
-    interface IOneRepMaxData {
-        userId: IUser["_id"];
-        exercise: IExercise["_id"];
-        weight: number; // Non-negative, normalized to KG
-        updatedAt: Date; // Date the one-rep max was last updated
-    }
-```
-
-- Endpoints for IDailyData (MAX 1 per day)
-  - Create the IDailyData Model.
-  - GET     (dailyData/?startDate=someDate&endDate)  request route that will retrieve it by date.
-  - DELETE  (dailyData/:dailyDataId)                 delete the specified dailyData by _id.
-  - POST    (dailyData/)                             dailyData will use updateOne with upsert based on createdAt which will always be the start of the day for the user, and the userId, the rest will update or create the document.
-
-```typescript
-    // ***Daily Tracking ***
-
-    interface IDailyData {
-        userId: IUser["_id"];
-        subjectiveMood?: {
-            mentalState?: number; // 1 (Very Poor) to 10 (Excellent)
-            muscleSoreness?: number; // 1 (No Soreness) to 10 (Very Sore)
-            energyLevel?: number; // 1 (Very Low) to 10 (Very High)
-        }
-        waterIntakeInLiters?: Number;
-        bodyWeight?: Number;
-        bodyFatPercentage?: Number;
-        bodyMeasurements?: IBodyMeasurement; 
-        createdAt: Date; // This should be force to be the beginning of the day according to the user's time zone, unless there's a better way of doing this like just setting it to a Date without time as it's a dailyData entry then we simply grab the one at the beginning of the day if it exists and update it
-    }
-
-    interface IBodyMeasurement { // Users can measure what they wish
-        neck?: Number;
-        bicepLeft?: Number;
-        bicepRight?: Number;
-        forearmLeft?: Number;
-        forearmRight?: Number;
-        chest?: Number;
-        stomach?: Number;
-        waist?: Number;
-        tightLeft?: Number;
-        tightRight?: Number;
-        calfLeft?: Number;
-        calfRight?: Number;
-    }
-```
-
-### **Current Place in Process**
-
-- Add IWorkoutData features
-  - Create the ISetData Model, making ISetDataEntry a embedded entry
-  - Create the IWorkoutData Model
-  - DELETE  (workoutData/:workoutId) Delete a workoutData by ID
-  - POST    (workoutData/)           Create a POST route that essentially starts the workoutData, with all empty arrays, and userID is used based on who login to the server
-  - GET     (workoutData/)           Create GET all workoutData, for a specific user, that is login in on the server. Filter by date, Include Populate Flag for ISetData & workout
-  - DELETE  (setData/:setId):        Delete a setData and delete it from the workoutData
-  - POST    (setData/:workoutId)     Create a route for creating ISetData
-  - PATCH   (setData/:workoutId)     Update a ISetdata inside of the specified IWorkoutData
-
-- Add RPE to user sets so they can state how they felt they performed
-
-```typescript
-
-    // ***Workout Tracking***
-
-    interface ISetDataEntry { // All Data inside this is the actual!
-        reps: number;
-        weight: number; // Non-negative, normalized to KG
-        rpe?: number; // 1-10, 10 being Max Effort, 1 being very light activity while 0 means Effortless, optional metric to log
-        restDurationInSeconds?: number;
-        distanceInCentimeters?: number;
-        durationInSeconds?: number;
-    }
-
-    interface ISetData {
-        userId: IUser["_id"];
-        type: SetTypeKey;
-        tempo?: {
-            eccentric: number;
-            bottomPause: number;
-            concentric: number;
-            topPause: number;
-        };
-        weight: number; // Non-negative, normalized to KG, for restPause
-        initialWeightSelection: number; // Non-negative, normalized to KG, for dropSets
-        exercise: IExercise["_id"];
-        setData: ISetDataEntry[];
-    }
-
-    interface IWorkoutData {
-        userId: IUser["_id"];
-        workout: IWorkout["_id"]; // If some deletes a IWorkout then, this should be updated to original workout not found. For example NULL.
-        sets: ISetData["_id"][];
-        createdAt: Date;
-    }
-
-
-```
-
 ## NOTES
+
+### Gamification inside of application
+
+- Have Weekly/monthly goals that user's can commit themselves
+- Leveling system?
+
+### ML inside of APP
+
+- User's can optional have a specific goal. (DOable)
+- MyFitnessPal integration, to obtains additional data for neo4j
+- Add regression model with neo4j, To predict the optimal weight for exercises, a common algorithm approach would be to use a regression model based on historical training data, incorporating factors like previous weight lifted, sets and reps performed, rest periods, muscle group targeted, and overall fitness level
+- ML algorithm for, A prediction algorithm for adjusting a workout program would typically use machine learning techniques to analyze data like past workout performance, heart rate, sleep patterns, nutrition, and other relevant metrics to predict when and how to adjust training variables like intensity, volume, exercise selection, or rest days
