@@ -16,7 +16,7 @@
   - **Set type**
   - **Amount of weight used**
   - **Volume, distance**, and other performance metrics
-- All measurements are automatically converted to the user’s **preferred metric system**.
+- All measurements are automatically converted to the user's **preferred metric system**.
 - Logged data is separate from the **workout programs**, which serve as training guidelines.
 - Over time, the logged data will be used to generate **personalized performance insights and reviews**. These reviews will consider:
   - Specific weights used
@@ -36,22 +36,22 @@ Gamification is a key component to keep data logging engaging and encourage dail
 
 - Users can unlock **achievements** based on milestones and special conditions.
 - Examples of achievements include:
-  - 🏆 **"First Workout Logged"** – First workout entry.
-  - 🔥 **"Consistency King"** – Log workouts for **30 days straight**.
-  - 🏋️ **"Strength Beast"** – Hit **2x bodyweight deadlift**.
-  - ⏳ **"Endurance Warrior"** – Complete **10 cardio sessions in a month**.
-  - 🌙 **"Night Owl"** – Log a workout at **3 AM**.
+  - 🏆 **"First Workout Logged"** - First workout entry.
+  - 🔥 **"Consistency King"** - Log workouts for **30 days straight**.
+  - 🏋️ **"Strength Beast"** - Hit **2x bodyweight deadlift**.
+  - ⏳ **"Endurance Warrior"** - Complete **10 cardio sessions in a month**.
+  - 🌙 **"Night Owl"** - Log a workout at **3 AM**.
 - Achievements will provide **XP boosts** and **badges** to display in the user profile.
 
 ### **Challenges**
 
 - Users can engage in **customized challenges** to push their limits.
 - Examples of challenges include:
-  - **Consistency Challenges** – Log workouts for **X days in a row**.
-  - **Strength Challenges** – Increase weight lifted by **X%** over **4 weeks**.
-  - **Endurance Challenges** – Complete **X miles of cardio per week**.
-  - **Personal Best Challenges** – Achieve a new **1-rep max** in a specific lift.
-- Challenges will **scale in difficulty**, adapting to the user’s progress.
+  - **Consistency Challenges** - Log workouts for **X days in a row**.
+  - **Strength Challenges** - Increase weight lifted by **X%** over **4 weeks**.
+  - **Endurance Challenges** - Complete **X miles of cardio per week**.
+  - **Personal Best Challenges** - Achieve a new **1-rep max** in a specific lift.
+- Challenges will **scale in difficulty**, adapting to the user's progress.
 - Completing challenges will reward **XP**, **badges**, or **progression rewards**.
 
 ### **Leveling System**
