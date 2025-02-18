@@ -4,7 +4,7 @@ import {
     deleteUser,
     readUserById,
     updateUser,
-} from "~/services/user-service";
+} from "~/services/user";
 import { requirePredicate } from "~/utils/auth.server";
 import { handleError, validateRequestBody } from "~/utils/util.server";
 import { createUserSchema, updateUserSchema } from "~/validation/user.server";

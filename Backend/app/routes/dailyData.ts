@@ -1,5 +1,5 @@
 import { ActionFunction, data, LoaderFunction } from "@remix-run/node";
-import { createOrUpdateDailyData, readDailyData } from "~/services/daily-data";
+import { createOrUpdateDailyData, readDailyData } from "~/services/dailyData";
 import { requirePredicate } from "~/utils/auth.server";
 import { handleError, validateRequestBody } from "~/utils/util.server";
 import { createDailyDataSchema } from "~/validation/daily-data.server";

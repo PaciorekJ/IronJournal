@@ -1,5 +1,5 @@
 import { ActionFunction, data, LoaderFunction } from "@remix-run/node";
-import { deleteDailyData, readDailyDataById } from "~/services/daily-data";
+import { deleteDailyData, readDailyDataById } from "~/services/dailyData";
 import { requirePredicate } from "~/utils/auth.server";
 import { handleError, validateDatabaseId } from "~/utils/util.server";
 

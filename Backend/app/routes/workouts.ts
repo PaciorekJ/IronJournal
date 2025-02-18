@@ -1,8 +1,8 @@
 import { ActionFunction, data, LoaderFunctionArgs } from "@remix-run/node";
-import { createWorkout, readWorkouts } from "~/services/workout-service";
+import { createWorkout, readWorkouts } from "~/services/workout";
 import { requirePredicate } from "~/utils/auth.server";
 import { handleError, validateRequestBody } from "~/utils/util.server";
-import { createWorkoutPrototypeSchema } from "~/validation/workout-prototype";
+import { createWorkoutPrototypeSchema } from "~/validation/workout";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const { user } = await requirePredicate(request, { user: true });

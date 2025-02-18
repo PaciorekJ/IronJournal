@@ -3,14 +3,14 @@ import {
     deleteWorkout,
     readWorkoutById,
     updateWorkout,
-} from "~/services/workout-service";
+} from "~/services/workout";
 import { requirePredicate } from "~/utils/auth.server";
 import {
     handleError,
     validateDatabaseId,
     validateRequestBody,
 } from "~/utils/util.server";
-import { updateWorkoutPrototypeSchema } from "~/validation/workout-prototype";
+import { updateWorkoutPrototypeSchema } from "~/validation/workout";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     const { user } = await requirePredicate(request, { user: true });

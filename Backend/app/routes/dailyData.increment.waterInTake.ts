@@ -1,5 +1,5 @@
 import { ActionFunction, data } from "@remix-run/node";
-import { incrementWaterIntake } from "~/services/daily-data";
+import { incrementWaterIntake } from "~/services/dailyData";
 import { requirePredicate } from "~/utils/auth.server";
 import { handleError, validateRequestBody } from "~/utils/util.server";
 import { createDailyDataSchema } from "~/validation/daily-data.server";

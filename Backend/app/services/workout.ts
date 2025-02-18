@@ -23,9 +23,9 @@ import { handleError } from "~/utils/util.server";
 import {
     IWorkoutPrototypeCreateDTO,
     IWorkoutPrototypeUpdateDTO as IWorkoutUpdateDTO,
-} from "~/validation/workout-prototype";
+} from "~/validation/workout";
 
-const censorWorkout = async (workout: IWorkout): Promise<IWorkout> => {
+export const censorWorkout = async (workout: IWorkout): Promise<IWorkout> => {
     const name = workout.name as Record<string, string>;
     const nameKeys = Object.keys(name);
     for (const key of nameKeys) {

@@ -1,5 +1,5 @@
 import { ActionFunction, data, LoaderFunctionArgs } from "@remix-run/node";
-import { createExercise, readExercises } from "~/services/exercise-service";
+import { createExercise, readExercises } from "~/services/exercise";
 import { requirePredicate } from "~/utils/auth.server";
 import { handleError, validateRequestBody } from "~/utils/util.server";
 import { createExerciseSchema } from "~/validation/exercise.server";

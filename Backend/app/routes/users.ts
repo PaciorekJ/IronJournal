@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, data } from "@remix-run/node";
-import { readUsers } from "~/services/user-service";
+import { readUsers } from "~/services/user";
 import { requirePredicate } from "~/utils/auth.server";
 
 export const loader = async ({ request }: ActionFunctionArgs) => {

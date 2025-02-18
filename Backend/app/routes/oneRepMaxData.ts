@@ -2,7 +2,7 @@ import { ActionFunctionArgs, data, LoaderFunctionArgs } from "@remix-run/node";
 import {
     createOneRepMaxData,
     readOneRepMaxData,
-} from "~/services/one-rep-max-data-service";
+} from "~/services/oneRepMaxData";
 import { requirePredicate } from "~/utils/auth.server";
 import { handleError, validateRequestBody } from "~/utils/util.server";
 import { createOneRepMaxDataSchema } from "~/validation/one-rep-max-data.server";

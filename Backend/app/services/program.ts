@@ -2,6 +2,7 @@ import {
     ILocalizedProgram,
     IProgram,
     IUser,
+    IWorkout,
     IWorkoutSchedule,
     LanguageKey,
     Program,
@@ -14,6 +15,10 @@ import mongoose from "mongoose";
 import { ServiceResult } from "~/interfaces/service-result";
 import { localizeDataInput } from "~/utils/localization.server";
 import {
+    censorText,
+    deleteCachedCensoredText,
+} from "~/utils/profanityFilter.server";
+import {
     buildPopulateOptions,
     buildQueryFromSearchParams,
     IQueryField,
@@ -24,6 +29,78 @@ import {
     IProgramCreateDTO,
     IProgramUpdateDTO,
 } from "~/validation/program.server";
+import { censorWorkout } from "./workout";
+
+const censorProgram = async (program: IProgram): Promise<IProgram> => {
+    const name = program.name as Record<string, string>;
+    const nameKeys = Object.keys(name);
+    for (const key of nameKeys) {
+        const originalName = name[key];
+        const censoredName = await censorText(
+            originalName,
+            `program-${program._id}-name-${key}`,
+        );
+        name[key] = censoredName;
+    }
+
+    const description = program.description as Record<string, string>;
+    const descriptionKeys = Object.keys(description);
+
+    if (description) {
+        for (const key of descriptionKeys) {
+            const originalDescription = description[key];
+            const censoredDescription = await censorText(
+                originalDescription,
+                `program-${program._id}-description-${key}`,
+            );
+            description[key] = censoredDescription;
+        }
+    }
+
+    // *** Check if workoutIds are populated ***
+    if (program.workoutSchedule) {
+        for (const schedule of program.workoutSchedule) {
+            if (
+                schedule.workoutIds &&
+                schedule.workoutIds.length > 0 &&
+                typeof schedule.workoutIds[0] === "object"
+            ) {
+                // *** Assume each workout is an IWorkout and apply censorship ***
+                schedule.workoutIds = await Promise.all(
+                    (schedule.workoutIds as unknown as IWorkout[]).map(
+                        async (workout) => {
+                            return await censorWorkout(workout);
+                        },
+                    ) as unknown as mongoose.Schema.Types.ObjectId[],
+                );
+            }
+        }
+    }
+
+    return program;
+};
+
+const deleteCachedCensoredWorkouts = async (program: IProgram) => {
+    const name = program.name as Record<string, string>;
+    const nameKeys = Object.keys(name);
+
+    for (const key of nameKeys) {
+        await deleteCachedCensoredText(`program-${program._id}-name-${key}`);
+    }
+
+    const description = program.description as Record<string, string>;
+    const descriptionKeys = Object.keys(description);
+
+    if (description) {
+        for (const key of descriptionKeys) {
+            await deleteCachedCensoredText(
+                `program-${program._id}-description-${key}`,
+            );
+        }
+    }
+
+    return program;
+};
 
 export const createProgram = async (
     user: IUser,
@@ -134,6 +211,8 @@ export const updateProgram = async (
             throw json({ error: "Failed to update program" }, { status: 500 });
         }
 
+        await deleteCachedCensoredWorkouts(updatedProgram);
+
         await TranslationTask.updateMany(
             {
                 documentId: updatedProgram._id,
@@ -176,6 +255,8 @@ export const deleteProgram = async (
         }
 
         await Program.deleteOne({ _id: programId });
+
+        await deleteCachedCensoredWorkouts(program);
 
         await TranslationTask.updateMany(
             {
@@ -234,8 +315,12 @@ export const readPrograms = async (
 
         const programs = (await queryObj.lean().exec()) as IProgram[];
 
-        const localizedPrograms: ILocalizedProgram[] = programs.map((program) =>
-            resolveLocalizedProgram(program, user),
+        const censoredPrograms = await Promise.all(
+            programs.map((program) => censorProgram(program)),
+        );
+
+        const localizedPrograms: ILocalizedProgram[] = censoredPrograms.map(
+            (program) => resolveLocalizedProgram(program, user),
         );
 
         const totalCount = await Program.countDocuments(query).exec();
@@ -279,7 +364,9 @@ export const readProgramById = async (
             );
         }
 
-        const localizedProgram = resolveLocalizedProgram(program, user);
+        const censoredProgram = await censorProgram(program);
+
+        const localizedProgram = resolveLocalizedProgram(censoredProgram, user);
 
         return { data: localizedProgram };
     } catch (error) {

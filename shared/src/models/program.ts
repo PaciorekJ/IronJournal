@@ -30,7 +30,6 @@ interface IProgram extends Document {
     scheduleType: ScheduleTypeKey;
     focusAreas?: FocusAreasKey[];
     targetAudience?: TargetAudienceKey;
-    repetitions?: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -89,7 +88,6 @@ const ProgramSchema: Schema<IProgram> = new Schema(
         },
         focusAreas: [{ type: String, enum: Object.keys(FOCUS_AREA) }],
         targetAudience: { type: String, enum: Object.keys(TARGET_AUDIENCE) },
-        repetitions: { type: Number, default: 0 },
     },
     { timestamps: true },
 );

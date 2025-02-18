@@ -1,5 +1,5 @@
 import { data, LoaderFunctionArgs } from "@remix-run/node";
-import { readUserById } from "~/services/user-service";
+import { readUserById } from "~/services/user";
 import { requirePredicate } from "~/utils/auth.server";
 import { validateDatabaseId } from "~/utils/util.server";
 

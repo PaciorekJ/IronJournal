@@ -1,5 +1,5 @@
 import { ActionFunction, data, LoaderFunction } from "@remix-run/node";
-import { createProgram, readPrograms } from "~/services/program-service";
+import { createProgram, readPrograms } from "~/services/program";
 import { requirePredicate } from "~/utils/auth.server";
 import { handleError, validateRequestBody } from "~/utils/util.server";
 import { createProgramSchema } from "~/validation/program.server";

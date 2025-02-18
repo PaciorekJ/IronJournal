@@ -3,7 +3,7 @@ import {
     deleteExercise,
     readExerciseById,
     updateExercise,
-} from "~/services/exercise-service";
+} from "~/services/exercise";
 import { requirePredicate } from "~/utils/auth.server";
 import {
     handleError,

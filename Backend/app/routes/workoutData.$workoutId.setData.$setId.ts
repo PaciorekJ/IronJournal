@@ -3,7 +3,7 @@ import {
     deleteSetData,
     readSetDataById,
     updateSetData,
-} from "~/services/set-data-service";
+} from "~/services/setData";
 import { requirePredicate } from "~/utils/auth.server";
 import {
     handleError,

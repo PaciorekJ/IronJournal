@@ -2,6 +2,8 @@ import { SetSchema } from "@paciorekj/iron-journal-shared";
 import {
     INTENSITY_LEVEL,
     IntensityLevelKey,
+    LANGUAGE,
+    LanguageKey,
 } from "@paciorekj/iron-journal-shared/constants";
 import { z } from "zod";
 
@@ -9,6 +11,9 @@ export const createWorkoutPrototypeSchema = z
     .object({
         name: z.string().min(1, "Name is required."),
         description: z.string().optional(),
+        originalLanguage: z.enum(
+            Object.keys(LANGUAGE) as [LanguageKey, ...LanguageKey[]],
+        ),
         sets: z.array(SetSchema).min(1, "At least one set is required."),
         intensityLevel: z
             .enum(

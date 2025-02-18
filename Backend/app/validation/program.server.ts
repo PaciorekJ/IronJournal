@@ -4,20 +4,14 @@ import {
     DaysOfWeekKey,
     FOCUS_AREA,
     FocusAreasKey,
+    LANGUAGE,
+    LanguageKey,
     SCHEDULE_TYPE,
     ScheduleTypeKey,
     TARGET_AUDIENCE,
     TargetAudienceKey,
 } from "@paciorekj/iron-journal-shared/constants";
 import { z } from "zod";
-
-const cardioRecommendationSchema = z
-    .object({
-        frequency: z.string(),
-        durationInMinutes: z.number(),
-        type: z.string(),
-    })
-    .strict();
 
 const workoutScheduleItemSchema = z
     .object({
@@ -50,7 +44,9 @@ const workoutScheduleItemSchema = z
 const tempCreateProgramSchema = z
     .object({
         name: z.string(),
-        userId: ObjectIdSchema,
+        originalLanguage: z.enum(
+            Object.keys(LANGUAGE) as [LanguageKey, ...LanguageKey[]],
+        ),
         description: z.string().optional(),
         workoutSchedule: z.array(workoutScheduleItemSchema).optional(),
         repetitions: z.number().nonnegative().optional().default(0),
@@ -80,8 +76,6 @@ const tempCreateProgramSchema = z
                 ],
             )
             .optional(),
-        cardioRecommendations: cardioRecommendationSchema.optional(),
-        progressionStrategy: z.string().optional(),
     })
     .strict();
 

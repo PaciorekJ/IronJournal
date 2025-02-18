@@ -3,7 +3,7 @@ import {
     deleteProgram,
     readProgramById,
     updateProgram,
-} from "~/services/program-service";
+} from "~/services/program";
 import { requirePredicate } from "~/utils/auth.server";
 import {
     handleError,

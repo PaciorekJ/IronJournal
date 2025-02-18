@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, data } from "@remix-run/node";
-import { createSetData } from "~/services/set-data-service";
+import { createSetData } from "~/services/setData";
 import { requirePredicate } from "~/utils/auth.server";
 import {
     handleError,
