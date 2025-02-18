@@ -32,7 +32,7 @@ export const censorWorkout = async (workout: IWorkout): Promise<IWorkout> => {
         const originalName = name[key];
         const censoredName = await censorText(
             originalName,
-            `${workout._id}-name-${key}`,
+            `workout-${workout._id}-name-${key}`,
         );
         name[key] = censoredName;
     }
@@ -45,7 +45,7 @@ export const censorWorkout = async (workout: IWorkout): Promise<IWorkout> => {
             const originalDescription = description[key];
             const censoredDescription = await censorText(
                 originalDescription,
-                `${workout._id}-description-${key}`,
+                `workout-${workout._id}-description-${key}`,
             );
             description[key] = censoredDescription;
         }
@@ -59,7 +59,7 @@ const deleteCachedCensoredWorkouts = async (workout: IWorkout) => {
     const nameKeys = Object.keys(name);
 
     for (const key of nameKeys) {
-        await deleteCachedCensoredText(`${workout._id}-name-${key}`);
+        await deleteCachedCensoredText(`workout-${workout._id}-name-${key}`);
     }
 
     const description = workout.description as Record<string, string>;
@@ -67,7 +67,9 @@ const deleteCachedCensoredWorkouts = async (workout: IWorkout) => {
 
     if (description) {
         for (const key of descriptionKeys) {
-            await deleteCachedCensoredText(`${workout._id}-description-${key}`);
+            await deleteCachedCensoredText(
+                `workout-${workout._id}-description-${key}`,
+            );
         }
     }
 
