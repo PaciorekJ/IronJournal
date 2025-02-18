@@ -10,9 +10,12 @@ services:
     depends_on:
       translation-worker:
         condition: service_started
+      redis:
+        condition: service_started
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/iron-journal
       - RABBITMQ_URI=amqp://guest:guest@rabbitmq:5672
+      - REDIS_URL=redis://root:password@redis:6379
     networks:
       - app-network
 
@@ -69,6 +72,21 @@ services:
       retries: 5
       start_period: 10s
 
+  redis:
+    hostname: redis
+    image: redis:alpine
+    command: redis-server /usr/local/etc/redis/redis.conf --maxmemory 256mb --maxmemory-policy allkeys-lru
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./redis:/data
+    networks:
+      - app-network
+
+
+
   libretranslate:
     hostname: libretranslate
     restart: always
@@ -80,7 +98,6 @@ services:
 
 volumes:
   rabbitmq_data:
-  mongodb_data:
 
 networks:
   app-network:

@@ -21,6 +21,11 @@ Database.connect().then(() => {
     console.log("Connected to MongoDB");
 });
 
+import { redisConnect } from "./utils/redis";
+redisConnect().then(() => {
+    console.log("Connected to Redis");
+});
+
 const ABORT_DELAY = 5_000;
 
 export default function handleRequest(

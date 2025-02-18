@@ -6,7 +6,6 @@ export const WorkoutStatusSchema = z.enum(
     Object.values(WORKOUT_DATA_STATUS) as [string, ...string[]],
 );
 
-// Schema for creating a workout session
 export const createWorkoutDataSchema = z
     .object({
         workout: ObjectIdSchema.nullable(),

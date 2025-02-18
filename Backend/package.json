@@ -1,5 +1,6 @@
 {
     "name": "backend",
+    "type": "module",
     "private": true,
     "sideEffects": false,
     "scripts": {
@@ -22,7 +23,7 @@
         "endOfLine": "lf"
     },
     "dependencies": {
-        "@paciorekj/iron-journal-shared": "1.2.23",
+        "@paciorekj/iron-journal-shared": "^1.2.30",
         "@remix-run/node": "^2.9.2",
         "@remix-run/react": "^2.9.2",
         "@remix-run/serve": "^2.9.2",
@@ -38,6 +39,7 @@
         "mongoose": "^8.6.1",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
+        "redis": "^4.7.0",
         "uuid": "^10.0.0",
         "zod": "^3.23.8"
     },

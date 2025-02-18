@@ -1,56 +1,57 @@
 {
     "name": "@paciorekj/iron-journal-shared",
-    "version": "1.2.23",
+    "version": "1.2.30",
     "description": "Shared library for Iron Journal.",
     "author": "Jason Paciorek <jason@paciorekwebsolutions.com>",
     "license": "ISC",
-    "main": "./dist/esm/index.js",
-    "module": "./dist/esm/index.js",
-    "types": "./dist/types/index.d.ts",
+    "main": "./build/index.js",
+    "module": "./build/index.js",
+    "types": "./build/types/index.d.ts",
     "scripts": {
         "build": "npm run clean && rollup -c",
-        "clean": "rimraf dist"
+        "prepare": "npm run build",
+        "clean": "rimraf build"
     },
     "exports": {
         ".": {
-            "import": "./dist/esm/index.js",
-            "types": "./dist/types/index.d.ts"
+            "import": "./build/index.js",
+            "types": "./build/types/index.d.ts"
         },
         "./constants": {
-            "import": "./dist/esm/constants/index.js",
-            "types": "./dist/types/constants/index.d.ts"
+            "import": "./build/constants/index.js",
+            "types": "./build/types/constants/index.d.ts"
         },
         "./constants/*": {
-            "import": "./dist/esm/constants/*.js",
-            "types": "./dist/types/constants/*.d.ts"
+            "import": "./build/constants/*.js",
+            "types": "./build/types/constants/*.d.ts"
         },
         "./database": {
-            "import": "./dist/esm/database/index.js",
-            "types": "./dist/types/database/index.d.ts"
+            "import": "./build/database/index.js",
+            "types": "./build/types/database/index.d.ts"
         },
         "./models": {
-            "import": "./dist/esm/models/index.js",
-            "types": "./dist/types/models/index.d.ts"
+            "import": "./build/models/index.js",
+            "types": "./build/types/models/index.d.ts"
         },
         "./models/*": {
-            "import": "./dist/esm/models/*.js",
-            "types": "./dist/types/models/*.d.ts"
+            "import": "./build/models/*.js",
+            "types": "./build/types/models/*.d.ts"
         },
         "./rabbitMQ": {
-            "import": "./dist/esm/rabbitMQ/index.js",
-            "types": "./dist/types/rabbitMQ/index.d.ts"
+            "import": "./build/rabbitMQ/index.js",
+            "types": "./build/types/rabbitMQ/index.d.ts"
         },
         "./localization": {
-            "import": "./dist/esm/localization/index.js",
-            "types": "./dist/types/localization/index.d.ts"
+            "import": "./build/localization/index.js",
+            "types": "./build/types/localization/index.d.ts"
         },
         "./localization/*": {
-            "import": "./dist/esm/localization/*.js",
-            "types": "./dist/types/localization/*.d.ts"
+            "import": "./build/localization/*.js",
+            "types": "./build/types/localization/*.d.ts"
         }
     },
     "files": [
-        "dist",
+        "build",
         "README.md"
     ],
     "type": "module",

@@ -17,6 +17,7 @@ export interface IWorkoutData extends Document {
     setsData: ISetData["_id"][];
     status: WORKOUT_DATA_STATUS;
     createdAt: Date;
+    updatedAt: Date;
 }
 
 const WorkoutDataSchema = new Schema<IWorkoutData>(
@@ -38,12 +39,9 @@ const WorkoutDataSchema = new Schema<IWorkoutData>(
             },
         ],
         status: {
+            type: String,
             enum: Object.values(WORKOUT_DATA_STATUS),
             default: WORKOUT_DATA_STATUS.ACTIVE,
-        },
-        createdAt: {
-            type: Date,
-            default: Date.now,
         },
     },
     { timestamps: true },

@@ -22,6 +22,7 @@ import {
 } from "@paciorekj/iron-journal-shared/constants";
 import { data } from "@remix-run/node";
 import { z } from "zod";
+import { WORKOUT_DATA_STATUS } from "~/models/WorkoutData";
 import { handleError } from "./util.server";
 
 type AllCombinations<T> = T extends object
@@ -54,6 +55,27 @@ type IQuery<T> = {
 };
 
 type IBuildQueryConfig = Record<string, IFieldConfig>;
+
+// Workout Data Query Configuration
+export const workoutDataQueryConfig = addPaginationAndSorting({
+    createdAt: {
+        isArray: false,
+        constructor: (value: string) => new Date(value),
+        schema: z.date(),
+    },
+    status: {
+        isArray: false,
+        constructor: String,
+        schema: z.enum(
+            Object.values(WORKOUT_DATA_STATUS) as [string, ...string[]],
+        ),
+    },
+    workout: {
+        isArray: false,
+        constructor: String,
+        schema: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId"),
+    },
+});
 
 // Daily Data Query Configuration
 export const dailyDataQueryConfig: IBuildQueryConfig = addPaginationAndSorting({

@@ -5,7 +5,7 @@ import Database from "@paciorekj/iron-journal-shared/database";
 import { Exercise } from "@paciorekj/iron-journal-shared/models/exercise";
 import { Program } from "@paciorekj/iron-journal-shared/models/program";
 import { TranslationTask } from "@paciorekj/iron-journal-shared/models/translationTask";
-import { WorkoutPrototype } from "@paciorekj/iron-journal-shared/models/workout-prototype";
+import { Workout } from "@paciorekj/iron-journal-shared/models/workout";
 import { getRabbitMQChannel } from "@paciorekj/iron-journal-shared/rabbitMQ";
 import translateText from "./libreTranslate.js";
 
@@ -72,7 +72,7 @@ async function startTranslationWorker() {
                         Model = Program;
                         break;
                     case "WORKOUT-PROTOTYPE":
-                        Model = WorkoutPrototype;
+                        Model = Workout;
                         break;
                     default:
                         throw new Error("Invalid document type");

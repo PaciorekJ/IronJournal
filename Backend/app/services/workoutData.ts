@@ -14,7 +14,6 @@ import {
     IWorkoutDataUpdateDTO,
 } from "~/validation/workoutData";
 
-// Create a new workout session
 export const createWorkoutData = async (
     user: IUser,
     workoutData: IWorkoutDataCreateDTO,

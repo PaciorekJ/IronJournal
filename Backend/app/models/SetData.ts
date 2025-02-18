@@ -19,12 +19,12 @@ export interface ISetData extends Document {
         concentric: number;
         topPause: number;
     };
-    rpe: number;
-    restDurationInSeconds: number;
-    weight: number;
-    initialWeightSelection: number;
-    exercise: mongoose.Types.ObjectId;
-    setData: ISetDataEntry[];
+    rpe?: number;
+    restDurationInSeconds?: number;
+    weight?: number;
+    initialWeightSelection?: number;
+    exercise?: mongoose.Types.ObjectId;
+    setData?: ISetDataEntry[];
     createdAt: Date;
     updatedAt: Date;
 }

@@ -2,7 +2,7 @@
 
 ## Primary Initiative
 
-1. Set up a Redis instance in Docker
+1. (Done) Set up a Redis instance in Docker
    - Create a **Redis container** using Docker.
    - Ensure it is **accessible from the backend**.
 

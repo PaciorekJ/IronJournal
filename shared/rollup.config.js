@@ -3,36 +3,29 @@ import { nodeResolve } from "@rollup/plugin-node-resolve";
 import fg from "fast-glob";
 import typescript from "rollup-plugin-typescript2";
 
-const inputFiles = [
-    "src/index.ts",
-    "src/constants/index.ts",
-    ...fg.sync("src/constants/*.ts"),
-    "src/database/index.ts",
-    "src/models/index.ts",
-    ...fg.sync("src/models/*.ts"),
-    "src/rabbitMQ/index.ts",
-    "src/localization/index.ts",
-    ...fg.sync("src/localization/*.ts"),
-    "src/validation/index.ts",
-    ...fg.sync("src/validation/*.ts"),
-];
+const inputFiles = fg.sync("src/**/*.ts");
 
 export default {
     input: inputFiles,
     output: {
-        dir: "dist/esm",
+        dir: "build",
         format: "esm",
-        preserveModules: true, // Preserves directory structure
-        preserveModulesRoot: "src", // Keeps 'src' as the root in 'dist/esm'
+        preserveModules: true,
+        preserveModulesRoot: "src",
         sourcemap: true,
     },
-    external: ["amqplib", "axios", "dotenv", "mongoose", "uuid"],
+    external: [
+        "amqplib",
+        "axios",
+        "dotenv",
+        "mongoose",
+        "uuid",
+        "luxon",
+        "zod",
+    ],
     plugins: [
         nodeResolve({ extensions: [".js", ".ts"] }),
         commonjs(),
-        typescript({
-            tsconfig: "tsconfig.esm.json",
-            useTsconfigDeclarationDir: true,
-        }),
+        typescript({ useTsconfigDeclarationDir: true }),
     ],
 };
