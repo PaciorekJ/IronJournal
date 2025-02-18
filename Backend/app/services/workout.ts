@@ -11,8 +11,8 @@ import { data } from "@remix-run/node";
 import { ServiceResult } from "~/interfaces/service-result";
 import { localizeDataInput } from "~/utils/localization.server";
 import {
+    batchDeleteCachedCensoredText,
     censorText,
-    deleteCachedCensoredText,
 } from "~/utils/profanityFilter.server";
 import {
     buildPopulateOptions,
@@ -37,10 +37,10 @@ export const censorWorkout = async (workout: IWorkout): Promise<IWorkout> => {
         name[key] = censoredName;
     }
 
-    const description = workout.description as Record<string, string>;
-    const descriptionKeys = Object.keys(description);
+    if (workout.description) {
+        const description = workout.description as Record<string, string>;
+        const descriptionKeys = Object.keys(description || {});
 
-    if (description) {
         for (const key of descriptionKeys) {
             const originalDescription = description[key];
             const censoredDescription = await censorText(
@@ -58,19 +58,19 @@ const deleteCachedCensoredWorkouts = async (workout: IWorkout) => {
     const name = workout.name as Record<string, string>;
     const nameKeys = Object.keys(name);
 
-    for (const key of nameKeys) {
-        await deleteCachedCensoredText(`workout-${workout._id}-name-${key}`);
-    }
+    await batchDeleteCachedCensoredText(
+        nameKeys.map((key) => `workout-${workout._id}-name-${key}`),
+    );
 
     const description = workout.description as Record<string, string>;
     const descriptionKeys = Object.keys(description);
 
     if (description) {
-        for (const key of descriptionKeys) {
-            await deleteCachedCensoredText(
-                `workout-${workout._id}-description-${key}`,
-            );
-        }
+        await batchDeleteCachedCensoredText(
+            descriptionKeys.map(
+                (key) => `workout-${workout._id}-description-${key}`,
+            ),
+        );
     }
 
     return workout;

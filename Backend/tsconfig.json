@@ -6,7 +6,8 @@
         "**/.server/**/*.tsx",
         "**/.client/**/*.ts",
         "**/.client/**/*.tsx",
-        "../shared/src/localization/localizeDate.ts"
+        "../shared/src/localization/localizeDate.ts",
+        "app/validation/workout"
     ],
     "compilerOptions": {
         "noUnusedLocals": true,

@@ -69,3 +69,19 @@ export const censorText = async (text: string, key: string) => {
 export const deleteCachedCensoredText = async (key: string) => {
     await redisClient.del(`${KEY_PREFIX}:${key}`);
 };
+
+/**
+ * Deletes multiple cached censored text items from Redis in a single operation.
+ *
+ * @param keys The keys to delete the cached text for.
+ */
+export const batchDeleteCachedCensoredText = async (keys: string[]) => {
+    if (keys.length === 0) return;
+
+    const fullKeys = keys.map((key) => `${KEY_PREFIX}:${key}`);
+    const pipeline = redisClient.multi();
+
+    fullKeys.forEach((fullKey) => pipeline.del(fullKey));
+
+    await pipeline.exec();
+};

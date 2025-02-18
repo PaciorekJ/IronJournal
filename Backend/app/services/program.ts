@@ -15,8 +15,8 @@ import mongoose from "mongoose";
 import { ServiceResult } from "~/interfaces/service-result";
 import { localizeDataInput } from "~/utils/localization.server";
 import {
+    batchDeleteCachedCensoredText,
     censorText,
-    deleteCachedCensoredText,
 } from "~/utils/profanityFilter.server";
 import {
     buildPopulateOptions,
@@ -43,10 +43,9 @@ const censorProgram = async (program: IProgram): Promise<IProgram> => {
         name[key] = censoredName;
     }
 
-    const description = program.description as Record<string, string>;
-    const descriptionKeys = Object.keys(description);
-
-    if (description) {
+    if (program.description) {
+        const description = program.description as Record<string, string>;
+        const descriptionKeys = Object.keys(description);
         for (const key of descriptionKeys) {
             const originalDescription = description[key];
             const censoredDescription = await censorText(
@@ -84,19 +83,19 @@ const deleteCachedCensoredWorkouts = async (program: IProgram) => {
     const name = program.name as Record<string, string>;
     const nameKeys = Object.keys(name);
 
-    for (const key of nameKeys) {
-        await deleteCachedCensoredText(`program-${program._id}-name-${key}`);
-    }
+    await batchDeleteCachedCensoredText(
+        nameKeys.map((key) => `program-${program._id}-name-${key}`),
+    );
 
     const description = program.description as Record<string, string>;
     const descriptionKeys = Object.keys(description);
 
     if (description) {
-        for (const key of descriptionKeys) {
-            await deleteCachedCensoredText(
-                `program-${program._id}-description-${key}`,
-            );
-        }
+        await batchDeleteCachedCensoredText(
+            descriptionKeys.map(
+                (key) => `program-${program._id}-description-${key}`,
+            ),
+        );
     }
 
     return program;
