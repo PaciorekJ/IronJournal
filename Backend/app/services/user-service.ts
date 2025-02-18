@@ -46,7 +46,7 @@ export const createUser = async (
 
         return {
             message: "User created successfully",
-            data: user as IUser,
+            data: user as unknown as IUser,
         };
     } catch (error) {
         throw handleError(error);

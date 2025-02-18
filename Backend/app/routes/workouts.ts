@@ -1,8 +1,5 @@
 import { ActionFunction, data, LoaderFunctionArgs } from "@remix-run/node";
-import {
-    createWorkoutPrototype,
-    readWorkouts,
-} from "~/services/workout-service";
+import { createWorkout, readWorkouts } from "~/services/workout-service";
 import { requirePredicate } from "~/utils/auth.server";
 import { handleError, validateRequestBody } from "~/utils/util.server";
 import { createWorkoutPrototypeSchema } from "~/validation/workout-prototype";
@@ -30,7 +27,7 @@ export const action: ActionFunction = async ({ request }) => {
 
         const validatedData = createWorkoutPrototypeSchema.parse(requestData);
 
-        const result = await createWorkoutPrototype(user, validatedData);
+        const result = await createWorkout(user, validatedData);
 
         return data(result, { status: 201 });
     } catch (error) {

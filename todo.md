@@ -69,6 +69,7 @@
 ## Important Steps
 
 - useLocalizeDate function upon get/retrieving model data that contains dates
+- Add original text & user's native text to returns for all localized fields. Specific handled in shared/localizations/*
 - Make Sets independent from workouts, as sets could be reusable by user's
 - Move constants out of package and require client to request them to interface with the server (Decrease bundle size)
 - Add localization to workoutData specifically the status field.

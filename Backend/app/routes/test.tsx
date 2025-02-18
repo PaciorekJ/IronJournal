@@ -1,23 +1,33 @@
+import type { ActionFunction } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 import { censorText } from "~/utils/profanityFilter.server";
 
-export async function action({ request }: any) {
-    const formData = await request.formData();
-    const text = formData.get("text").toString();
+// Define the type of data returned from the action
+type ActionData = {
+    text: string;
+    censoredText: string;
+};
 
-    const censoredText = await censorText(text, "test");
+// Use Remix’s ActionFunction type for the action export
+export const action: ActionFunction = async ({ request }) => {
+    const formData = await request.formData();
+    // Ensure we safely extract the text value
+    const text = formData.get("text")?.toString() || "";
+
+    const censoredText = await censorText(text, text);
 
     return { text, censoredText };
-}
+};
 
 export default function Test() {
-    const data = useActionData<typeof action>();
+    const data = useActionData<ActionData>();
+
     return (
         <div>
             <h1>Test</h1>
             <Form method="post">
                 <input type="text" name="text" placeholder="text" />
-                <button>Submit</button>
+                <button type="submit">Submit</button>
             </Form>
             <div>
                 <h2>Result</h2>

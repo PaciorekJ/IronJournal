@@ -1,6 +1,6 @@
 import { LANGUAGE } from "@paciorekj/iron-journal-shared";
 import { CensorSensor, CensorTier } from "censor-sensor";
-import { redisClient } from "./redis";
+import redisClient from "./redis";
 
 const KEY_PREFIX = "profanity-filter";
 
@@ -33,6 +33,15 @@ censor.setCleanFunction((str) => {
     return "*".repeat(str.length);
 });
 
+/**
+ * Checks a given string for profanity in all supported locales.
+ * If profanity is found, it will be censored according to the
+ * custom clean function.
+ *
+ * @param text The string to check for profanity
+ * @param key The key to use for caching the result
+ * @returns The censored string
+ */
 export const censorText = async (text: string, key: string) => {
     const value = await redisClient.get(`${KEY_PREFIX}:${key}`);
 
@@ -51,4 +60,12 @@ export const censorText = async (text: string, key: string) => {
     await redisClient.set(`${KEY_PREFIX}:${key}`, text);
 
     return text;
+};
+
+/**
+ * Deletes the cached censored text for the given key.
+ * @param key The key to delete the cached text for.
+ */
+export const deleteCachedCensoredText = async (key: string) => {
+    await redisClient.del(`${KEY_PREFIX}:${key}`);
 };

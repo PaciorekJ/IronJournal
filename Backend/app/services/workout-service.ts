@@ -11,6 +11,10 @@ import { data } from "@remix-run/node";
 import { ServiceResult } from "~/interfaces/service-result";
 import { localizeDataInput } from "~/utils/localization.server";
 import {
+    censorText,
+    deleteCachedCensoredText,
+} from "~/utils/profanityFilter.server";
+import {
     buildPopulateOptions,
     buildQueryFromSearchParams,
     workoutPrototypeQueryConfig,
@@ -21,7 +25,56 @@ import {
     IWorkoutPrototypeUpdateDTO as IWorkoutUpdateDTO,
 } from "~/validation/workout-prototype";
 
-export const createWorkoutPrototype = async (
+const censorWorkout = async (workout: IWorkout): Promise<IWorkout> => {
+    const name = workout.name as Record<string, string>;
+    const nameKeys = Object.keys(name);
+    for (const key of nameKeys) {
+        const originalName = name[key];
+        const censoredName = await censorText(
+            originalName,
+            `${workout._id}-name-${key}`,
+        );
+        name[key] = censoredName;
+    }
+
+    const description = workout.description as Record<string, string>;
+    const descriptionKeys = Object.keys(description);
+
+    if (description) {
+        for (const key of descriptionKeys) {
+            const originalDescription = description[key];
+            const censoredDescription = await censorText(
+                originalDescription,
+                `${workout._id}-description-${key}`,
+            );
+            description[key] = censoredDescription;
+        }
+    }
+
+    return workout;
+};
+
+const deleteCachedCensoredWorkouts = async (workout: IWorkout) => {
+    const name = workout.name as Record<string, string>;
+    const nameKeys = Object.keys(name);
+
+    for (const key of nameKeys) {
+        await deleteCachedCensoredText(`${workout._id}-name-${key}`);
+    }
+
+    const description = workout.description as Record<string, string>;
+    const descriptionKeys = Object.keys(description);
+
+    if (description) {
+        for (const key of descriptionKeys) {
+            await deleteCachedCensoredText(`${workout._id}-description-${key}`);
+        }
+    }
+
+    return workout;
+};
+
+export const createWorkout = async (
     user: IUser,
     data: IWorkoutPrototypeCreateDTO,
 ): Promise<ServiceResult<IWorkout>> => {
@@ -52,7 +105,7 @@ export const createWorkoutPrototype = async (
     }
 };
 
-export const updateWorkoutPrototype = async (
+export const updateWorkout = async (
     user: IUser,
     workoutId: string,
     updateData: IWorkoutUpdateDTO,
@@ -91,6 +144,8 @@ export const updateWorkoutPrototype = async (
             throw data({ error: "Failed to update workout" }, { status: 500 });
         }
 
+        await deleteCachedCensoredWorkouts(updatedWorkout);
+
         // Cancel any pending translation tasks before queuing a new one
         await TranslationTask.updateMany(
             {
@@ -113,7 +168,7 @@ export const updateWorkoutPrototype = async (
     }
 };
 
-export const deleteWorkoutPrototype = async (
+export const deleteWorkout = async (
     user: IUser,
     workoutId: string,
 ): Promise<ServiceResult<undefined>> => {
@@ -128,6 +183,8 @@ export const deleteWorkoutPrototype = async (
         }
 
         await workout.deleteOne();
+
+        await deleteCachedCensoredWorkouts(workout);
 
         await TranslationTask.updateMany(
             {
@@ -176,8 +233,12 @@ export const readWorkouts = async (
 
         const workouts = (await queryObj.lean().exec()) as IWorkout[];
 
-        const localizedWorkouts: ILocalizedWorkout[] = workouts.map((workout) =>
-            resolveLocalizedWorkout(workout, user),
+        const censoredWorkouts = await Promise.all(
+            workouts.map((workout) => censorWorkout(workout)),
+        );
+
+        const localizedWorkouts: ILocalizedWorkout[] = censoredWorkouts.map(
+            (workout) => resolveLocalizedWorkout(workout, user),
         );
 
         const totalCount = await Workout.countDocuments(query).exec();
@@ -189,7 +250,7 @@ export const readWorkouts = async (
     }
 };
 
-export const readWorkoutPrototypeById = async (
+export const readWorkoutById = async (
     user: IUser,
     workoutId: string,
     searchParams: URLSearchParams,
@@ -217,7 +278,9 @@ export const readWorkoutPrototypeById = async (
             );
         }
 
-        const localizedWorkout = resolveLocalizedWorkout(workout, user);
+        const censoredWorkout = await censorWorkout(workout);
+
+        const localizedWorkout = resolveLocalizedWorkout(censoredWorkout, user);
 
         return { data: localizedWorkout };
     } catch (error) {

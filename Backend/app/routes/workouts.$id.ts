@@ -1,8 +1,8 @@
 import { data, LoaderFunctionArgs } from "@remix-run/node";
 import {
-    deleteWorkoutPrototype,
-    readWorkoutPrototypeById,
-    updateWorkoutPrototype,
+    deleteWorkout,
+    readWorkoutById,
+    updateWorkout,
 } from "~/services/workout-service";
 import { requirePredicate } from "~/utils/auth.server";
 import {
@@ -20,7 +20,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
     const id = validateDatabaseId(params.id || "");
 
-    const result = await readWorkoutPrototypeById(user, id, searchParams);
+    const result = await readWorkoutById(user, id, searchParams);
     return data(result, { status: 200 });
 };
 
@@ -40,11 +40,11 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
                 const validatedData =
                     updateWorkoutPrototypeSchema.parse(requestData);
 
-                result = await updateWorkoutPrototype(user, id, validatedData);
+                result = await updateWorkout(user, id, validatedData);
                 return data(result, { status: 200 });
 
             case "DELETE":
-                result = await deleteWorkoutPrototype(user, id);
+                result = await deleteWorkout(user, id);
                 return data(result, { status: 200 });
 
             default:
