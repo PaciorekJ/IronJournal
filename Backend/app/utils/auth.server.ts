@@ -67,11 +67,33 @@ export const requirePredicate = async <
     (U extends true ? { user: IUser } : {}) &
         (F extends true ? { firebaseToken: admin.auth.DecodedIdToken } : {})
 > => {
-    // Get the Firebase token info
-    const firebaseToken = await isLoginValid(request);
+    let user: IUser | null = null;
+    let firebaseToken: admin.auth.DecodedIdToken | null = null;
 
-    // Find the user in your database
-    const user = await User.findOne({ firebaseId: firebaseToken.uid }).lean();
+    if (process.env.NODE_ENV === "development") {
+        user = await User.findOneAndUpdate(
+            { firebaseId: "test" },
+            {
+                $set: {
+                    firebaseId: "test",
+                    username: "test",
+                    languagePreference: "en",
+                    measurementSystemPreference: "METRIC",
+                    timezone: "America/Chicago",
+                },
+            },
+            { upsert: true },
+        );
+        firebaseToken = "test" as any;
+    } else {
+        // Get the Firebase token info
+        firebaseToken = await isLoginValid(request);
+
+        // Find the user in your database
+        user = await User.findOne({
+            firebaseId: firebaseToken.uid,
+        }).lean();
+    }
 
     // Handle the case where a predicate is defined but fails
     if (config?.predicate && user && !config.predicate(user as IUser)) {
@@ -100,7 +122,7 @@ export const requirePredicate = async <
 
     // Assign the firebaseToken if required in the config
     if (config?.firebaseToken) {
-        result.firebaseToken = firebaseToken;
+        result.firebaseToken = firebaseToken as admin.auth.DecodedIdToken;
     }
 
     return result as (U extends true ? { user: IUser } : {}) &
