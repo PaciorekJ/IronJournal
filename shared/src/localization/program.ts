@@ -1,10 +1,6 @@
 import { IUser } from "../models";
 import { IProgram, IWorkoutSchedule } from "../models/program";
-import {
-    localizeDate,
-    resolveLocalizedEnum,
-    resolveLocalizedField,
-} from "./utils";
+import { resolveLocalizedEnum, resolveLocalizedField } from "./utils";
 
 interface ILocalizedWorkoutSchedule extends Omit<IWorkoutSchedule, "day"> {
     day: string | number;
@@ -113,12 +109,6 @@ export function resolveLocalizedProgram(
             },
         );
     }
-
-    localizedProgram.createdAt = localizeDate(
-        program.createdAt,
-        language,
-        timezone,
-    );
 
     return localizedProgram as ILocalizedProgram;
 }

@@ -1,7 +1,5 @@
 import { LANGUAGE, LanguageKey } from "../constants/language";
-import { IUser } from "../models";
 import CONSTANT_LOCALIZATIONS from "./constant-localization";
-import { DateTime } from "luxon";
 
 export interface LocalizedConstant {
     key: string;
@@ -131,27 +129,3 @@ export const getLocalizedConstants = (
 
     return localizedConstants;
 };
-
-/**
- * Localizes a date to the user's preferred language and time zone.
- *
- * @param {Date} date - The UTC date to localize.
- * @param {IUser["languagePreference"]} language - The user's preferred language (e.g., "en", "es").
- * @param {IUser["timezone"]} timezone - The user's time zone (e.g., "America/New_York").
- * @returns {string} The localized date as a string.
- */
-export function localizeDate(
-    date: Date,
-    language: IUser["languagePreference"],
-    timezone: IUser["timezone"],
-): string {
-    if (!date || !timezone || !language) {
-        throw new Error("Missing required parameters for date localization.");
-    }
-
-    const localizedDate = DateTime.fromJSDate(date)
-        .setZone(timezone)
-        .setLocale(language);
-
-    return localizedDate.toLocaleString(DateTime.DATETIME_FULL);
-}
