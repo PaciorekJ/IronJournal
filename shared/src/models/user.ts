@@ -7,6 +7,7 @@ interface IUser extends Document {
     firebaseId: string;
     languagePreference: LanguageKey;
     measurementSystemPreference: "METRIC" | "IMPERIAL";
+    acceptedProfanityTiers: (1 | 2 | 3 | 4 | 5)[];
     timezone: string;
     createdAt: Date;
     updatedAt: Date;

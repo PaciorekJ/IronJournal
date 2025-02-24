@@ -2,6 +2,7 @@ import {
     ILocalizedWorkout,
     IUser,
     IWorkout,
+    LANGUAGE,
     LanguageKey,
     resolveLocalizedWorkout,
     TranslationTask,
@@ -13,6 +14,7 @@ import { localizeDataInput } from "~/utils/localization.server";
 import {
     batchDeleteCachedCensoredText,
     censorText,
+    setCensorTiers,
 } from "~/utils/profanityFilter.server";
 import {
     buildPopulateOptions,
@@ -25,29 +27,28 @@ import {
     IWorkoutPrototypeUpdateDTO as IWorkoutUpdateDTO,
 } from "~/validation/workout";
 
-export const censorWorkout = async (workout: IWorkout): Promise<IWorkout> => {
-    const name = workout.name as Record<string, string>;
-    const nameKeys = Object.keys(name);
-    for (const key of nameKeys) {
-        const originalName = name[key];
-        const censoredName = await censorText(
-            originalName,
+export const censorWorkout = async (
+    user: IUser,
+    workout: IWorkout,
+): Promise<IWorkout> => {
+    setCensorTiers(user.profanityAcceptedTiers);
+    const locales = [user.languagePreference, workout.originalLanguage];
+
+    for (const locale of locales) {
+        const key = locale as LanguageKey;
+
+        workout.name[key] = await censorText(
+            workout.name[key],
             `workout-${workout._id}-name-${key}`,
+            key,
         );
-        name[key] = censoredName;
-    }
 
-    if (workout.description) {
-        const description = workout.description as Record<string, string>;
-        const descriptionKeys = Object.keys(description || {});
-
-        for (const key of descriptionKeys) {
-            const originalDescription = description[key];
-            const censoredDescription = await censorText(
-                originalDescription,
+        if (workout.description?.[key]) {
+            workout.description[key] = await censorText(
+                workout.description[key],
                 `workout-${workout._id}-description-${key}`,
+                key,
             );
-            description[key] = censoredDescription;
         }
     }
 
@@ -55,11 +56,10 @@ export const censorWorkout = async (workout: IWorkout): Promise<IWorkout> => {
 };
 
 const deleteCachedCensoredWorkouts = async (workout: IWorkout) => {
-    const name = workout.name as Record<string, string>;
-    const nameKeys = Object.keys(name);
+    const locales = Object.keys(LANGUAGE);
 
     await batchDeleteCachedCensoredText(
-        nameKeys.map((key) => `workout-${workout._id}-name-${key}`),
+        locales.map((locale) => `workout-${workout._id}-name-${locale}`),
     );
 
     const description = workout.description as Record<string, string>;
@@ -68,7 +68,7 @@ const deleteCachedCensoredWorkouts = async (workout: IWorkout) => {
     if (description) {
         await batchDeleteCachedCensoredText(
             descriptionKeys.map(
-                (key) => `workout-${workout._id}-description-${key}`,
+                (locale) => `workout-${workout._id}-description-${locale}`,
             ),
         );
     }
@@ -236,7 +236,7 @@ export const readWorkouts = async (
         const workouts = (await queryObj.lean().exec()) as IWorkout[];
 
         const censoredWorkouts = await Promise.all(
-            workouts.map((workout) => censorWorkout(workout)),
+            workouts.map((workout) => censorWorkout(user, workout)),
         );
 
         const localizedWorkouts: ILocalizedWorkout[] = censoredWorkouts.map(
@@ -280,7 +280,7 @@ export const readWorkoutById = async (
             );
         }
 
-        const censoredWorkout = await censorWorkout(workout);
+        const censoredWorkout = await censorWorkout(user, workout);
 
         const localizedWorkout = resolveLocalizedWorkout(censoredWorkout, user);
 

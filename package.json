@@ -2,6 +2,6 @@
     "scripts": {
         "start": "docker compose build && docker compose up -d",
         "update:shared": "cd translation-worker && npm install @paciorekj/iron-journal-shared@latest && cd ../backend && npm install @paciorekj/iron-journal-shared@latest && cd ..",
-        "publish:shared": "cd shared && npm version minor && npm publish --access restricted && npm run update:shared"
+        "publish:shared": "cd shared && npm version minor && npm publish --access restricted"
     }
 }

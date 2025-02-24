@@ -2,6 +2,7 @@ import {
     LANGUAGE,
     LanguageKey,
 } from "@paciorekj/iron-journal-shared/constants";
+import { CensorTier } from "censor-sensor";
 import { z } from "zod";
 
 const safeUsernamePattern = /^[a-zA-Z0-9_]+$/;
@@ -24,6 +25,21 @@ export const createUserSchema = z
             .trim(),
         firebaseId: z.string().min(1, "Firebase ID is required").trim(),
         languagePreference: languagePreferenceSchema,
+        profanityAcceptedTiers: z
+            .array(
+                z.enum(
+                    [...Object.values(CensorTier)] as [string, ...string[]],
+                    {
+                        message: "Invalid profanity tier",
+                    },
+                ),
+            )
+            .optional()
+            .default([]),
+        measurementSystemPreference: z.enum(["METRIC", "IMPERIAL"], {
+            message: "Invalid measurement system preference",
+        }),
+        timezone: z.string().min(1, "Timezone is required").trim(),
     })
     .strict();
 

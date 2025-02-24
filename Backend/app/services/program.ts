@@ -4,6 +4,7 @@ import {
     IUser,
     IWorkout,
     IWorkoutSchedule,
+    LANGUAGE,
     LanguageKey,
     Program,
     resolveLocalizedProgram,
@@ -17,6 +18,7 @@ import { localizeDataInput } from "~/utils/localization.server";
 import {
     batchDeleteCachedCensoredText,
     censorText,
+    setCensorTiers,
 } from "~/utils/profanityFilter.server";
 import {
     buildPopulateOptions,
@@ -31,47 +33,43 @@ import {
 } from "~/validation/program.server";
 import { censorWorkout } from "./workout";
 
-const censorProgram = async (program: IProgram): Promise<IProgram> => {
-    const name = program.name as Record<string, string>;
-    const nameKeys = Object.keys(name);
-    for (const key of nameKeys) {
-        const originalName = name[key];
-        const censoredName = await censorText(
-            originalName,
-            `program-${program._id}-name-${key}`,
-        );
-        name[key] = censoredName;
-    }
+export const censorProgram = async (
+    user: IUser,
+    program: IProgram,
+): Promise<IProgram> => {
+    setCensorTiers(user.profanityAcceptedTiers);
+    const locales = [user.languagePreference, program.originalLanguage];
 
-    if (program.description) {
-        const description = program.description as Record<string, string>;
-        const descriptionKeys = Object.keys(description);
-        for (const key of descriptionKeys) {
-            const originalDescription = description[key];
-            const censoredDescription = await censorText(
-                originalDescription,
-                `program-${program._id}-description-${key}`,
+    for (const locale of locales) {
+        // *** Censor Name ***
+        program.name[locale] = await censorText(
+            program.name[locale],
+            `program-${program._id}-name-${locale}`,
+            locale,
+        );
+
+        // *** Censor Description (if it exists) ***
+        if (program.description?.[locale]) {
+            program.description[locale] = await censorText(
+                program.description[locale],
+                `program-${program._id}-description-${locale}`,
+                locale,
             );
-            description[key] = censoredDescription;
         }
     }
 
-    // *** Check if workoutIds are populated ***
+    // *** Censor Workouts inside Workout Schedule (if populated) ***
     if (program.workoutSchedule) {
         for (const schedule of program.workoutSchedule) {
             if (
-                schedule.workoutIds &&
-                schedule.workoutIds.length > 0 &&
+                schedule.workoutIds?.length &&
                 typeof schedule.workoutIds[0] === "object"
             ) {
-                // *** Assume each workout is an IWorkout and apply censorship ***
-                schedule.workoutIds = await Promise.all(
+                schedule.workoutIds = (await Promise.all(
                     (schedule.workoutIds as unknown as IWorkout[]).map(
-                        async (workout) => {
-                            return await censorWorkout(workout);
-                        },
-                    ) as unknown as mongoose.Schema.Types.ObjectId[],
-                );
+                        (workout) => censorWorkout(user, workout),
+                    ),
+                )) as unknown as mongoose.Schema.Types.ObjectId[];
             }
         }
     }
@@ -80,21 +78,17 @@ const censorProgram = async (program: IProgram): Promise<IProgram> => {
 };
 
 const deleteCachedCensoredWorkouts = async (program: IProgram) => {
-    const name = program.name as Record<string, string>;
-    const nameKeys = Object.keys(name);
+    const locales = Object.keys(LANGUAGE);
 
     await batchDeleteCachedCensoredText(
-        nameKeys.map((key) => `program-${program._id}-name-${key}`),
+        locales.map((key) => `program-${program._id}-name-${key}`),
     );
 
     const description = program.description as Record<string, string>;
-    const descriptionKeys = Object.keys(description);
 
     if (description) {
         await batchDeleteCachedCensoredText(
-            descriptionKeys.map(
-                (key) => `program-${program._id}-description-${key}`,
-            ),
+            locales.map((key) => `program-${program._id}-description-${key}`),
         );
     }
 
@@ -315,7 +309,7 @@ export const readPrograms = async (
         const programs = (await queryObj.lean().exec()) as IProgram[];
 
         const censoredPrograms = await Promise.all(
-            programs.map((program) => censorProgram(program)),
+            programs.map((program) => censorProgram(user, program)),
         );
 
         const localizedPrograms: ILocalizedProgram[] = censoredPrograms.map(
@@ -363,7 +357,7 @@ export const readProgramById = async (
             );
         }
 
-        const censoredProgram = await censorProgram(program);
+        const censoredProgram = await censorProgram(user, program);
 
         const localizedProgram = resolveLocalizedProgram(censoredProgram, user);
 
