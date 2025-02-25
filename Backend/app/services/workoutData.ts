@@ -16,6 +16,13 @@ import {
 } from "~/validation/workoutData";
 import { denormalizeSetData } from "./setData";
 
+interface ISetDataNormalized {} // Temp
+
+export interface IWorkoutDataDenormalized
+    extends Omit<IWorkoutData, "setsData"> {
+    setsData: ISetData["_id"][] | ISetDataNormalized[];
+}
+
 export const createWorkoutData = async (
     user: IUser,
     workoutData: IWorkoutDataCreateDTO,
@@ -40,7 +47,7 @@ export const createWorkoutData = async (
 export const getAllWorkoutData = async (
     user: IUser,
     searchParams: URLSearchParams,
-): Promise<ServiceResult<IWorkoutData[]>> => {
+): Promise<ServiceResult<IWorkoutDataDenormalized[]>> => {
     try {
         const { query, limit, offset, sortBy, sortOrder } =
             buildQueryFromSearchParams<IWorkoutData>(
@@ -50,7 +57,9 @@ export const getAllWorkoutData = async (
 
         query.userId = user._id;
 
-        const sortOption = sortBy ? { [sortBy]: sortOrder as 1 | -1 } : null;
+        const sortOption: Record<string, 1 | -1> | undefined = sortBy
+            ? { [sortBy]: sortOrder as 1 | -1 }
+            : undefined;
 
         let queryObj = WorkoutData.find(query)
             .sort(sortOption)
@@ -79,21 +88,22 @@ export const getAllWorkoutData = async (
         );
 
         // In the event that setData is populated we must de-normalized them
-        const normalizedWorkoutData = localizedWorkoutData.map((workout) => ({
-            ...workout,
-            setsData: workout.setsData.map((setData) =>
-                typeof setData === "object"
-                    ? denormalizeSetData(
-                          setData as ISetData,
-                          user.measurementSystemPreference,
-                      )
-                    : setData,
-            ),
-        }));
+        const normalizedWorkoutData: IWorkoutDataDenormalized[] =
+            localizedWorkoutData.map((workout) => ({
+                ...workout,
+                setsData: workout.setsData.map((setData) =>
+                    typeof setData === "object"
+                        ? denormalizeSetData(
+                              setData as ISetData,
+                              user.measurementSystemPreference,
+                          )
+                        : setData,
+                ),
+            }));
 
         return {
             message: "WorkoutData retrieved successfully",
-            data: normalizedWorkoutData as IWorkoutData[],
+            data: normalizedWorkoutData,
         };
     } catch (error) {
         throw handleError(error);
@@ -104,7 +114,7 @@ export const getWorkoutDataById = async (
     user: IUser,
     workoutId: string,
     searchParams: URLSearchParams,
-): Promise<ServiceResult<IWorkoutData>> => {
+): Promise<ServiceResult<IWorkoutDataDenormalized>> => {
     try {
         let queryObj = WorkoutData.findOne({
             _id: workoutId,
@@ -134,7 +144,7 @@ export const getWorkoutDataById = async (
             user.languagePreference,
         );
 
-        const denormalizedWorkoutData = {
+        const denormalizedWorkoutData: IWorkoutDataDenormalized = {
             ...localizedWorkoutData,
             setsData: localizedWorkoutData.setsData.map((setData) =>
                 typeof setData === "object"
@@ -148,7 +158,7 @@ export const getWorkoutDataById = async (
 
         return {
             message: "WorkoutData retrieved successfully",
-            data: denormalizedWorkoutData as IWorkoutData,
+            data: denormalizedWorkoutData,
         };
     } catch (error) {
         throw handleError(error);
