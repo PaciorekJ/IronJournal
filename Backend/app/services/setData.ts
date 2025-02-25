@@ -5,6 +5,8 @@ import { ServiceResult } from "~/interfaces/service-result";
 import SetData, { ISetData, ISetDataEntry } from "~/models/SetData";
 import { WorkoutData } from "~/models/WorkoutData";
 import {
+    deNormalizeDistance,
+    deNormalizeWeight,
     normalizeDistance,
     normalizeWeight,
 } from "~/utils/noramlizeUnits.server";
@@ -79,7 +81,7 @@ export function denormalizeSetData(
 
     // *** Denormalize Weight (if present) ***
     if (setData.weight) {
-        denormalizedData.weight = denormalizeWeight(
+        denormalizedData.weight = deNormalizeWeight(
             setData.weight,
             measurementSystemPreference,
         );
@@ -88,11 +90,11 @@ export function denormalizeSetData(
     // *** Denormalize Distance, Weight, and Duration in SetData Array ***
     if (setData.setData) {
         denormalizedData.setData = setData.setData.map((entry) => {
-            const updatedEntry = { ...entry };
+            const updatedEntry = { ...entry } as any; // TODO: Refine Return typing for ISetDataEntry
 
             // *** Denormalize Weight ***
             if ("weight" in entry && entry.weight) {
-                updatedEntry.weight = denormalizeWeight(
+                updatedEntry.weight = deNormalizeWeight(
                     entry.weight,
                     measurementSystemPreference,
                 );
@@ -100,7 +102,7 @@ export function denormalizeSetData(
 
             // *** Denormalize Distance ***
             if ("distance" in entry && entry.distance) {
-                updatedEntry.distance = denormalizeDistance(
+                updatedEntry.distance = deNormalizeDistance(
                     entry.distance,
                     measurementSystemPreference,
                 );
