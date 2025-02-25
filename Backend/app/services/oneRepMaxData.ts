@@ -4,6 +4,7 @@ import { ServiceResult } from "~/interfaces/service-result";
 import OneRepMaxData, { IOneRepMaxData } from "~/models/OneRepMaxData";
 import {
     deNormalizeWeight,
+    IUnitsWeight,
     normalizeWeight,
 } from "~/utils/noramlizeUnits.server";
 import {
@@ -16,6 +17,11 @@ import {
     IOneRepMaxCreateDTO,
     IOneRepMaxUpdateDTO,
 } from "~/validation/one-rep-max-data.server";
+
+export interface IOneRepMaxDataDenormalized
+    extends Omit<IOneRepMaxData, "weight"> {
+    weight: IUnitsWeight;
+}
 
 const normalizeOneRepMaxData = (
     data: (IOneRepMaxCreateDTO | IOneRepMaxUpdateDTO) & {
@@ -33,13 +39,13 @@ const normalizeOneRepMaxData = (
 const deNormalizeOneRepMaxData = (
     data: IOneRepMaxData,
     measurementSystem: IUser["measurementSystemPreference"],
-): IOneRepMaxData =>
+): IOneRepMaxDataDenormalized =>
     ({
         ...data,
         weight: data.weight
             ? deNormalizeWeight(data.weight, measurementSystem)
-            : undefined,
-    }) as IOneRepMaxData;
+            : ({ kg: 0, lb: 0 } as IUnitsWeight),
+    }) as unknown as IOneRepMaxDataDenormalized;
 
 export const createOneRepMaxData = async (
     user: IUser,
@@ -50,13 +56,6 @@ export const createOneRepMaxData = async (
             userId: user._id,
             exercise: oneRepMax.exercise,
         });
-
-        if (existingRecord) {
-            throw json(
-                { error: "A record for this exercise already exists." },
-                { status: 400 },
-            );
-        }
 
         if (existingRecord) {
             throw json(
@@ -94,7 +93,7 @@ export const createOneRepMaxData = async (
 export const readOneRepMaxData = async (
     user: IUser,
     searchParams: URLSearchParams,
-): Promise<ServiceResult<IOneRepMaxData[]>> => {
+): Promise<ServiceResult<IOneRepMaxDataDenormalized[]>> => {
     try {
         const { query, limit, offset, sortBy, sortOrder } =
             buildQueryFromSearchParams<IOneRepMaxData>(
@@ -119,7 +118,7 @@ export const readOneRepMaxData = async (
 
         const deNormalizedData = data.map((record) =>
             deNormalizeOneRepMaxData(record, user.measurementSystemPreference),
-        ) as unknown as IOneRepMaxData[];
+        );
 
         return {
             data: deNormalizedData,
@@ -161,11 +160,10 @@ export const readOneRepMaxDataById = async (
     user: IUser,
     oneRepMaxDataId: string,
     searchParams: URLSearchParams,
-): Promise<ServiceResult<IOneRepMaxData>> => {
+): Promise<ServiceResult<IOneRepMaxDataDenormalized>> => {
     try {
         let queryObj = OneRepMaxData.findById(oneRepMaxDataId);
 
-        // Populate options (e.g., exercise details)
         const populateOptions = buildPopulateOptions(searchParams, "populate");
         populateOptions.forEach((option) => {
             queryObj = queryObj.populate(option);
