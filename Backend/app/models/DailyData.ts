@@ -52,30 +52,18 @@ const SubjectiveMoodSchema = new Schema<ISubjectiveMood>({
     energyLevel: { type: Number, min: 1, max: 10 },
 });
 
-const DailyDataSchema = new Schema<IDailyData>(
-    {
-        userId: { type: Schema.Types.ObjectId, required: true, ref: "User" },
-        subjectiveMood: { type: SubjectiveMoodSchema },
-        waterIntake: { type: Number },
-        bodyWeight: { type: Number },
-        bodyFatPercentage: { type: Number },
-        bodyMeasurements: { type: BodyMeasurementSchema },
-        createdAt: {
-            type: Date,
-            required: true,
-            set: (date: Date) => {
-                // Provided time should be localized to the user's time zone
-                // Strip time hours, minutes, seconds, milliseconds
-                return new Date(
-                    date.getFullYear(),
-                    date.getMonth(),
-                    date.getDate(),
-                );
-            },
-        },
+const DailyDataSchema = new Schema<IDailyData>({
+    userId: { type: Schema.Types.ObjectId, required: true, ref: "User" },
+    subjectiveMood: { type: SubjectiveMoodSchema },
+    waterIntake: { type: Number },
+    bodyWeight: { type: Number },
+    bodyFatPercentage: { type: Number },
+    bodyMeasurements: { type: BodyMeasurementSchema },
+    createdAt: {
+        type: Date,
+        required: true,
     },
-    { timestamps: true },
-);
+});
 
 // Ensure one entry per user per day
 DailyDataSchema.index({ userId: 1, createdAt: 1 }, { unique: true });
