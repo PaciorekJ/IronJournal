@@ -24,6 +24,20 @@ import {
     IDailyDataUpdateDTO,
 } from "~/validation/daily-data.server";
 
+export type DenormalizedBodyMeasurement = {
+    [key in keyof IBodyMeasurement]: IUnitsDistance | undefined;
+};
+
+export interface IDailyDataDenormalized
+    extends Omit<
+        IDailyData,
+        "bodyMeasurements" | "waterIntake" | "bodyWeight"
+    > {
+    bodyMeasurements: DenormalizedBodyMeasurement;
+    waterIntake: IUnitsVolume | undefined;
+    bodyWeight: IUnitsWeight | undefined;
+}
+
 const normalizeDailyData = (
     dailyData: IDailyDataCreateDTO | IDailyDataUpdateDTO,
     user: IUser,
@@ -39,9 +53,7 @@ const normalizeDailyData = (
             (acc, measurement) => {
                 acc[measurement] = dailyData.bodyMeasurements?.[measurement]
                     ? normalizeDistance(
-                          dailyData.bodyMeasurements[
-                              measurement
-                          ] as IUnitsDistance,
+                          dailyData.bodyMeasurements[measurement],
                           user.measurementSystemPreference,
                       )
                     : undefined;
@@ -54,7 +66,7 @@ const normalizeDailyData = (
     if ("waterIntake" in dailyData) {
         normalizedDailyData.waterIntake = dailyData.waterIntake
             ? normalizeVolume(
-                  dailyData.waterIntake as IUnitsVolume,
+                  dailyData.waterIntake,
                   user.measurementSystemPreference,
               )
             : undefined;
@@ -63,7 +75,7 @@ const normalizeDailyData = (
     if ("bodyWeight" in dailyData) {
         normalizedDailyData.bodyWeight = dailyData.bodyWeight
             ? normalizeWeight(
-                  dailyData.bodyWeight as IUnitsWeight,
+                  dailyData.bodyWeight,
                   user.measurementSystemPreference,
               )
             : undefined;
@@ -75,12 +87,12 @@ const normalizeDailyData = (
 const deNormalizeDailyData = (
     dailyData: IDailyData,
     user: IUser,
-): IDailyData => {
-    const deNormalizedDailyData = { ...dailyData };
+): IDailyDataDenormalized => {
+    const deNormalizedDailyData = { ...dailyData } as IDailyDataDenormalized;
 
     const measurementsTaken = Object.keys(
         bodyMeasurementSchema.shape,
-    ) as (keyof IBodyMeasurement)[];
+    ) as (keyof DenormalizedBodyMeasurement)[];
     deNormalizedDailyData.bodyMeasurements = measurementsTaken.reduce(
         (acc, measurement) => {
             acc[measurement] = dailyData.bodyMeasurements?.[measurement]
@@ -91,30 +103,26 @@ const deNormalizeDailyData = (
                 : undefined;
             return acc;
         },
-        {} as IBodyMeasurement as any,
+        {} as DenormalizedBodyMeasurement,
     );
 
     // De-normalize water intake
-    deNormalizedDailyData.waterIntake = (
-        dailyData.waterIntake
-            ? deNormalizeVolume(
-                  dailyData.waterIntake,
-                  user.measurementSystemPreference,
-              )
-            : undefined
-    ) as number;
+    deNormalizedDailyData.waterIntake = dailyData.waterIntake
+        ? deNormalizeVolume(
+              dailyData.waterIntake,
+              user.measurementSystemPreference,
+          )
+        : undefined;
 
     // De-normalize body weight
-    deNormalizedDailyData.bodyWeight = (
-        dailyData.bodyWeight
-            ? deNormalizeWeight(
-                  dailyData.bodyWeight,
-                  user.measurementSystemPreference,
-              )
-            : undefined
-    ) as number;
+    deNormalizedDailyData.bodyWeight = dailyData.bodyWeight
+        ? deNormalizeWeight(
+              dailyData.bodyWeight,
+              user.measurementSystemPreference,
+          )
+        : undefined;
 
-    return deNormalizedDailyData as IDailyData;
+    return deNormalizedDailyData;
 };
 
 const stripTime = (date: Date) => {
@@ -129,14 +137,14 @@ export const incrementWaterIntake = async (
     try {
         const createdAt = stripTime(new Date(dailyData.createdAt));
 
-        const incrementValue = normalizeVolume(
-            dailyData.waterIntake as IUnitsVolume,
-            user.measurementSystemPreference,
-        );
-
         if (!dailyData.waterIntake) {
             throw data({ error: "Water intake is required" }, { status: 400 });
         }
+
+        const incrementValue = normalizeVolume(
+            dailyData.waterIntake,
+            user.measurementSystemPreference,
+        );
 
         const result = await DailyData.updateOne(
             { userId: user._id, createdAt },
@@ -159,22 +167,17 @@ export const incrementWaterIntake = async (
 export const createOrUpdateDailyData = async (
     user: IUser,
     dailyData: IDailyDataCreateDTO,
-): Promise<ServiceResult<IDailyData>> => {
+): Promise<ServiceResult<IDailyDataDenormalized>> => {
     try {
-        // Normalize the createdAt field to the start of the day
         const normalizedDate = stripTime(new Date(dailyData.createdAt));
 
-        // Start building normalizedData
-        const normalizedData: Partial<IDailyData> = normalizeDailyData(
-            dailyData,
-            user,
-        ) as unknown as Partial<IDailyData>;
+        const normalizedData = normalizeDailyData(dailyData, user);
 
-        const dailyDataEntry = (await DailyData.findOneAndUpdate(
+        const dailyDataEntry = await DailyData.findOneAndUpdate(
             { userId: user._id, createdAt: normalizedDate },
             { $set: normalizedData },
             { upsert: true, new: true, runValidators: true },
-        ).lean()) as IDailyData;
+        ).lean();
 
         if (!dailyDataEntry) {
             throw new Error("DailyData not found or failed to update");
@@ -192,7 +195,7 @@ export const createOrUpdateDailyData = async (
 export const readDailyData = async (
     user: IUser,
     searchParams: URLSearchParams,
-): Promise<ServiceResult<IDailyData[]>> => {
+): Promise<ServiceResult<IDailyDataDenormalized[]>> => {
     try {
         const { query, limit, offset, sortBy, sortOrder } =
             buildQueryFromSearchParams<IDailyData>(
@@ -249,7 +252,7 @@ export const readDailyData = async (
 export const readDailyDataById = async (
     user: IUser,
     dailyDataId: string,
-): Promise<ServiceResult<IDailyData>> => {
+): Promise<ServiceResult<IDailyDataDenormalized>> => {
     try {
         const dailyData = (await DailyData.findOne({
             _id: dailyDataId,
