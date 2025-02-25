@@ -7,25 +7,26 @@ import { WorkoutData } from "~/models/WorkoutData";
 import {
     deNormalizeDistance,
     deNormalizeWeight,
+    IUnitsDistance,
+    IUnitsWeight,
     normalizeDistance,
     normalizeWeight,
 } from "~/utils/noramlizeUnits.server";
 import { handleError } from "~/utils/util.server";
 import { ISetDataCreateDTO, ISetDataUpdateDTO } from "~/validation/setData";
 
-/**
- * @description
- * Normalize `ISetData` object by performing the following operations:
- * 1. Clone `setData` into `normalizedData`
- * 2. Normalize `weight` if present
- * 3. Normalize the following fields in `setData` array:
- *    a. `weight`
- *    b. `distance`
- *    c. `duration` (ensure non-negative)
- * @param {ISetDataCreateDTO | ISetDataUpdateDTO} setData
- * @param {IUser["measurementSystemPreference"]} measurementSystemPreference
- * @returns {ISetData}
- */
+export interface ISetDataEntryDenormalized
+    extends Omit<ISetDataEntry, "weight" | "distance" | "duration"> {
+    weight: IUnitsWeight;
+    distance?: IUnitsDistance;
+}
+
+export interface ISetDataDenormalized
+    extends Omit<ISetData, "setData" | "weight"> {
+    setData: ISetDataEntryDenormalized[];
+    weight: IUnitsWeight;
+}
+
 export function normalizeSetData(
     setData: ISetDataCreateDTO | ISetDataUpdateDTO,
     measurementSystemPreference: IUser["measurementSystemPreference"],
@@ -61,11 +62,6 @@ export function normalizeSetData(
                 );
             }
 
-            // *** Normalize Duration (Ensure non-negative) ***
-            if ("duration" in entry && entry.duration !== undefined) {
-                updatedEntry.duration = Math.max(0, entry.duration);
-            }
-
             return updatedEntry;
         }) as ISetDataEntry[];
     }
@@ -76,28 +72,29 @@ export function normalizeSetData(
 export function denormalizeSetData(
     setData: ISetData,
     measurementSystemPreference: IUser["measurementSystemPreference"],
-): ISetDataCreateDTO | ISetDataUpdateDTO {
-    const denormalizedData = { ...setData } as ISetDataCreateDTO;
+): ISetDataDenormalized {
+    const denormalizedData = { ...setData } as unknown as ISetDataDenormalized;
 
     // *** Denormalize Weight (if present) ***
     if (setData.weight) {
-        denormalizedData.weight = deNormalizeWeight(
-            setData.weight,
-            measurementSystemPreference,
-        );
+        denormalizedData.weight = setData.weight
+            ? deNormalizeWeight(setData.weight, measurementSystemPreference)
+            : { kg: 0, lb: 0 };
     }
 
     // *** Denormalize Distance, Weight, and Duration in SetData Array ***
     if (setData.setData) {
         denormalizedData.setData = setData.setData.map((entry) => {
-            const updatedEntry = { ...entry } as any; // TODO: Refine Return typing for ISetDataEntry
+            const updatedEntry = { ...entry } as ISetDataEntryDenormalized;
 
             // *** Denormalize Weight ***
             if ("weight" in entry && entry.weight) {
-                updatedEntry.weight = deNormalizeWeight(
-                    entry.weight,
-                    measurementSystemPreference,
-                );
+                updatedEntry.weight = entry.weight
+                    ? deNormalizeWeight(
+                          entry.weight,
+                          measurementSystemPreference,
+                      )
+                    : { kg: 0, lb: 0 };
             }
 
             // *** Denormalize Distance ***
@@ -106,11 +103,6 @@ export function denormalizeSetData(
                     entry.distance,
                     measurementSystemPreference,
                 );
-            }
-
-            // *** Preserve Duration (Ensure non-negative remains) ***
-            if ("duration" in entry && entry.duration !== undefined) {
-                updatedEntry.duration = Math.max(0, entry.duration);
             }
 
             return updatedEntry;
@@ -175,7 +167,7 @@ export const createSetData = async (
     user: IUser,
     workoutId: string,
     setData: ISetDataCreateDTO,
-): Promise<ServiceResult<ISetData>> => {
+): Promise<ServiceResult<ISetDataDenormalized>> => {
     const session = await mongoose.startSession();
 
     try {
@@ -210,10 +202,7 @@ export const createSetData = async (
 
         return {
             message: "SetData created successfully and added to WorkoutData",
-            data: denormalizeSetData(
-                newSet,
-                user.measurementSystemPreference,
-            ) as ISetData,
+            data: denormalizeSetData(newSet, user.measurementSystemPreference),
         };
     } catch (error) {
         await session.abortTransaction();
@@ -228,7 +217,7 @@ export const updateSetData = async (
     workoutDataId: string,
     setDataId: string,
     setDataUpdates: ISetDataUpdateDTO,
-): Promise<ServiceResult<ISetData>> => {
+): Promise<ServiceResult<ISetDataDenormalized>> => {
     try {
         const workoutData = await WorkoutData.exists({
             userId: user._id,
@@ -275,7 +264,7 @@ export const updateSetData = async (
 
         return {
             message: "SetData updated successfully",
-            data: denormalizedSetData as ISetData,
+            data: denormalizedSetData,
         };
     } catch (error) {
         throw handleError(error);
@@ -285,7 +274,7 @@ export const updateSetData = async (
 export const readSetDataById = async (
     user: IUser,
     setDataId: string,
-): Promise<ServiceResult<ISetData>> => {
+): Promise<ServiceResult<ISetDataDenormalized>> => {
     try {
         const setData = await SetData.findById(setDataId).lean().exec();
 
@@ -314,7 +303,7 @@ export const readSetDataById = async (
 
         return {
             message: "SetData found successfully",
-            data: denormalizedSetData as ISetData,
+            data: denormalizedSetData,
         };
     } catch (error) {
         throw handleError(error);
