@@ -2,7 +2,7 @@ import { IUser } from "@paciorekj/iron-journal-shared";
 import mongoose from "mongoose";
 import { ServiceResult } from "~/interfaces/service-result";
 import { localizeWorkoutData } from "~/localization/WorkoutData";
-import SetData from "~/models/SetData";
+import SetData, { ISetData } from "~/models/SetData";
 import { IWorkoutData, WorkoutData } from "~/models/WorkoutData";
 import {
     buildPopulateOptions,
@@ -14,6 +14,7 @@ import {
     IWorkoutDataCreateDTO,
     IWorkoutDataUpdateDTO,
 } from "~/validation/workoutData";
+import { denormalizeSetData } from "./setData";
 
 export const createWorkoutData = async (
     user: IUser,
@@ -77,9 +78,22 @@ export const getAllWorkoutData = async (
             ),
         );
 
+        // In the event that setData is populated we must de-normalized them
+        const normalizedWorkoutData = localizedWorkoutData.map((workout) => ({
+            ...workout,
+            setsData: workout.setsData.map((setData) =>
+                typeof setData === "object"
+                    ? denormalizeSetData(
+                          setData as ISetData,
+                          user.measurementSystemPreference,
+                      )
+                    : setData,
+            ),
+        }));
+
         return {
             message: "WorkoutData retrieved successfully",
-            data: localizedWorkoutData as IWorkoutData[],
+            data: normalizedWorkoutData as IWorkoutData[],
         };
     } catch (error) {
         throw handleError(error);
@@ -120,9 +134,21 @@ export const getWorkoutDataById = async (
             user.languagePreference,
         );
 
+        const denormalizedWorkoutData = {
+            ...localizedWorkoutData,
+            setsData: localizedWorkoutData.setsData.map((setData) =>
+                typeof setData === "object"
+                    ? denormalizeSetData(
+                          setData as ISetData,
+                          user.measurementSystemPreference,
+                      )
+                    : setData,
+            ),
+        };
+
         return {
             message: "WorkoutData retrieved successfully",
-            data: localizedWorkoutData as IWorkoutData,
+            data: denormalizedWorkoutData as IWorkoutData,
         };
     } catch (error) {
         throw handleError(error);
