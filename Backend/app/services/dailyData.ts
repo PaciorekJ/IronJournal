@@ -3,6 +3,9 @@ import { data } from "@remix-run/node";
 import { ServiceResult } from "~/interfaces/service-result";
 import { DailyData, IBodyMeasurement, IDailyData } from "~/models/DailyData";
 import {
+    deNormalizeDistance,
+    deNormalizeVolume,
+    deNormalizeWeight,
     IUnitsDistance,
     IUnitsVolume,
     IUnitsWeight,
@@ -15,9 +18,107 @@ import {
     dailyDataQueryConfig,
 } from "~/utils/query.server";
 import { handleError } from "~/utils/util.server";
-import { IDailyDataCreateDTO } from "~/validation/daily-data.server";
+import {
+    bodyMeasurementSchema,
+    IDailyDataCreateDTO,
+    IDailyDataUpdateDTO,
+} from "~/validation/daily-data.server";
+
+const normalizeDailyData = (
+    dailyData: IDailyDataCreateDTO | IDailyDataUpdateDTO,
+    user: IUser,
+): IDailyData => {
+    const normalizedDailyData = { ...dailyData } as unknown as IDailyData;
+
+    if ("bodyMeasurements" in dailyData) {
+        const measurementsTaken = Object.keys(
+            bodyMeasurementSchema.shape,
+        ) as (keyof IBodyMeasurement)[];
+
+        normalizedDailyData.bodyMeasurements = measurementsTaken.reduce(
+            (acc, measurement) => {
+                acc[measurement] = dailyData.bodyMeasurements?.[measurement]
+                    ? normalizeDistance(
+                          dailyData.bodyMeasurements[
+                              measurement
+                          ] as IUnitsDistance,
+                          user.measurementSystemPreference,
+                      )
+                    : undefined;
+                return acc;
+            },
+            {} as IBodyMeasurement,
+        );
+    }
+
+    if ("waterIntake" in dailyData) {
+        normalizedDailyData.waterIntake = dailyData.waterIntake
+            ? normalizeVolume(
+                  dailyData.waterIntake as IUnitsVolume,
+                  user.measurementSystemPreference,
+              )
+            : undefined;
+    }
+
+    if ("bodyWeight" in dailyData) {
+        normalizedDailyData.bodyWeight = dailyData.bodyWeight
+            ? normalizeWeight(
+                  dailyData.bodyWeight as IUnitsWeight,
+                  user.measurementSystemPreference,
+              )
+            : undefined;
+    }
+
+    return normalizedDailyData;
+};
+
+const deNormalizeDailyData = (
+    dailyData: IDailyData,
+    user: IUser,
+): IDailyData => {
+    const deNormalizedDailyData = { ...dailyData };
+
+    const measurementsTaken = Object.keys(
+        bodyMeasurementSchema.shape,
+    ) as (keyof IBodyMeasurement)[];
+    deNormalizedDailyData.bodyMeasurements = measurementsTaken.reduce(
+        (acc, measurement) => {
+            acc[measurement] = dailyData.bodyMeasurements?.[measurement]
+                ? deNormalizeDistance(
+                      dailyData.bodyMeasurements[measurement],
+                      user.measurementSystemPreference,
+                  )
+                : undefined;
+            return acc;
+        },
+        {} as IBodyMeasurement as any,
+    );
+
+    // De-normalize water intake
+    deNormalizedDailyData.waterIntake = (
+        dailyData.waterIntake
+            ? deNormalizeVolume(
+                  dailyData.waterIntake,
+                  user.measurementSystemPreference,
+              )
+            : undefined
+    ) as number;
+
+    // De-normalize body weight
+    deNormalizedDailyData.bodyWeight = (
+        dailyData.bodyWeight
+            ? deNormalizeWeight(
+                  dailyData.bodyWeight,
+                  user.measurementSystemPreference,
+              )
+            : undefined
+    ) as number;
+
+    return deNormalizedDailyData as IDailyData;
+};
 
 const stripTime = (date: Date) => {
+    // TODO: MAKE THIS ACCOUNT FOR USERS TIMEZONE
     return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 };
 
@@ -64,47 +165,10 @@ export const createOrUpdateDailyData = async (
         const normalizedDate = stripTime(new Date(dailyData.createdAt));
 
         // Start building normalizedData
-        const normalizedData: Partial<IDailyData> = {
-            ...dailyData,
-            createdAt: normalizedDate,
-        } as unknown as Partial<IDailyData>; // Temporary type mismatch, resolved in the steps below.
-
-        // Check and normalize bodyWeight
-        if (dailyData.bodyWeight) {
-            normalizedData.bodyWeight = normalizeWeight(
-                dailyData.bodyWeight as IUnitsWeight,
-                user.measurementSystemPreference,
-            );
-        }
-
-        // Check and normalize waterIntake
-        if (dailyData.waterIntake) {
-            normalizedData.waterIntake = normalizeVolume(
-                dailyData.waterIntake as IUnitsVolume,
-                user.measurementSystemPreference,
-            );
-        }
-
-        // Check and normalize bodyMeasurements
-        if (dailyData.bodyMeasurements) {
-            normalizedData.bodyMeasurements = (
-                Object.keys(
-                    dailyData.bodyMeasurements,
-                ) as (keyof IBodyMeasurement)[]
-            ).reduce(
-                (acc, key) => {
-                    const measurement = dailyData.bodyMeasurements![key];
-                    if (measurement) {
-                        acc[key] = normalizeDistance(
-                            measurement as IUnitsDistance,
-                            user.measurementSystemPreference,
-                        );
-                    }
-                    return acc;
-                },
-                {} as Record<keyof IBodyMeasurement, number | undefined>,
-            );
-        }
+        const normalizedData: Partial<IDailyData> = normalizeDailyData(
+            dailyData,
+            user,
+        ) as unknown as Partial<IDailyData>;
 
         const dailyDataEntry = (await DailyData.findOneAndUpdate(
             { userId: user._id, createdAt: normalizedDate },
@@ -118,7 +182,7 @@ export const createOrUpdateDailyData = async (
 
         return {
             message: "DailyData updated successfully",
-            data: dailyDataEntry,
+            data: deNormalizeDailyData(dailyDataEntry, user),
         };
     } catch (error) {
         throw handleError(error);
@@ -160,11 +224,13 @@ export const readDailyData = async (
             ? { [sortBy]: sortOrder }
             : { createdAt: -1 };
 
-        const dailyDataEntries = (await DailyData.find(query)
-            .sort(sortOption)
-            .skip(offset)
-            .limit(limit)
-            .lean()) as IDailyData[];
+        const dailyDataEntries = (
+            await DailyData.find(query)
+                .sort(sortOption)
+                .skip(offset)
+                .limit(limit)
+                .lean()
+        ).map((dailyData) => deNormalizeDailyData(dailyData, user));
 
         const totalCount = await DailyData.countDocuments(query);
 
@@ -196,7 +262,7 @@ export const readDailyDataById = async (
 
         return {
             message: "DailyData retrieved successfully",
-            data: dailyData,
+            data: deNormalizeDailyData(dailyData, user),
         };
     } catch (error) {
         throw handleError(error);

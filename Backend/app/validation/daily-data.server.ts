@@ -5,7 +5,7 @@ import {
     weightUnitsSchema,
 } from "./utils";
 
-const bodyMeasurementSchema = z
+export const bodyMeasurementSchema = z
     .object({
         neck: distanceUnitsSchema.optional(),
         bicepLeft: distanceUnitsSchema.optional(),

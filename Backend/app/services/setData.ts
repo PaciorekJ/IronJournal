@@ -33,7 +33,7 @@ export function normalizeSetData(
     const normalizedData = { ...setData } as ISetData;
 
     // *** Normalize Weight (if present) ***
-    if (setData.weight) {
+    if ("weight" in setData && setData.weight) {
         normalizedData.weight = normalizeWeight(
             setData.weight,
             measurementSystemPreference,
@@ -41,7 +41,7 @@ export function normalizeSetData(
     }
 
     // *** Normalize Distance, Weight, and Duration in SetData Array ***
-    if (setData.setData) {
+    if ("setData" in setData && setData.setData) {
         normalizedData.setData = setData.setData.map((entry) => {
             const updatedEntry = { ...entry } as ISetDataEntry;
 
@@ -181,9 +181,14 @@ export const createSetData = async (
     try {
         session.startTransaction();
 
-        // Normalize SetData weight, and setdata, etc...
+        const normalizedSetData = normalizeSetData(
+            setData,
+            user.measurementSystemPreference,
+        );
 
-        const newSet = (await SetData.create([setData], { session }))[0];
+        const newSet = (
+            await SetData.create([normalizedSetData], { session })
+        )[0];
 
         const { modifiedCount } = await WorkoutData.updateOne(
             { userId: user._id, _id: workoutId },
@@ -205,7 +210,10 @@ export const createSetData = async (
 
         return {
             message: "SetData created successfully and added to WorkoutData",
-            data: newSet,
+            data: denormalizeSetData(
+                newSet,
+                user.measurementSystemPreference,
+            ) as ISetData,
         };
     } catch (error) {
         await session.abortTransaction();
@@ -237,9 +245,14 @@ export const updateSetData = async (
             );
         }
 
+        const normalizedSetData = normalizeSetData(
+            setDataUpdates,
+            user.measurementSystemPreference,
+        );
+
         const updatedSet = await SetData.findByIdAndUpdate(
             setDataId,
-            setDataUpdates,
+            normalizedSetData,
             {
                 new: true,
                 runValidators: true,
@@ -255,9 +268,14 @@ export const updateSetData = async (
             );
         }
 
+        const denormalizedSetData = denormalizeSetData(
+            updatedSet,
+            user.measurementSystemPreference,
+        );
+
         return {
             message: "SetData updated successfully",
-            data: updatedSet as ISetData,
+            data: denormalizedSetData as ISetData,
         };
     } catch (error) {
         throw handleError(error);
@@ -289,9 +307,14 @@ export const readSetDataById = async (
             );
         }
 
+        const denormalizedSetData = denormalizeSetData(
+            setData,
+            user.measurementSystemPreference,
+        );
+
         return {
             message: "SetData found successfully",
-            data: setData as ISetData,
+            data: denormalizedSetData as ISetData,
         };
     } catch (error) {
         throw handleError(error);

@@ -12,18 +12,43 @@ import {
     oneRepMaxQueryConfig,
 } from "~/utils/query.server";
 import { handleError } from "~/utils/util.server";
+import {
+    IOneRepMaxCreateDTO,
+    IOneRepMaxUpdateDTO,
+} from "~/validation/one-rep-max-data.server";
 
-// Note a denormalized function is not used here as the calculations are straight forward
+const normalizeOneRepMaxData = (
+    data: (IOneRepMaxCreateDTO | IOneRepMaxUpdateDTO) & {
+        userId: IOneRepMaxData["userId"];
+    },
+    measurementSystem: IUser["measurementSystemPreference"],
+): IOneRepMaxData =>
+    ({
+        ...data,
+        weight: data.weight
+            ? normalizeWeight(data.weight, measurementSystem)
+            : undefined,
+    }) as unknown as IOneRepMaxData;
+
+const deNormalizeOneRepMaxData = (
+    data: IOneRepMaxData,
+    measurementSystem: IUser["measurementSystemPreference"],
+): IOneRepMaxData =>
+    ({
+        ...data,
+        weight: data.weight
+            ? deNormalizeWeight(data.weight, measurementSystem)
+            : undefined,
+    }) as IOneRepMaxData;
 
 export const createOneRepMaxData = async (
     user: IUser,
-    exerciseId: string,
-    weight: number,
+    oneRepMax: IOneRepMaxCreateDTO,
 ): Promise<ServiceResult<IOneRepMaxData>> => {
     try {
-        const existingRecord = await OneRepMaxData.findOne({
+        const existingRecord = await OneRepMaxData.exists({
             userId: user._id,
-            exercise: exerciseId,
+            exercise: oneRepMax.exercise,
         });
 
         if (existingRecord) {
@@ -33,14 +58,27 @@ export const createOneRepMaxData = async (
             );
         }
 
-        const normalizedWeight = normalizeWeight(
-            { kg: weight, lb: weight },
+        if (existingRecord) {
+            throw json(
+                { error: "A record for this exercise already exists." },
+                { status: 400 },
+            );
+        }
+
+        const normalizedOneRepMaxData = normalizeOneRepMaxData(
+            {
+                ...oneRepMax,
+                userId: user._id as unknown as IOneRepMaxData["userId"],
+            },
             user.measurementSystemPreference,
         );
 
         const newRecord = await OneRepMaxData.findOneAndUpdate(
-            { userId: user._id, exercise: exerciseId },
-            { weight: normalizedWeight, updatedAt: new Date() },
+            {
+                userId: normalizedOneRepMaxData.userId,
+                exercise: normalizedOneRepMaxData.exercise,
+            },
+            { weight: normalizedOneRepMaxData.weight, updatedAt: new Date() },
             { upsert: true, new: true },
         );
 
@@ -79,15 +117,9 @@ export const readOneRepMaxData = async (
         const data = await queryObj.exec();
         const totalCount = await OneRepMaxData.countDocuments(query).exec();
 
-        const deNormalizedData = data.map((record) => {
-            return {
-                ...record.toObject(),
-                weight: deNormalizeWeight(
-                    record.weight,
-                    user.measurementSystemPreference,
-                ),
-            };
-        }) as unknown as IOneRepMaxData[]; // TODO: Improper typing
+        const deNormalizedData = data.map((record) =>
+            deNormalizeOneRepMaxData(record, user.measurementSystemPreference),
+        ) as unknown as IOneRepMaxData[];
 
         return {
             data: deNormalizedData,
@@ -156,13 +188,10 @@ export const readOneRepMaxDataById = async (
             );
         }
 
-        const deNormalizedOneRepMaxData = {
-            ...oneRepMaxData,
-            weight: deNormalizeWeight(
-                oneRepMaxData.weight,
-                user.measurementSystemPreference,
-            ),
-        } as unknown as IOneRepMaxData; // TODO: Improper typing
+        const deNormalizedOneRepMaxData = deNormalizeOneRepMaxData(
+            oneRepMaxData,
+            user.measurementSystemPreference,
+        );
 
         return { data: deNormalizedOneRepMaxData };
     } catch (error) {

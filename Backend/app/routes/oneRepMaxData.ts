@@ -33,11 +33,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 const validatedData =
                     createOneRepMaxDataSchema.parse(requestData);
 
-                const result = await createOneRepMaxData(
-                    user,
-                    validatedData.exercise,
-                    validatedData.weight,
-                );
+                const result = await createOneRepMaxData(user, validatedData);
 
                 return data(result, { status: 201 });
             }

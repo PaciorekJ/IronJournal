@@ -1,17 +1,18 @@
 import { ObjectIdSchema } from "@paciorekj/iron-journal-shared";
 import { z } from "zod";
+import { weightUnitsSchema } from "./utils";
 
 const createOneRepMaxDataSchema = z
     .object({
         exercise: ObjectIdSchema,
-        weight: z.number().min(0, "Weight must be a non-negative number"),
+        weight: weightUnitsSchema,
     })
     .strict();
 
 const updateOneRepMaxDataSchema = z
     .object({
         exercise: ObjectIdSchema.optional(),
-        weight: z.number().min(0, "Weight must be a non-negative number"),
+        weight: weightUnitsSchema.optional(),
     })
     .strict();
 

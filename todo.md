@@ -8,9 +8,8 @@
 - (POTENTIAL FEATURE) Maybe I wil collect old exercise one rep max to track users progression on a particular lift from a one rep max perspective
 - Make Sets independent from workouts, as sets could be reusable by user's
 
-- Add normalized and deNormalized functions throughout setdata
-- Implement normalizing and deNormalizing functions to dailyData
-- Add normalized and deNormalized functions throughout dailyData
+- StripTime Function should account for user's timezone so then they will literally be dailyData
+
 - Add typing for the return types for deNormalized data for setData, dailyData, and oneRepMaxData
 
 ## LOW PRIORITY
