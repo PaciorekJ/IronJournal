@@ -7,7 +7,11 @@
 - User's can optional have a specific goal. (DOable)
 - (POTENTIAL FEATURE) Maybe I wil collect old exercise one rep max to track users progression on a particular lift from a one rep max perspective
 - Make Sets independent from workouts, as sets could be reusable by user's
-- Add denormalizing for all data metrics to users preferred metric system.
+
+- Add normalized and deNormalized functions throughout setdata
+- Implement normalizing and deNormalizing functions to dailyData
+- Add normalized and deNormalized functions throughout dailyData
+- Add typing for the return types for deNormalized data for setData, dailyData, and oneRepMaxData
 
 ## LOW PRIORITY
 
