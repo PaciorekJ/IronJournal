@@ -10,8 +10,6 @@
 
 - StripTime Function should account for user's timezone so then they will literally be dailyData
 
-- Add typing for the return types for deNormalized data for setData, dailyData, and oneRepMaxData
-
 ## LOW PRIORITY
 
 - Add an admin review system for flagged content, so user can report content for programs & workouts
