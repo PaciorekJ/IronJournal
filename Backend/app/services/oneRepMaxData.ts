@@ -1,5 +1,5 @@
 import { IUser } from "@paciorekj/iron-journal-shared";
-import { data, json } from "@remix-run/node";
+import { data } from "@remix-run/node";
 import { ServiceResult } from "~/interfaces/service-result";
 import OneRepMaxData, { IOneRepMaxData } from "~/models/OneRepMaxData";
 import {
@@ -52,18 +52,6 @@ export const createOneRepMaxData = async (
     oneRepMax: IOneRepMaxCreateDTO,
 ): Promise<ServiceResult<IOneRepMaxData>> => {
     try {
-        const existingRecord = await OneRepMaxData.exists({
-            userId: user._id,
-            exercise: oneRepMax.exercise,
-        });
-
-        if (existingRecord) {
-            throw json(
-                { error: "A record for this exercise already exists." },
-                { status: 400 },
-            );
-        }
-
         const normalizedOneRepMaxData = normalizeOneRepMaxData(
             {
                 ...oneRepMax,
@@ -82,7 +70,7 @@ export const createOneRepMaxData = async (
         );
 
         return {
-            message: "One-rep max data created successfully.",
+            message: "One-rep max data created/updated successfully.",
             data: newRecord,
         };
     } catch (error) {
