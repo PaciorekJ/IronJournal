@@ -125,9 +125,12 @@ const deNormalizeDailyData = (
     return deNormalizedDailyData;
 };
 
-const stripTime = (date: Date) => {
-    // TODO: MAKE THIS ACCOUNT FOR USERS TIMEZONE
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+const stripTime = (date: Date, timeZone: string): Date => {
+    const utcDate = new Date(date.toLocaleString("en-US", { timeZone }));
+
+    return new Date(
+        Date.UTC(utcDate.getFullYear(), utcDate.getMonth(), utcDate.getDate()),
+    );
 };
 
 export const incrementWaterIntake = async (
@@ -135,7 +138,10 @@ export const incrementWaterIntake = async (
     dailyData: IDailyDataCreateDTO,
 ): Promise<ServiceResult<undefined>> => {
     try {
-        const createdAt = stripTime(new Date(dailyData.createdAt));
+        const createdAt = stripTime(
+            new Date(dailyData.createdAt),
+            user.timezone,
+        );
 
         if (!dailyData.waterIntake) {
             throw data({ error: "Water intake is required" }, { status: 400 });
@@ -169,7 +175,10 @@ export const createOrUpdateDailyData = async (
     dailyData: IDailyDataCreateDTO,
 ): Promise<ServiceResult<IDailyDataDenormalized>> => {
     try {
-        const normalizedDate = stripTime(new Date(dailyData.createdAt));
+        const normalizedDate = stripTime(
+            new Date(dailyData.createdAt),
+            user.timezone,
+        );
 
         const normalizedData = normalizeDailyData(dailyData, user);
 
@@ -207,14 +216,17 @@ export const readDailyData = async (
         const endDateString = searchParams.get("endDate") || null;
 
         if (startDateString) {
-            const startDate = stripTime(new Date(startDateString));
+            const startDate = stripTime(
+                new Date(startDateString),
+                user.timezone,
+            );
             query.createdAt = {
                 $gte: startDate,
             };
         }
 
         if (endDateString) {
-            const endDate = stripTime(new Date(endDateString));
+            const endDate = stripTime(new Date(endDateString), user.timezone);
             query.createdAt = {
                 ...query.createdAt,
                 $lte: endDate,

@@ -8,8 +8,6 @@
 - (POTENTIAL FEATURE) Maybe I wil collect old exercise one rep max to track users progression on a particular lift from a one rep max perspective
 - Make Sets independent from workouts, as sets could be reusable by user's
 
-- StripTime Function should account for user's timezone so then they will literally be dailyData
-
 ## LOW PRIORITY
 
 - Add an admin review system for flagged content, so user can report content for programs & workouts
