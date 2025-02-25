@@ -24,6 +24,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     const searchParams = url.searchParams;
 
     const result = await getWorkoutDataById(user, workoutId, searchParams);
+
     return data(result, { status: 200 });
 };
 

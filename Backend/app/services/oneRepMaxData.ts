@@ -2,7 +2,10 @@ import { IUser } from "@paciorekj/iron-journal-shared";
 import { data, json } from "@remix-run/node";
 import { ServiceResult } from "~/interfaces/service-result";
 import OneRepMaxData, { IOneRepMaxData } from "~/models/OneRepMaxData";
-import { normalizeWeight } from "~/utils/noramlizeUnits.server";
+import {
+    deNormalizeWeight,
+    normalizeWeight,
+} from "~/utils/noramlizeUnits.server";
 import {
     buildPopulateOptions,
     buildQueryFromSearchParams,
@@ -74,8 +77,18 @@ export const readOneRepMaxData = async (
         const data = await queryObj.exec();
         const totalCount = await OneRepMaxData.countDocuments(query).exec();
 
+        const deNormalizedData = data.map((record) => {
+            return {
+                ...record.toObject(),
+                weight: deNormalizeWeight(
+                    record.weight,
+                    user.measurementSystemPreference,
+                ),
+            };
+        }) as unknown as IOneRepMaxData[]; // TODO: Improper typing
+
         return {
-            data,
+            data: deNormalizedData,
             hasMore: offset + data.length < totalCount,
         };
     } catch (error) {
@@ -141,7 +154,15 @@ export const readOneRepMaxDataById = async (
             );
         }
 
-        return { data: oneRepMaxData };
+        const deNormalizedOneRepMaxData = {
+            ...oneRepMaxData,
+            weight: deNormalizeWeight(
+                oneRepMaxData.weight,
+                user.measurementSystemPreference,
+            ),
+        } as unknown as IOneRepMaxData; // TODO: Improper typing
+
+        return { data: deNormalizedOneRepMaxData };
     } catch (error) {
         throw handleError(error);
     }

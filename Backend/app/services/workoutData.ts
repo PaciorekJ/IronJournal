@@ -1,6 +1,7 @@
 import { IUser } from "@paciorekj/iron-journal-shared";
 import mongoose from "mongoose";
 import { ServiceResult } from "~/interfaces/service-result";
+import { localizeWorkoutData } from "~/localization/WorkoutData";
 import SetData from "~/models/SetData";
 import { IWorkoutData, WorkoutData } from "~/models/WorkoutData";
 import {
@@ -69,9 +70,16 @@ export const getAllWorkoutData = async (
 
         const workouts = await queryObj.lean().exec();
 
+        const localizedWorkoutData = workouts.map((workout) =>
+            localizeWorkoutData(
+                workout as IWorkoutData,
+                user.languagePreference,
+            ),
+        );
+
         return {
             message: "WorkoutData retrieved successfully",
-            data: workouts as IWorkoutData[],
+            data: localizedWorkoutData as IWorkoutData[],
         };
     } catch (error) {
         throw handleError(error);
@@ -107,9 +115,14 @@ export const getWorkoutDataById = async (
             throw new Error("WorkoutData not found");
         }
 
+        const localizedWorkoutData = localizeWorkoutData(
+            workout as IWorkoutData,
+            user.languagePreference,
+        );
+
         return {
             message: "WorkoutData retrieved successfully",
-            data: workout as IWorkoutData,
+            data: localizedWorkoutData as IWorkoutData,
         };
     } catch (error) {
         throw handleError(error);

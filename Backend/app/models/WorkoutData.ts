@@ -40,8 +40,8 @@ const WorkoutDataSchema = new Schema<IWorkoutData>(
         ],
         status: {
             type: String,
-            enum: Object.values(WORKOUT_DATA_STATUS),
-            default: WORKOUT_DATA_STATUS.ACTIVE,
+            enum: Object.keys(WORKOUT_DATA_STATUS),
+            default: "ACTIVE",
         },
     },
     { timestamps: true },

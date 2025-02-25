@@ -124,3 +124,88 @@ export function normalizeVolume(
             .to("ml"),
     ].reduce((a, b) => a + b, 0);
 }
+
+/**
+ * Converts a standardized distance (in cm) to the user's preferred measurement system.
+ *
+ * @param {number} cm - The distance in centimeters.
+ * @param {IUser["measurementSystemPreference"]} measurementSystemPreference - The user's measurement system.
+ * @returns {IUnitsDistance} The converted values.
+ */
+export function deNormalizeDistance(
+    cm: number,
+    measurementSystemPreference: IUser["measurementSystemPreference"],
+): IUnitsDistance {
+    if (measurementSystemPreference === "METRIC") {
+        return {
+            cm,
+            m: lengthConvert(cm).from("cm").to("m"),
+            km: lengthConvert(cm).from("cm").to("km"),
+
+            inches: 0,
+            ft: 0,
+            mi: 0,
+        };
+    }
+
+    return {
+        cm,
+        m: 0,
+        km: 0,
+
+        inches: lengthConvert(cm).from("cm").to("in"),
+        ft: lengthConvert(cm).from("cm").to("ft"),
+        mi: lengthConvert(cm).from("cm").to("mi"),
+    };
+}
+
+/**
+ * Converts a standardized weight (in kg) to the user's preferred measurement system.
+ *
+ * @param {number} kg - The weight in kilograms.
+ * @param {IUser["measurementSystemPreference"]} measurementSystemPreference - The user's measurement system.
+ * @returns {IUnitsWeight} The converted values.
+ */
+export function deNormalizeWeight(
+    kg: number,
+    measurementSystemPreference: IUser["measurementSystemPreference"],
+): IUnitsWeight {
+    if (measurementSystemPreference === "METRIC") {
+        return { kg, lb: 0 };
+    }
+
+    return {
+        kg,
+        lb: massConvert(kg).from("kg").to("lb"),
+    };
+}
+
+/**
+ * Converts a standardized volume (in ml) to the user's preferred measurement system.
+ *
+ * @param {number} ml - The volume in milliliters.
+ * @param {IUser["measurementSystemPreference"]} measurementSystemPreference - The user's measurement system.
+ * @returns {IUnitsVolume} The converted values.
+ */
+export function deNormalizeVolume(
+    ml: number,
+    measurementSystemPreference: IUser["measurementSystemPreference"],
+): IUnitsVolume {
+    if (measurementSystemPreference === "METRIC") {
+        return {
+            ml,
+            l: volumeConvert(ml).from("ml").to("l"),
+
+            fluidOz: 0,
+            gal: 0,
+        };
+    }
+
+    return {
+        ml,
+        l: 0,
+
+        fluidOz: volumeConvert(ml).from("ml").to("fl-oz"),
+        gal: volumeConvert(ml).from("ml").to("gal"),
+    };
+}
