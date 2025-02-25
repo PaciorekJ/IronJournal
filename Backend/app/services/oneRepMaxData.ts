@@ -13,6 +13,8 @@ import {
 } from "~/utils/query.server";
 import { handleError } from "~/utils/util.server";
 
+// Note a denormalized function is not used here as the calculations are straight forward
+
 export const createOneRepMaxData = async (
     user: IUser,
     exerciseId: string,

@@ -17,13 +17,13 @@ const massConvert = configureMeasurements({
 });
 
 export interface IUnitsDistance {
-    cm: number;
-    m: number;
-    km: number;
+    cm?: number;
+    m?: number;
+    km?: number;
 
-    inches: number;
-    ft: number;
-    mi: number;
+    inches?: number;
+    ft?: number;
+    mi?: number;
 }
 
 /**
@@ -34,38 +34,38 @@ export interface IUnitsDistance {
  * @returns {number} The total distance in centimeters.
  */
 export function normalizeDistance(
-    units: IUnitsDistance,
+    { m = 0, km = 0, inches = 0, ft = 0, mi = 0 }: IUnitsDistance,
     measurementSystemPreference: IUser["measurementSystemPreference"],
 ): number {
     if (measurementSystemPreference === "METRIC") {
         return [
-            units.m || 0,
-            lengthConvert(units.m || 0)
+            m || 0,
+            lengthConvert(m || 0)
                 .from("m")
                 .to("cm"),
-            lengthConvert(units.km || 0)
+            lengthConvert(km || 0)
                 .from("km")
                 .to("cm"),
         ].reduce((a, b) => a + b, 0);
     }
 
     return [
-        lengthConvert(units.inches || 0)
+        lengthConvert(inches || 0)
             .from("in")
             .to("cm"),
-        lengthConvert(units.ft || 0)
+        lengthConvert(ft || 0)
             .from("ft")
             .to("cm"),
-        lengthConvert(units.mi || 0)
+        lengthConvert(mi || 0)
             .from("mi")
             .to("cm"),
     ].reduce((a, b) => a + b, 0);
 }
 
 export interface IUnitsWeight {
-    kg: number;
+    kg?: number;
 
-    lb: number;
+    lb?: number;
 }
 
 /**
@@ -76,23 +76,23 @@ export interface IUnitsWeight {
  * @returns {number} The total weight in kilograms.
  */
 export function normalizeWeight(
-    units: IUnitsWeight,
+    { kg = 0, lb = 0 }: IUnitsWeight,
     measurementSystemPreference: IUser["measurementSystemPreference"],
 ) {
     if (measurementSystemPreference === "METRIC") {
-        return units.kg || 0;
+        return kg || 0;
     }
-    return massConvert(units.lb || 0)
+    return massConvert(lb || 0)
         .from("lb")
         .to("kg");
 }
 
 export interface IUnitsVolume {
-    ml: number;
-    l: number;
+    ml?: number;
+    l?: number;
 
-    fluidOz: number;
-    gal: number;
+    fluidOz?: number;
+    gal?: number;
 }
 
 /**
@@ -104,22 +104,22 @@ export interface IUnitsVolume {
  * @returns {number} The total volume in milliliters.
  */
 export function normalizeVolume(
-    units: IUnitsVolume,
+    { ml = 0, l = 0, fluidOz = 0, gal = 0 }: IUnitsVolume,
     measurementSystemPreference: IUser["measurementSystemPreference"],
 ) {
     if (measurementSystemPreference === "METRIC") {
         return [
-            units.ml || 0,
-            volumeConvert(units.l || 0)
+            ml || 0,
+            volumeConvert(l || 0)
                 .from("l")
                 .to("ml"),
         ].reduce((a, b) => a + b, 0);
     }
     return [
-        volumeConvert(units.fluidOz || 0)
+        volumeConvert(fluidOz || 0)
             .from("fl-oz")
             .to("ml"),
-        volumeConvert(units.gal || 0)
+        volumeConvert(gal || 0)
             .from("gal")
             .to("ml"),
     ].reduce((a, b) => a + b, 0);

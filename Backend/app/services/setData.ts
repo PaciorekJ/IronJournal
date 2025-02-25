@@ -2,10 +2,121 @@ import { IUser } from "@paciorekj/iron-journal-shared";
 import { data } from "@remix-run/node";
 import mongoose from "mongoose";
 import { ServiceResult } from "~/interfaces/service-result";
-import SetData, { ISetData } from "~/models/SetData";
+import SetData, { ISetData, ISetDataEntry } from "~/models/SetData";
 import { WorkoutData } from "~/models/WorkoutData";
+import {
+    normalizeDistance,
+    normalizeWeight,
+} from "~/utils/noramlizeUnits.server";
 import { handleError } from "~/utils/util.server";
 import { ISetDataCreateDTO, ISetDataUpdateDTO } from "~/validation/setData";
+
+/**
+ * @description
+ * Normalize `ISetData` object by performing the following operations:
+ * 1. Clone `setData` into `normalizedData`
+ * 2. Normalize `weight` if present
+ * 3. Normalize the following fields in `setData` array:
+ *    a. `weight`
+ *    b. `distance`
+ *    c. `duration` (ensure non-negative)
+ * @param {ISetDataCreateDTO | ISetDataUpdateDTO} setData
+ * @param {IUser["measurementSystemPreference"]} measurementSystemPreference
+ * @returns {ISetData}
+ */
+export function normalizeSetData(
+    setData: ISetDataCreateDTO | ISetDataUpdateDTO,
+    measurementSystemPreference: IUser["measurementSystemPreference"],
+): ISetData {
+    const normalizedData = { ...setData } as ISetData;
+
+    // *** Normalize Weight (if present) ***
+    if (setData.weight) {
+        normalizedData.weight = normalizeWeight(
+            setData.weight,
+            measurementSystemPreference,
+        );
+    }
+
+    // *** Normalize Distance, Weight, and Duration in SetData Array ***
+    if (setData.setData) {
+        normalizedData.setData = setData.setData.map((entry) => {
+            const updatedEntry = { ...entry } as ISetDataEntry;
+
+            // *** Normalize Weight ***
+            if ("weight" in entry && entry.weight) {
+                updatedEntry.weight = normalizeWeight(
+                    entry.weight,
+                    measurementSystemPreference,
+                );
+            }
+
+            // *** Normalize Distance ***
+            if ("distance" in entry && entry.distance) {
+                updatedEntry.distance = normalizeDistance(
+                    entry.distance,
+                    measurementSystemPreference,
+                );
+            }
+
+            // *** Normalize Duration (Ensure non-negative) ***
+            if ("duration" in entry && entry.duration !== undefined) {
+                updatedEntry.duration = Math.max(0, entry.duration);
+            }
+
+            return updatedEntry;
+        }) as ISetDataEntry[];
+    }
+
+    return normalizedData;
+}
+
+export function denormalizeSetData(
+    setData: ISetData,
+    measurementSystemPreference: IUser["measurementSystemPreference"],
+): ISetDataCreateDTO | ISetDataUpdateDTO {
+    const denormalizedData = { ...setData } as ISetDataCreateDTO;
+
+    // *** Denormalize Weight (if present) ***
+    if (setData.weight) {
+        denormalizedData.weight = denormalizeWeight(
+            setData.weight,
+            measurementSystemPreference,
+        );
+    }
+
+    // *** Denormalize Distance, Weight, and Duration in SetData Array ***
+    if (setData.setData) {
+        denormalizedData.setData = setData.setData.map((entry) => {
+            const updatedEntry = { ...entry };
+
+            // *** Denormalize Weight ***
+            if ("weight" in entry && entry.weight) {
+                updatedEntry.weight = denormalizeWeight(
+                    entry.weight,
+                    measurementSystemPreference,
+                );
+            }
+
+            // *** Denormalize Distance ***
+            if ("distance" in entry && entry.distance) {
+                updatedEntry.distance = denormalizeDistance(
+                    entry.distance,
+                    measurementSystemPreference,
+                );
+            }
+
+            // *** Preserve Duration (Ensure non-negative remains) ***
+            if ("duration" in entry && entry.duration !== undefined) {
+                updatedEntry.duration = Math.max(0, entry.duration);
+            }
+
+            return updatedEntry;
+        });
+    }
+
+    return denormalizedData;
+}
 
 export const deleteSetData = async (
     user: IUser,
@@ -67,6 +178,8 @@ export const createSetData = async (
 
     try {
         session.startTransaction();
+
+        // Normalize SetData weight, and setdata, etc...
 
         const newSet = (await SetData.create([setData], { session }))[0];
 

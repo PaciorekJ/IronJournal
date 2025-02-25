@@ -30,33 +30,36 @@ export interface ISetData extends Document {
 }
 
 // Subdocument Schema for ISetDataEntry
-const SetDataEntrySchema = new Schema<ISetDataEntry>({
-    reps: {
-        type: Number,
-        min: 0,
+const SetDataEntrySchema = new Schema<ISetDataEntry>(
+    {
+        reps: {
+            type: Number,
+            min: 0,
+        },
+        weight: {
+            type: Number,
+            min: 0,
+        },
+        rpe: {
+            type: Number,
+            min: 1,
+            max: 10,
+        },
+        restDurationInSeconds: {
+            type: Number,
+            min: 0,
+        },
+        distance: {
+            type: Number,
+            min: 0,
+        },
+        duration: {
+            type: Number,
+            min: 0,
+        },
     },
-    weight: {
-        type: Number,
-        min: 0,
-    },
-    rpe: {
-        type: Number,
-        min: 1,
-        max: 10,
-    },
-    restDurationInSeconds: {
-        type: Number,
-        min: 0,
-    },
-    distance: {
-        type: Number,
-        min: 0,
-    },
-    duration: {
-        type: Number,
-        min: 0,
-    },
-});
+    { id: false },
+);
 
 // Main Schema for ISetData
 const mongooseSetDataSchema = new Schema<ISetData>(
