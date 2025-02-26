@@ -22,8 +22,15 @@
 
 ### Gamification inside of application
 
+- Streak and Streak breaking mechanics, advertise a 1 day until streak breaks, but provide a 2-3 days buffer to restore streak.
+- Provide many rewards and activities from the start and seasoned users have to work harder.
 - Add a leveling system, users gain XP for doing tasks/challenges, achievements
 - Create a Mechanism for users receiving Achievements (Probably a strategy pattern), and Completing challenges. Server Response should contain some achievement or challenge (Weekly/Monthly) field in response so client knows it happened for UI feedback
+
+- Friends make users return!
+- Users should be able to play with each other, asyncly -> Perhaps users can challenge other people to lifts and approve or reject, based on a video!
+
+- Keep track of user reputation - know who's engaged and valuable users
 
 ### ML inside of APP
 
@@ -33,3 +40,4 @@
 ### React Native Development
 
 - Dates will be formatted on retrieval by the application.
+- All dates should be sent using Date.toISOString(). Display stuff in users local timezone, then take the localDate and do localDate.toISOString()
