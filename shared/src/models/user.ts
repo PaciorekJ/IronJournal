@@ -11,6 +11,9 @@ interface IUser extends Document {
     timezone: string;
     createdAt: Date;
     updatedAt: Date;
+
+    level: number;
+    xp: number;
 }
 
 const UserSchema: Schema<IUser> = new Schema(
@@ -28,6 +31,12 @@ const UserSchema: Schema<IUser> = new Schema(
             enum: ["METRIC", "IMPERIAL"],
             required: true,
         },
+        acceptedProfanityTiers: {
+            type: [Number],
+            required: true,
+        },
+        level: { type: Number, required: true, default: 1 },
+        xp: { type: Number, required: true, default: 0 },
     },
     { timestamps: true },
 );

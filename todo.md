@@ -7,10 +7,10 @@
 - User's can optional have a specific goal. (DOable)
 - (POTENTIAL FEATURE) Maybe I wil collect old exercise one rep max to track users progression on a particular lift from a one rep max perspective
 - Make Sets independent from workouts, as sets could be reusable by user's
+- Add an admin review system for flagged content, so user can report content for programs, workouts, and users accounts can be reported for usernames for example
+- Add username check for profanity in the language submitted
 
 ## LOW PRIORITY
-
-- Add an admin review system for flagged content, so user can report content for programs & workouts
 
 ## Back Burner
 
@@ -22,15 +22,90 @@
 
 ### Gamification inside of application
 
-- Streak and Streak breaking mechanics, advertise a 1 day until streak breaks, but provide a 2-3 days buffer to restore streak.
-- Provide many rewards and activities from the start and seasoned users have to work harder.
-- Add a leveling system, users gain XP for doing tasks/challenges, achievements
-- Create a Mechanism for users receiving Achievements (Probably a strategy pattern), and Completing challenges. Server Response should contain some achievement or challenge (Weekly/Monthly) field in response so client knows it happened for UI feedback
+# **Iron Journal Beta Feature Roadmap**
 
-- Friends make users return!
-- Users should be able to play with each other, asyncly -> Perhaps users can challenge other people to lifts and approve or reject, based on a video!
+## ✅ Must-Have for Beta
+These features ensure core engagement and habit-building from day one.
 
-- Keep track of user reputation - know who's engaged and valuable users
+### **1. Streak & Streak Breaking Mechanics**
+- **Why?** Encourages consistency without punishing users too harshly.
+- **Implementation:** Advertise a 1-day break but provide a 2–3 day buffer for restoring streaks.
+
+### **2. Leveling System (XP & Achievements Framework)**
+- **Why?** Progression motivates users.
+- **Implementation:** Assign XP for completed workouts, challenges, and logging workouts.
+
+### **3. Weekly/Monthly Challenges with XP Rewards**
+- **Why?** Adds replayability and a sense of urgency.
+- **Implementation:** Simple challenges like "Workout 3x this week" or "Lift X kg total."
+
+### **4. Basic Achievements & UI Feedback for Unlocks**
+- **Why?** Creates small dopamine hits when completing tasks.
+- **Implementation:** Use a **strategy pattern** for achievements and include them in the server response.
+
+### **5. Friends & Social Engagement**
+- **Why?** Social connections **increase retention** significantly.
+- **Implementation:** Simple **friend list system** with activity updates (e.g., “Jason just hit a PR!”).
+
+### **6. Basic Reputation Tracking (Engagement Score)**
+- **Why?** Helps measure valuable users and **potentially reward them later**.
+- **Implementation:** Track workout streaks, XP earned, and challenge participation.
+
+---
+
+## 🚀 Save for Later (Post-Beta, More Complexity or Social Focus)
+
+These features are great but require more work or polish.
+
+### **1. Asynchronous User Challenges (Lifting Duels with Video Proof)**
+
+- **Why?** It’s a great idea but requires **video uploads, moderation, and challenge handling**, which increases complexity.
+
+### **2. Scarcity-Based Challenges (Random & Rare XP Boosters)**
+
+- **Why?** Could be fun but might be overwhelming early on. Add later once the **challenge system is solid**.
+
+### **3. Unlocking Sets of Achievements by Leveling Up**
+
+- **Why?** Cool progression system but not necessary for beta. Introduce after more achievements exist.
+
+### **4. Sharing Achievements/Badges**
+
+- **Why?** Useful for social engagement but lower priority. Start with **individual achievements first**.
+
+---
+
+## 🏗️ Potential Additional Features for Beta
+
+- **Basic Workout Stats Leaderboard (Optional)**
+
+  - Let users compare **XP or streaks** with friends.
+
+- **Personalized Challenge Suggestions**
+  - Use past workouts to suggest relevant challenges.
+
+- **Milestone Celebrations (Popup/UI Feedback)**
+  - “Congrats on logging 10 workouts!” - quick wins to **reinforce habit loops**.
+
+---
+
+## 🎯 **Summary**
+
+### ✅ **Include in Beta**
+
+1. **Streak mechanics** (1-3 day buffer)
+2. **XP & leveling system**
+3. **Basic weekly/monthly challenges**
+4. **Basic achievement system**
+5. **Friends & social activity feed**
+6. **Basic reputation tracking**
+
+### 🚀 **Post-Beta Expansion**
+
+1. **Async lifting challenges w/ video**
+2. **Rare challenges (XP boosters)**
+3. **Unlockable achievement tiers**
+4. **Sharing badges & achievements**
 
 ### ML inside of APP
 

@@ -60,6 +60,21 @@ export const createOneRepMaxData = async (
             user.measurementSystemPreference,
         );
 
+        const existingRecord = await OneRepMaxData.findOne({
+            userId: normalizedOneRepMaxData.userId,
+            exercise: normalizedOneRepMaxData.exercise,
+        });
+
+        if (
+            existingRecord &&
+            existingRecord?.weight >= normalizedOneRepMaxData.weight
+        ) {
+            return {
+                message: "One Rep Max has not improved.",
+                data: existingRecord,
+            };
+        }
+
         const newRecord = await OneRepMaxData.findOneAndUpdate(
             {
                 userId: normalizedOneRepMaxData.userId,
