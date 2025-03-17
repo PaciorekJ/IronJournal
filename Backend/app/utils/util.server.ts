@@ -21,6 +21,22 @@ export function convertKeysToCamelCase(
     return newObj;
 }
 
+export const getUserLocalMidnight = (timeZone: string) => {
+    const now = new Date();
+
+    const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    });
+
+    const [month, day, year] = formatter.format(now).split("/");
+    const localMidnight = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+
+    return localMidnight;
+};
+
 /**
  * Validates that the request body is a non-empty JSON object.
  * @param {Request} request - The request object.

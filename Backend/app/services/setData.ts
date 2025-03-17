@@ -14,6 +14,7 @@ import {
 } from "~/utils/noramlizeUnits.server";
 import { handleError } from "~/utils/util.server";
 import { ISetDataCreateDTO, ISetDataUpdateDTO } from "~/validation/setData";
+import { awardXp } from "./awardXp";
 
 export interface ISetDataEntryDenormalized
     extends Omit<ISetDataEntry, "weight" | "distance" | "duration"> {
@@ -199,6 +200,20 @@ export const createSetData = async (
 
         await session.commitTransaction();
         await session.endSession();
+
+        if (modifiedCount >= 1) {
+            const leveling = await awardXp(user._id.toString(), "completeSet");
+
+            return {
+                message:
+                    "SetData created successfully and added to WorkoutData",
+                data: denormalizeSetData(
+                    newSet,
+                    user.measurementSystemPreference,
+                ),
+                leveling,
+            };
+        }
 
         return {
             message: "SetData created successfully and added to WorkoutData",

@@ -207,17 +207,11 @@ export const createOrUpdateDailyData = async (
             )
             .map((field) => field as keyof IDailyDataCreateDTO);
 
-        let leveling = { newLevel: user.level, remainingXp: user.xp };
-        for (const _ of updatedFields) {
-            const xpResult = await awardXp(
-                user._id.toString(),
-                "completeDailyDataField",
-            );
-            if (xpResult) {
-                leveling.newLevel = xpResult.newLevel;
-                leveling.remainingXp = xpResult.remainingXp;
-            }
-        }
+        const leveling = await awardXp(
+            user._id.toString(),
+            "completeDailyDataField",
+            updatedFields.length,
+        );
 
         if (!dailyDataEntry) {
             throw new Error("DailyData not found or failed to update");

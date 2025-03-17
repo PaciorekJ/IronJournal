@@ -1,6 +1,13 @@
 export interface ILeveling {
     newLevel: number;
     remainingXp: number;
+
+    streak: {
+        currentStreak: number;
+        xpMultiplier: number;
+        nextMilestone: number | null;
+        progressToNext: number;
+    };
 }
 
 export interface ServiceResult<T = any> {

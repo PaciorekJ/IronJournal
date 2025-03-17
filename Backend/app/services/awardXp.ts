@@ -1,5 +1,8 @@
 import { User } from "@paciorekj/iron-journal-shared";
+import mongoose from "mongoose";
 import UserXpLog from "~/models/UserXpLogger";
+import { getUserLocalMidnight } from "~/utils/util.server";
+import { updateUserStreak } from "./streak";
 
 export const AwardXpActions = {
     completeDailyDataField: { xp: 5, limit: 5 },
@@ -16,55 +19,81 @@ const levelUpFormula = (level: number) => {
     return Math.round(100 * 1.12 ** (level - 1));
 };
 
-const getUserLocalMidnight = (timeZone: string) => {
-    const now = new Date();
+export const awardXp = async (
+    userId: string,
+    action: actionsType,
+    count = 1,
+) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    const formatter = new Intl.DateTimeFormat("en-US", {
-        timeZone,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-    });
+    try {
+        const user = await User.findById(userId).session(session);
+        if (!user) {
+            throw new Response(
+                `User not found, cannot award XP - ${userId} ${action}`,
+                { status: 404 },
+            );
+        }
 
-    const [month, day, year] = formatter.format(now).split("/");
-    const localMidnight = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+        const streakData = await updateUserStreak(user);
 
-    return localMidnight;
-};
+        const { xp, limit } = AwardXpActions[action];
+        const timeZone = user.timezone || "UTC";
+        const localMidnightUTC = getUserLocalMidnight(timeZone);
 
-export const awardXp = async (userId: string, action: actionsType) => {
-    const user = await User.findById(userId);
-    if (!user)
-        throw new Response(
-            `User not found, cannot award XP - ${userId} ${action}`,
-            { status: 404 },
-        );
+        const actionsToday = await UserXpLog.countDocuments({
+            userId,
+            action,
+            timestamp: { $gte: localMidnightUTC },
+        }).session(session);
 
-    const { xp, limit } = AwardXpActions[action];
+        const remaining = Math.max(0, limit - actionsToday);
+        const actualAwardCount = Math.min(count, remaining);
 
-    const timeZone = user.timezone || "UTC";
-    const localMidnightUTC = getUserLocalMidnight(timeZone);
+        if (actualAwardCount === 0) {
+            await session.abortTransaction();
+            session.endSession();
+            return {
+                newLevel: user.level,
+                remainingXp: user.xp,
+                streak: streakData,
+            };
+        }
 
-    const actionsToday = await UserXpLog.countDocuments({
-        userId,
-        action,
-        timestamp: { $gte: localMidnightUTC },
-    });
+        const baseXp = actualAwardCount * xp;
+        const totalXp = Math.round(baseXp * streakData.xpMultiplier);
 
-    if (actionsToday >= limit) {
-        return { newLevel: user.level, remainingXp: user.xp };
+        user.xp = (user.xp ?? 0) + totalXp;
+        user.level = user.level ?? 1;
+
+        let xpThreshold = levelUpFormula(user.level);
+        while (user.xp >= xpThreshold) {
+            user.xp -= xpThreshold;
+            user.level += 1;
+            xpThreshold = levelUpFormula(user.level);
+        }
+
+        await user.save({ session });
+
+        const xpLogs = Array.from({ length: actualAwardCount }).map(() => ({
+            userId,
+            action,
+            xpAwarded: xp,
+        }));
+        await UserXpLog.insertMany(xpLogs, { session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return {
+            newLevel: user.level,
+            remainingXp: user.xp,
+            streak: streakData,
+        };
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        throw error;
     }
-
-    user.xp = (user.xp ?? 0) + xp;
-
-    while (user.xp >= levelUpFormula(user.level)) {
-        user.xp -= levelUpFormula(user.level);
-        user.level += 1;
-    }
-
-    await user.save();
-
-    await UserXpLog.create({ userId, action, xpAwarded: xp });
-
-    return { newLevel: user.level, remainingXp: user.xp };
 };

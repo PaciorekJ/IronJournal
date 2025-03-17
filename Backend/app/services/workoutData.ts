@@ -21,7 +21,7 @@ import {
 import { awardXp } from "./awardXp";
 import { denormalizeSetData } from "./setData";
 
-interface ISetDataNormalized {} // Temp
+interface ISetDataNormalized {} // TODO: Temp
 
 export interface IWorkoutDataDenormalized
     extends Omit<IWorkoutData, "setsData"> {

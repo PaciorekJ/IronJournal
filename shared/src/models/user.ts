@@ -12,6 +12,10 @@ interface IUser extends Document {
 
     xp: number;
     level: number;
+    streak: {
+        count: number;
+        lastUpdated: Date;
+    };
 
     createdAt: Date;
     updatedAt: Date;
@@ -38,6 +42,10 @@ const UserSchema: Schema<IUser> = new Schema(
         },
         xp: { type: Number, required: true, default: 0 },
         level: { type: Number, required: true, default: 1 },
+        streak: {
+            count: { type: Number, required: true, default: 0 },
+            lastUpdated: { type: Date, required: true, default: Date.now },
+        },
     },
     { timestamps: true },
 );
