@@ -9,11 +9,12 @@ interface IUser extends Document {
     measurementSystemPreference: "METRIC" | "IMPERIAL";
     acceptedProfanityTiers: (1 | 2 | 3 | 4 | 5)[];
     timezone: string;
+
+    xp: number;
+    level: number;
+
     createdAt: Date;
     updatedAt: Date;
-
-    level: number;
-    xp: number;
 }
 
 const UserSchema: Schema<IUser> = new Schema(
@@ -35,8 +36,8 @@ const UserSchema: Schema<IUser> = new Schema(
             type: [Number],
             required: true,
         },
-        level: { type: Number, required: true, default: 1 },
         xp: { type: Number, required: true, default: 0 },
+        level: { type: Number, required: true, default: 1 },
     },
     { timestamps: true },
 );

@@ -25,29 +25,36 @@
 # **Iron Journal Beta Feature Roadmap**
 
 ## ✅ Must-Have for Beta
+
 These features ensure core engagement and habit-building from day one.
 
 ### **1. Streak & Streak Breaking Mechanics**
+
 - **Why?** Encourages consistency without punishing users too harshly.
 - **Implementation:** Advertise a 1-day break but provide a 2–3 day buffer for restoring streaks.
 
 ### **2. Leveling System (XP & Achievements Framework)**
+
 - **Why?** Progression motivates users.
 - **Implementation:** Assign XP for completed workouts, challenges, and logging workouts.
 
 ### **3. Weekly/Monthly Challenges with XP Rewards**
+
 - **Why?** Adds replayability and a sense of urgency.
 - **Implementation:** Simple challenges like "Workout 3x this week" or "Lift X kg total."
 
 ### **4. Basic Achievements & UI Feedback for Unlocks**
+
 - **Why?** Creates small dopamine hits when completing tasks.
 - **Implementation:** Use a **strategy pattern** for achievements and include them in the server response.
 
 ### **5. Friends & Social Engagement**
+
 - **Why?** Social connections **increase retention** significantly.
 - **Implementation:** Simple **friend list system** with activity updates (e.g., “Jason just hit a PR!”).
 
 ### **6. Basic Reputation Tracking (Engagement Score)**
+
 - **Why?** Helps measure valuable users and **potentially reward them later**.
 - **Implementation:** Track workout streaks, XP earned, and challenge participation.
 

@@ -23,6 +23,7 @@ import {
     IDailyDataCreateDTO,
     IDailyDataUpdateDTO,
 } from "~/validation/daily-data.server";
+import { awardXp } from "./awardXp";
 
 export type DenormalizedBodyMeasurement = {
     [key in keyof IBodyMeasurement]: IUnitsDistance | undefined;
@@ -126,11 +127,15 @@ const deNormalizeDailyData = (
 };
 
 const stripTime = (date: Date, timeZone: string): Date => {
-    const utcDate = new Date(date.toLocaleString("en-US", { timeZone }));
+    const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    });
 
-    return new Date(
-        Date.UTC(utcDate.getFullYear(), utcDate.getMonth(), utcDate.getDate()),
-    );
+    const [month, day, year] = formatter.format(date).split("/");
+    return new Date(`${year}-${month}-${day}T00:00:00.000Z`);
 };
 
 export const incrementWaterIntake = async (
@@ -152,6 +157,11 @@ export const incrementWaterIntake = async (
             user.measurementSystemPreference,
         );
 
+        const leveling = await awardXp(
+            user._id.toString(),
+            "completeDailyDataField",
+        );
+
         const result = await DailyData.updateOne(
             { userId: user._id, createdAt },
             { $inc: { waterIntakeInLiters: incrementValue } },
@@ -164,6 +174,7 @@ export const incrementWaterIntake = async (
 
         return {
             message: "Water intake incremented successfully",
+            leveling,
         };
     } catch (error) {
         throw error;
@@ -188,6 +199,26 @@ export const createOrUpdateDailyData = async (
             { upsert: true, new: true, runValidators: true },
         ).lean();
 
+        const updatedFields = Object.keys(dailyData)
+            .filter(
+                (field) =>
+                    !!dailyData[field as keyof IDailyDataCreateDTO] &&
+                    field !== "createdAt",
+            )
+            .map((field) => field as keyof IDailyDataCreateDTO);
+
+        let leveling = { newLevel: user.level, remainingXp: user.xp };
+        for (const _ of updatedFields) {
+            const xpResult = await awardXp(
+                user._id.toString(),
+                "completeDailyDataField",
+            );
+            if (xpResult) {
+                leveling.newLevel = xpResult.newLevel;
+                leveling.remainingXp = xpResult.remainingXp;
+            }
+        }
+
         if (!dailyDataEntry) {
             throw new Error("DailyData not found or failed to update");
         }
@@ -195,6 +226,7 @@ export const createOrUpdateDailyData = async (
         return {
             message: "DailyData updated successfully",
             data: deNormalizeDailyData(dailyDataEntry, user),
+            leveling,
         };
     } catch (error) {
         throw handleError(error);

@@ -1,11 +1,6 @@
 export interface ILeveling {
-    oldLevel: number;
     newLevel: number;
-    oldXp: number;
-    newXP: number;
-    xpEarned: number;
-    leveledUp: boolean;
-    message?: string;
+    remainingXp: number;
 }
 
 export interface ServiceResult<T = any> {
