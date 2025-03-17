@@ -26,12 +26,13 @@ import {
     IWorkoutPrototypeCreateDTO,
     IWorkoutPrototypeUpdateDTO as IWorkoutUpdateDTO,
 } from "~/validation/workout";
+import { awardXp } from "./awardXp";
 
 export const censorWorkout = async (
     user: IUser,
     workout: IWorkout,
 ): Promise<IWorkout> => {
-    setCensorTiers(user.profanityAcceptedTiers);
+    setCensorTiers(user.acceptedProfanityTiers);
     const locales = [user.languagePreference, workout.originalLanguage];
 
     for (const locale of locales) {
@@ -98,9 +99,15 @@ export const createWorkout = async (
         // Await the queueTranslationTask
         await queueTranslationTask(newWorkout._id);
 
+        const leveling = await awardXp(
+            user._id.toString(),
+            "createWorkoutSchedule",
+        );
+
         return {
             message: "Workout created successfully",
             data: newWorkout,
+            leveling,
         };
     } catch (error) {
         throw handleError(error);

@@ -3,7 +3,11 @@ import mongoose from "mongoose";
 import { ServiceResult } from "~/interfaces/service-result";
 import { localizeWorkoutData } from "~/localization/WorkoutData";
 import SetData, { ISetData } from "~/models/SetData";
-import { IWorkoutData, WorkoutData } from "~/models/WorkoutData";
+import {
+    IWorkoutData,
+    WORKOUT_DATA_STATUS,
+    WorkoutData,
+} from "~/models/WorkoutData";
 import {
     buildPopulateOptions,
     buildQueryFromSearchParams,
@@ -14,6 +18,7 @@ import {
     IWorkoutDataCreateDTO,
     IWorkoutDataUpdateDTO,
 } from "~/validation/workoutData";
+import { awardXp } from "./awardXp";
 import { denormalizeSetData } from "./setData";
 
 interface ISetDataNormalized {} // Temp
@@ -180,6 +185,22 @@ export const updateWorkoutData = async (
 
         if (!updatedWorkout) {
             throw new Error("WorkoutData not found");
+        }
+
+        if (
+            updatedWorkout.setsData.length > 0 &&
+            updatedWorkout.status === WORKOUT_DATA_STATUS.COMPLETED
+        ) {
+            const leveling = await awardXp(
+                user._id.toString(),
+                "completeWorkout",
+            );
+
+            return {
+                message: "WorkoutData updated successfully",
+                data: updatedWorkout as IWorkoutData,
+                leveling,
+            };
         }
 
         return {
