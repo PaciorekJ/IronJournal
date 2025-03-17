@@ -31,13 +31,14 @@ import {
     IProgramCreateDTO,
     IProgramUpdateDTO,
 } from "~/validation/program.server";
+import { awardXp } from "./awardXp";
 import { censorWorkout } from "./workout";
 
 export const censorProgram = async (
     user: IUser,
     program: IProgram,
 ): Promise<IProgram> => {
-    setCensorTiers(user.profanityAcceptedTiers);
+    setCensorTiers(user.acceptedProfanityTiers);
     const locales = [user.languagePreference, program.originalLanguage];
 
     for (const locale of locales) {
@@ -152,9 +153,15 @@ export const createProgram = async (
         // Await the queueTranslationTask
         await queueTranslationTask(newProgram._id);
 
+        const leveling = await awardXp(
+            user._id.toString(),
+            "createProgramSchedule",
+        );
+
         return {
             message: "Program created successfully",
             data: newProgram,
+            leveling,
         };
     } catch (error) {
         throw handleError(error);
