@@ -1,5 +1,5 @@
 import { IUser } from "@paciorekj/iron-journal-shared";
-import { data } from "@remix-run/node";
+import { data, json } from "@remix-run/node";
 import { ServiceResult } from "~/interfaces/service-result";
 import OneRepMaxData, { IOneRepMaxData } from "~/models/OneRepMaxData";
 import {
@@ -17,6 +17,7 @@ import {
     IOneRepMaxCreateDTO,
     IOneRepMaxUpdateDTO,
 } from "~/validation/one-rep-max-data.server";
+import { awardXp } from "./awardXp";
 
 export interface IOneRepMaxDataDenormalized
     extends Omit<IOneRepMaxData, "weight"> {
@@ -69,10 +70,13 @@ export const createOneRepMaxData = async (
             existingRecord &&
             existingRecord?.weight >= normalizedOneRepMaxData.weight
         ) {
-            return {
-                message: "One Rep Max has not improved.",
-                data: existingRecord,
-            };
+            return json(
+                {
+                    message: "One Rep Max has not improved.",
+                    data: existingRecord,
+                },
+                { status: 409 },
+            );
         }
 
         const newRecord = await OneRepMaxData.findOneAndUpdate(
@@ -84,9 +88,24 @@ export const createOneRepMaxData = async (
             { upsert: true, new: true },
         );
 
+        if (!newRecord) {
+            return json(
+                {
+                    message: "Error updating one-rep max data.",
+                },
+                { status: 500 },
+            );
+        }
+
+        const leveling = await awardXp(
+            user._id.toString(),
+            "completeOneRepMax",
+        );
+
         return {
             message: "One-rep max data created/updated successfully.",
             data: newRecord,
+            leveling,
         };
     } catch (error) {
         throw handleError(error);
