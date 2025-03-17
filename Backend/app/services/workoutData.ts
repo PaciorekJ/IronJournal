@@ -19,13 +19,11 @@ import {
     IWorkoutDataUpdateDTO,
 } from "~/validation/workoutData";
 import { awardXp } from "./awardXp";
-import { denormalizeSetData } from "./setData";
-
-interface ISetDataNormalized {} // TODO: Temp
+import { denormalizeSetData, ISetDataDenormalized } from "./setData";
 
 export interface IWorkoutDataDenormalized
     extends Omit<IWorkoutData, "setsData"> {
-    setsData: ISetData["_id"][] | ISetDataNormalized[];
+    setsData: ISetData["_id"][] | ISetDataDenormalized[];
 }
 
 export const createWorkoutData = async (
