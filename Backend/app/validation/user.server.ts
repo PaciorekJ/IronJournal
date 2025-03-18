@@ -1,3 +1,4 @@
+import { ObjectIdSchema } from "@paciorekj/iron-journal-shared";
 import {
     LANGUAGE,
     LanguageKey,
@@ -23,9 +24,11 @@ export const createUserSchema = z
                 "Username can only contain letters, numbers, and underscores",
             )
             .trim(),
+        activeProgram: ObjectIdSchema.optional(),
+        timezone: z.string().min(1, "Timezone is required").trim(),
         firebaseId: z.string().min(1, "Firebase ID is required").trim(),
         languagePreference: languagePreferenceSchema,
-        profanityAcceptedTiers: z
+        acceptedProfanityTiers: z
             .array(
                 z.enum(
                     [...Object.values(CensorTier)] as [string, ...string[]],
@@ -39,7 +42,6 @@ export const createUserSchema = z
         measurementSystemPreference: z.enum(["METRIC", "IMPERIAL"], {
             message: "Invalid measurement system preference",
         }),
-        timezone: z.string().min(1, "Timezone is required").trim(),
     })
     .strict();
 
