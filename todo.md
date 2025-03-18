@@ -4,7 +4,6 @@
 
 ## Important Steps
 
-- User's can optional have a specific goal. (DOable)
 - (POTENTIAL FEATURE) Maybe I wil collect old exercise one rep max to track users progression on a particular lift from a one rep max perspective
 - Make Sets independent from workouts, as sets could be reusable by user's
 - Add an admin review system for flagged content, so user can report content for programs, workouts, and users accounts can be reported for usernames for example
@@ -17,6 +16,8 @@
 - Make so assisted sets are accounted for, using assisted equipment for example
 - Add Accessory-Equipment to both the Iset, ISetDataEntry, and IOneRepMaxData
 - MyFitnessPal integration, to obtains additional data for neo4j
+- Challenges (Weekly/Monthly)
+- Add Achievement
 
 ## NOTES
 

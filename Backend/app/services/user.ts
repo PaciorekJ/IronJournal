@@ -7,6 +7,7 @@ import {
 } from "@paciorekj/iron-journal-shared";
 import { data, json } from "@remix-run/node";
 import { ServiceResult } from "~/interfaces/service-result";
+import { censorText } from "~/utils/profanityFilter.server";
 import {
     buildQueryFromSearchParams,
     userQueryConfig,
@@ -41,6 +42,21 @@ export const createUser = async (
             throw data({ error: "Username is already taken" }, { status: 409 });
         }
 
+        const censoredUsername = await censorText(
+            username,
+            "username",
+            createData.languagePreference,
+        );
+
+        const isProfane = username !== censoredUsername;
+
+        if (isProfane) {
+            throw data(
+                { error: "Username contains profanity" },
+                { status: 400 },
+            );
+        }
+
         const newUser = await User.create(createData);
         const { firebaseId: _, ...user } = newUser.toJSON();
 
@@ -54,19 +70,44 @@ export const createUser = async (
 };
 
 export const updateUser = async (
-    userId: string,
+    user: IUser,
     updateData: IUserUpdateDTO,
 ): Promise<ServiceResult<IUser>> => {
     try {
-        const updateUsername = updateData.username;
-        const existingUser =
-            updateUsername &&
-            (await User.findOne({ username: updateUsername })
-                .select("_id")
-                .lean());
+        const { _id: userId, username, languagePreference } = user;
+        const { username: updateUsername } = updateData;
 
-        if (existingUser && (existingUser as IUser)._id.toString() !== userId) {
-            throw data({ error: "Username is already taken" }, { status: 409 });
+        if (updateUsername && updateUsername !== username) {
+            const existingUser =
+                updateUsername &&
+                (await User.findOne({ username: updateUsername })
+                    .select("_id")
+                    .lean());
+
+            if (
+                existingUser &&
+                (existingUser as IUser)._id.toString() !== userId.toString()
+            ) {
+                throw data(
+                    { error: "Username is already taken" },
+                    { status: 409 },
+                );
+            }
+
+            const censoredUsername = await censorText(
+                updateUsername,
+                "username",
+                languagePreference,
+            );
+
+            const isProfane = updateUsername !== censoredUsername;
+
+            if (isProfane) {
+                throw data(
+                    { error: "Username contains profanity" },
+                    { status: 400 },
+                );
+            }
         }
 
         const updatedUser = await User.findByIdAndUpdate(userId, updateData, {

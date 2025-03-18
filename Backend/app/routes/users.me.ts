@@ -42,10 +42,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 const patchRequestData = await validateRequestBody(request);
                 const validatedPatchData =
                     updateUserSchema.parse(patchRequestData);
-                result = await updateUser(
-                    patchUser._id.toString(),
-                    validatedPatchData,
-                );
+                result = await updateUser(patchUser, validatedPatchData);
 
                 return data(result, { status: 200 });
 
