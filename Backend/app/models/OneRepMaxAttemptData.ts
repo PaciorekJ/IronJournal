@@ -1,7 +1,6 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-// Define the Mongoose interface
-export interface IOneRepMaxData extends Document {
+export interface IOneRepMaxAttemptData extends Document {
     userId: mongoose.Types.ObjectId;
     exercise: mongoose.Types.ObjectId;
     weight: number;
@@ -9,8 +8,7 @@ export interface IOneRepMaxData extends Document {
     createdAt: Date;
 }
 
-// Create the schema
-const OneRepMaxDataSchema = new Schema<IOneRepMaxData>(
+const OneRepMaxAttemptDataSchema = new Schema<IOneRepMaxAttemptData>(
     {
         userId: {
             type: Schema.Types.ObjectId,
@@ -35,9 +33,9 @@ const OneRepMaxDataSchema = new Schema<IOneRepMaxData>(
 );
 
 // Create the Mongoose model
-const OneRepMaxData = mongoose.model<IOneRepMaxData>(
-    "OneRepMaxData",
-    OneRepMaxDataSchema,
+const OneRepMaxAttemptData = mongoose.model<IOneRepMaxAttemptData>(
+    "OneRepMaxAttemptData",
+    OneRepMaxAttemptDataSchema,
 );
 
-export default OneRepMaxData;
+export default OneRepMaxAttemptData;

@@ -7,6 +7,7 @@ import { updateUserStreak } from "./streak";
 export const AwardXpActions = {
     completeDailyDataField: { xp: 5, limit: 5 },
     completeOneRepMax: { xp: 30, limit: 1 },
+    completeOneRepMaxAttempt: { xp: 10, limit: 5 },
     completeWorkout: { xp: 10, limit: 3 },
     completeSet: { xp: 5, limit: 50 },
     createWorkoutSchedule: { xp: 10, limit: 1 },

@@ -1,6 +1,9 @@
 import { IUser } from "@paciorekj/iron-journal-shared";
 import { data, json } from "@remix-run/node";
 import { ServiceResult } from "~/interfaces/service-result";
+import OneRepMaxAttemptData, {
+    IOneRepMaxAttemptData,
+} from "~/models/OneRepMaxAttemptData";
 import OneRepMaxData, { IOneRepMaxData } from "~/models/OneRepMaxData";
 import {
     deNormalizeWeight,
@@ -51,7 +54,7 @@ const deNormalizeOneRepMaxData = (
 export const createOneRepMaxData = async (
     user: IUser,
     oneRepMax: IOneRepMaxCreateDTO,
-): Promise<ServiceResult<IOneRepMaxData>> => {
+): Promise<ServiceResult<IOneRepMaxData | IOneRepMaxAttemptData>> => {
     try {
         const normalizedOneRepMaxData = normalizeOneRepMaxData(
             {
@@ -64,29 +67,46 @@ export const createOneRepMaxData = async (
         const existingRecord = await OneRepMaxData.findOne({
             userId: normalizedOneRepMaxData.userId,
             exercise: normalizedOneRepMaxData.exercise,
-        });
+        }).lean();
 
         if (
             existingRecord &&
             existingRecord?.weight >= normalizedOneRepMaxData.weight
         ) {
+            const attempt = await OneRepMaxAttemptData.create({
+                ...normalizedOneRepMaxData,
+                userId: user._id as unknown as IOneRepMaxAttemptData["userId"],
+            });
+
+            if (!attempt) {
+                return json(
+                    {
+                        message: "Error creating one-rep max attempt data.",
+                    },
+                    { status: 500 },
+                );
+            }
+
+            const leveling = await awardXp(
+                user._id.toString(),
+                "completeOneRepMaxAttempt",
+            );
+
             return json(
                 {
                     message: "One Rep Max has not improved.",
-                    data: existingRecord,
+                    data: attempt.toJSON(),
+                    leveling,
                 },
-                { status: 409 },
+                { status: 201 },
             );
         }
 
-        const newRecord = await OneRepMaxData.findOneAndUpdate(
-            {
-                userId: normalizedOneRepMaxData.userId,
-                exercise: normalizedOneRepMaxData.exercise,
-            },
-            { weight: normalizedOneRepMaxData.weight, updatedAt: new Date() },
-            { upsert: true, new: true },
-        );
+        const newRecord = await OneRepMaxData.create({
+            userId: normalizedOneRepMaxData.userId,
+            exercise: normalizedOneRepMaxData.exercise,
+            weight: normalizedOneRepMaxData.weight,
+        });
 
         if (!newRecord) {
             return json(
@@ -96,17 +116,30 @@ export const createOneRepMaxData = async (
                 { status: 500 },
             );
         }
+        if (existingRecord) {
+            const historicalRecordData = {
+                userId: existingRecord.userId,
+                exercise: existingRecord.exercise,
+                weight: existingRecord.weight,
+                notes: existingRecord.notes,
+                createdAt: existingRecord.createdAt,
+            };
+            await OneRepMaxAttemptData.create(historicalRecordData);
+        }
 
         const leveling = await awardXp(
             user._id.toString(),
             "completeOneRepMax",
         );
 
-        return {
-            message: "One-rep max data created/updated successfully.",
-            data: newRecord,
-            leveling,
-        };
+        return json(
+            {
+                message: "One-rep max data created/updated successfully.",
+                data: newRecord,
+                leveling,
+            },
+            { status: 201 },
+        );
     } catch (error) {
         throw handleError(error);
     }

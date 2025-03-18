@@ -206,7 +206,7 @@ export const oneRepMaxQueryConfig = addPaginationAndSorting({
         constructor: Number,
         schema: z.number().min(0, "Weight must be non-negative"),
     },
-    updatedAt: {
+    createdAt: {
         isArray: false,
         constructor: Date,
         schema: z.date(),

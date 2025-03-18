@@ -4,10 +4,10 @@
 
 ## Important Steps
 
+- Add Statistics like average weekly volume per body part.
 - (POTENTIAL FEATURE) Maybe I wil collect old exercise one rep max to track users progression on a particular lift from a one rep max perspective
 - Make Sets independent from workouts, as sets could be reusable by user's
 - Add an admin review system for flagged content, so user can report content for programs, workouts, and users accounts can be reported for usernames for example
-- Add username check for profanity in the language submitted
 
 ## LOW PRIORITY
 

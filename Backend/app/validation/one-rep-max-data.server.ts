@@ -6,6 +6,7 @@ const createOneRepMaxDataSchema = z
     .object({
         exercise: ObjectIdSchema,
         weight: weightUnitsSchema,
+        notes: z.string().optional(),
     })
     .strict();
 
@@ -13,6 +14,7 @@ const updateOneRepMaxDataSchema = z
     .object({
         exercise: ObjectIdSchema.optional(),
         weight: weightUnitsSchema.optional(),
+        notes: z.string().optional(),
     })
     .strict();
 
