@@ -10,8 +10,8 @@ export const AwardXpActions = {
     completeOneRepMaxAttempt: { xp: 10, limit: 5 },
     completeWorkout: { xp: 10, limit: 3 },
     completeSet: { xp: 5, limit: 50 },
-    createWorkoutSchedule: { xp: 10, limit: 1 },
-    createProgramSchedule: { xp: 15, limit: 1 },
+    createWorkoutSchedule: { xp: 20, limit: 5 },
+    createProgramSchedule: { xp: 30, limit: 1 },
 } as const;
 
 type actionsType = keyof typeof AwardXpActions;
