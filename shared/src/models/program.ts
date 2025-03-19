@@ -26,7 +26,7 @@ interface IProgram extends Document {
     description?: localizedField<string>;
     workoutSchedule?: IWorkoutSchedule[];
     userId: mongoose.Schema.Types.ObjectId;
-    isPublic?: boolean;
+    isPublic: boolean;
     scheduleType: ScheduleTypeKey;
     focusAreas?: FocusAreasKey[];
     targetAudience?: TargetAudienceKey;
@@ -49,7 +49,6 @@ const ProgramSchema: Schema<IProgram> = new Schema(
             type: String,
             enum: Object.keys(LANGUAGE),
             required: true,
-            default: "en",
         },
         description: {
             type: Map,

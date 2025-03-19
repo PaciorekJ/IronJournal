@@ -11,6 +11,7 @@ export const createWorkoutPrototypeSchema = z
     .object({
         name: z.string().min(1, "Name is required."),
         description: z.string().optional(),
+        isPublic: z.boolean().optional().default(false),
         originalLanguage: z.enum(
             Object.keys(LANGUAGE) as [LanguageKey, ...LanguageKey[]],
         ),

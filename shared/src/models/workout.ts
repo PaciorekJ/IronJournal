@@ -15,6 +15,7 @@ import SetSchema from "./set";
 interface IWorkout extends Document {
     _id: mongoose.Schema.Types.ObjectId;
     name: localizedField<string>;
+    isPublic: boolean;
     originalLanguage: LanguageKey;
     description?: localizedField<string>;
     sets: ISet[];
@@ -35,6 +36,7 @@ const WorkoutSchema: Schema<IWorkout> = new Schema(
                 message: 'Invalid language key in "name" field.',
             },
         },
+        isPublic: { type: Boolean, default: false },
         description: {
             type: Map,
             of: String,

@@ -23,7 +23,7 @@
         "endOfLine": "lf"
     },
     "dependencies": {
-        "@paciorekj/iron-journal-shared": "^1.5.0",
+        "@paciorekj/iron-journal-shared": "^1.6.0",
         "@remix-run/node": "^2.9.2",
         "@remix-run/react": "^2.9.2",
         "@remix-run/serve": "^2.9.2",

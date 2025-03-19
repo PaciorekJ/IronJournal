@@ -19,6 +19,7 @@ import {
 import {
     buildPopulateOptions,
     buildQueryFromSearchParams,
+    IQueryField,
     workoutPrototypeQueryConfig,
 } from "~/utils/query.server";
 import { handleError } from "~/utils/util.server";
@@ -224,7 +225,17 @@ export const readWorkouts = async (
                 user.languagePreference as LanguageKey,
             ) as any;
 
-        query.userId = user._id;
+        const mine = searchParams.get("mine") === "true";
+        const userId = searchParams.get("userId");
+
+        if (mine) {
+            query.userId = user._id;
+        } else if (userId) {
+            query.userId = userId as IQueryField<string>;
+            query.isPublic = true;
+        } else {
+            query.isPublic = true;
+        }
 
         const sortOption: Record<string, 1 | -1> | null = sortBy
             ? { [sortBy]: sortOrder as 1 | -1 }
