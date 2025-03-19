@@ -210,3 +210,101 @@ export const readUserById = async (
         throw handleError(error);
     }
 };
+
+export const deleteFavorite = async (
+    userId: string,
+    favoriteId: string,
+    favoriteType: "program" | "workout",
+) => {
+    try {
+        if (!userId || !favoriteId || !favoriteType) {
+            throw data(
+                { error: "Missing userId, favoriteId, or favoriteType" },
+                { status: 400 },
+            );
+        }
+        if (!["program", "workout"].includes(favoriteType)) {
+            throw data(
+                {
+                    error: "Invalid favoriteType: Must be 'program' or 'workout'",
+                },
+                { status: 400 },
+            );
+        }
+
+        const field =
+            favoriteType === "program"
+                ? "favoritePrograms"
+                : "favoriteWorkouts";
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { $pull: { [field]: favoriteId } },
+            { new: true, runValidators: true },
+        ).select("-firebaseId");
+
+        if (!updatedUser) {
+            throw data({ error: "User not found" }, { status: 404 });
+        }
+
+        return {
+            message: `${favoriteType.charAt(0).toUpperCase() + favoriteType.slice(1)} removed from favorites`,
+            data: updatedUser,
+        };
+    } catch (error) {
+        throw handleError(error);
+    }
+};
+
+export const addFavorite = async (
+    userId: string,
+    favoriteId: string,
+    favoriteType: "program" | "workout",
+) => {
+    try {
+        if (!userId || !favoriteId || !favoriteType) {
+            throw data(
+                { error: "Missing userId, favoriteId, or favoriteType" },
+                { status: 400 },
+            );
+        }
+        if (!["program", "workout"].includes(favoriteType)) {
+            throw data(
+                {
+                    error: "Invalid favoriteType: Must be 'program' or 'workout'",
+                },
+                { status: 400 },
+            );
+        }
+
+        const field =
+            favoriteType === "program"
+                ? "favoritePrograms"
+                : "favoriteWorkouts";
+
+        const user = await User.findById(userId).select(`${field} _id`);
+        if (!user) {
+            throw data({ error: "User not found" }, { status: 404 });
+        }
+
+        if (user[field].length >= 100) {
+            throw data(
+                { error: `You can only have 100 favorite ${favoriteType}s.` },
+                { status: 400 },
+            );
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { $addToSet: { [field]: favoriteId } },
+            { new: true, runValidators: true },
+        ).select("-firebaseId");
+
+        return {
+            message: `${favoriteType.charAt(0).toUpperCase() + favoriteType.slice(1)} added to favorites`,
+            data: updatedUser,
+        };
+    } catch (error) {
+        throw handleError(error);
+    }
+};

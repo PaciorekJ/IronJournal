@@ -28,6 +28,22 @@ export const createUserSchema = z
         timezone: z.string().min(1, "Timezone is required").trim(),
         firebaseId: z.string().min(1, "Firebase ID is required").trim(),
         languagePreference: languagePreferenceSchema,
+        favoritePrograms: z
+            .array(ObjectIdSchema)
+            .optional()
+            .default([])
+            .refine(
+                (ids) => ids.length <= 100,
+                "Cannot have more than 100 favorite programs",
+            ),
+        favoriteWorkouts: z
+            .array(ObjectIdSchema)
+            .optional()
+            .default([])
+            .refine(
+                (ids) => ids.length <= 100,
+                "Cannot have more than 100 favorite workouts",
+            ),
         acceptedProfanityTiers: z
             .array(
                 z.enum(

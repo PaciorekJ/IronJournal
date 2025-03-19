@@ -10,6 +10,10 @@ interface IUser extends Document {
     acceptedProfanityTiers: (1 | 2 | 3 | 4 | 5)[];
     timezone: string;
 
+    activeProgram: mongoose.Schema.Types.ObjectId;
+    favoritePrograms: mongoose.Schema.Types.ObjectId[];
+    favoriteWorkouts: mongoose.Schema.Types.ObjectId[];
+
     xp: number;
     level: number;
     streak: {
@@ -30,12 +34,33 @@ const UserSchema: Schema<IUser> = new Schema(
             enum: Object.keys(LANGUAGE),
             required: true,
         },
+        activeProgram: { type: Schema.Types.ObjectId, required: true },
         timezone: { type: String, required: true },
         measurementSystemPreference: {
             type: String,
             enum: ["METRIC", "IMPERIAL"],
             required: true,
         },
+        favoritePrograms: [
+            {
+                type: Schema.Types.ObjectId,
+                default: [],
+                validate: [
+                    (val) => val.length <= 100,
+                    "Cannot have more than 100 favorite programs.",
+                ],
+            },
+        ],
+        favoriteWorkouts: [
+            {
+                type: Schema.Types.ObjectId,
+                default: [],
+                validate: [
+                    (val) => val.length <= 100,
+                    "Cannot have more than 100 favorite programs.",
+                ],
+            },
+        ],
         acceptedProfanityTiers: {
             type: [Number],
             required: true,
