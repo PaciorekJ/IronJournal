@@ -11,8 +11,8 @@ import {
 import {
     buildPopulateOptions,
     buildQueryFromSearchParams,
-    workoutDataQueryConfig,
-} from "~/utils/query.server";
+} from "~/queryConfig/utils";
+import { workoutDataQueryConfig } from "~/queryConfig/workoutData";
 import { handleError } from "~/utils/util.server";
 import {
     IWorkoutDataCreateDTO,

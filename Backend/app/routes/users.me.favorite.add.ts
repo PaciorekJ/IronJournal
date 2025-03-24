@@ -13,22 +13,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         const requestData = await validateRequestBody(request);
         const { favoriteId, favoriteType } = requestData;
 
-        if (!favoriteId || !favoriteType) {
-            return data(
-                { error: "Missing favoriteId or favoriteType" },
-                { status: 400 },
-            );
-        }
-
-        if (favoriteType !== "program" && favoriteType !== "workout") {
-            return data(
-                {
-                    error: "Invalid favoriteType: Must be 'program' or 'workout'",
-                },
-                { status: 400 },
-            );
-        }
-
         const result = await addFavorite(
             user._id.toString(),
             favoriteId,

@@ -10,11 +10,9 @@ import {
 import { data, json } from "@remix-run/node";
 import { RootFilterQuery } from "mongoose";
 import { ServiceResult } from "~/interfaces/service-result";
+import { exerciseQueryConfig } from "~/queryConfig/exercise";
+import { buildQueryFromSearchParams } from "~/queryConfig/utils";
 import { localizeDataInput } from "~/utils/localization.server";
-import {
-    buildQueryFromSearchParams,
-    exerciseQueryConfig,
-} from "~/utils/query.server";
 import { handleError } from "~/utils/util.server";
 import {
     IExerciseCreateDTO,

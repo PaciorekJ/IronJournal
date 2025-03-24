@@ -2,16 +2,15 @@
 
 ## Primary Initiative
 
-## Important Steps
+### Important Steps
 
 - Add Statistics like average weekly volume per body part.
-- (POTENTIAL FEATURE) Maybe I wil collect old exercise one rep max to track users progression on a particular lift from a one rep max perspective
-- Make Sets independent from workouts, as sets could be reusable by user's
-- Add an admin review system for flagged content, so user can report content for programs, workouts, and users accounts can be reported for usernames for example
+- Make Sets independent from workouts, for scalability.
+- Add an admin review system for flagged content, so user can report content for programs, workouts, and users accounts can be reported for usernames for example.
 
-## LOW PRIORITY
+### LOW PRIORITY
 
-## Back Burner
+### Back Burner
 
 - Make so assisted sets are accounted for, using assisted equipment for example
 - Add Accessory-Equipment to both the Iset, ISetDataEntry, and IOneRepMaxData
@@ -23,67 +22,67 @@
 
 ### Gamification inside of application
 
-# **Iron Journal Beta Feature Roadmap**
+### **Iron Journal Beta Feature Roadmap**
 
-## ✅ Must-Have for Beta
+#### ✅ Must-Have for Beta
 
 These features ensure core engagement and habit-building from day one.
 
-### **1. Streak & Streak Breaking Mechanics**
+#### **1. Streak & Streak Breaking Mechanics**
 
 - **Why?** Encourages consistency without punishing users too harshly.
 - **Implementation:** Advertise a 1-day break but provide a 2–3 day buffer for restoring streaks.
 
-### **2. Leveling System (XP & Achievements Framework)**
+#### **2. Leveling System (XP & Achievements Framework)**
 
 - **Why?** Progression motivates users.
 - **Implementation:** Assign XP for completed workouts, challenges, and logging workouts.
 
-### **3. Weekly/Monthly Challenges with XP Rewards**
+#### **3. Weekly/Monthly Challenges with XP Rewards**
 
 - **Why?** Adds replayability and a sense of urgency.
 - **Implementation:** Simple challenges like "Workout 3x this week" or "Lift X kg total."
 
-### **4. Basic Achievements & UI Feedback for Unlocks**
+#### **4. Basic Achievements & UI Feedback for Unlocks**
 
 - **Why?** Creates small dopamine hits when completing tasks.
 - **Implementation:** Use a **strategy pattern** for achievements and include them in the server response.
 
-### **5. Friends & Social Engagement**
+#### **5. Friends & Social Engagement**
 
 - **Why?** Social connections **increase retention** significantly.
 - **Implementation:** Simple **friend list system** with activity updates (e.g., “Jason just hit a PR!”).
 
-### **6. Basic Reputation Tracking (Engagement Score)**
+#### **6. Basic Reputation Tracking (Engagement Score)**
 
 - **Why?** Helps measure valuable users and **potentially reward them later**.
 - **Implementation:** Track workout streaks, XP earned, and challenge participation.
 
 ---
 
-## 🚀 Save for Later (Post-Beta, More Complexity or Social Focus)
+### 🚀 Save for Later (Post-Beta, More Complexity or Social Focus)
 
 These features are great but require more work or polish.
 
-### **1. Asynchronous User Challenges (Lifting Duels with Video Proof)**
+#### **1. Asynchronous User Challenges (Lifting Duels with Video Proof)**
 
 - **Why?** It’s a great idea but requires **video uploads, moderation, and challenge handling**, which increases complexity.
 
-### **2. Scarcity-Based Challenges (Random & Rare XP Boosters)**
+#### **2. Scarcity-Based Challenges (Random & Rare XP Boosters)**
 
 - **Why?** Could be fun but might be overwhelming early on. Add later once the **challenge system is solid**.
 
-### **3. Unlocking Sets of Achievements by Leveling Up**
+#### **3. Unlocking Sets of Achievements by Leveling Up**
 
 - **Why?** Cool progression system but not necessary for beta. Introduce after more achievements exist.
 
-### **4. Sharing Achievements/Badges**
+#### **4. Sharing Achievements/Badges**
 
 - **Why?** Useful for social engagement but lower priority. Start with **individual achievements first**.
 
 ---
 
-## 🏗️ Potential Additional Features for Beta
+### 🏗️ Potential Additional Features for Beta
 
 - **Basic Workout Stats Leaderboard (Optional)**
 
@@ -97,9 +96,9 @@ These features are great but require more work or polish.
 
 ---
 
-## 🎯 **Summary**
+### 🎯 **Summary**
 
-### ✅ **Include in Beta**
+#### ✅ **Include in Beta**
 
 1. **Streak mechanics** (1-3 day buffer)
 2. **XP & leveling system**
@@ -124,3 +123,17 @@ These features are great but require more work or polish.
 
 - Dates will be formatted on retrieval by the application.
 - All dates should be sent using Date.toISOString(). Display stuff in users local timezone, then take the localDate and do localDate.toISOString()
+
+| Level | Title                        | Description                                      |                        |
+|-------|------------------------------|--------------------------------------------------|------------------------|
+| 0     | Novice Lifter 🏋️            | Just starting the journey, eager to learn.      |                        |
+| 5     | Committed Trainee 💪         | Developing consistency and tracking progress.   |        View Public Workouts             |
+| 10    | Disciplined Grinder 🔄       | Putting in the work, seeing early gains.        |          View Public Programs          |
+| 15    | Strength Seeker 🏆           | Focused on improving, unlocking new abilities.  |     Create Public Workouts            |
+| 20    | Iron Warrior ⚔️             | Dedicated to structured workouts and progress.  |           Create Public Programs      |
+| 25    | Seasoned Lifter 🔥          | More experienced, sharing insights with others. |                        |
+| 30    | Elite Athlete 🏅            | Mastering training techniques, setting records. |                        |
+| 35    | Iron Veteran 🦾            | A highly experienced lifter, guiding others.    |                        |
+| 40    | Master of the Barbell 🏋️‍♂️ | A true expert, optimizing strength and endurance. |                        |
+| 45    | Gym Titan ⚡                 | Dominating the gym, pushing the limits.         |                        |
+| 50    | Legend of Iron 👑           | A master of training, inspiring the next generation. |                        |

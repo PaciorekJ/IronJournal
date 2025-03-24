@@ -2,6 +2,8 @@ import { IUser } from "@paciorekj/iron-journal-shared/models/user";
 import { data } from "@remix-run/node";
 import { ServiceResult } from "~/interfaces/service-result";
 import { DailyData, IBodyMeasurement, IDailyData } from "~/models/DailyData";
+import { dailyDataQueryConfig } from "~/queryConfig/dailyData";
+import { buildQueryFromSearchParams } from "~/queryConfig/utils";
 import {
     deNormalizeDistance,
     deNormalizeVolume,
@@ -13,10 +15,6 @@ import {
     normalizeVolume,
     normalizeWeight,
 } from "~/utils/noramlizeUnits.server";
-import {
-    buildQueryFromSearchParams,
-    dailyDataQueryConfig,
-} from "~/utils/query.server";
 import { handleError } from "~/utils/util.server";
 import {
     bodyMeasurementSchema,

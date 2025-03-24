@@ -1,38 +1,17 @@
-import { ObjectIdSchema } from "@paciorekj/iron-journal-shared";
-import {
-    CATEGORY,
-    CategoryKey,
-    EQUIPMENT,
-    EquipmentKey,
-    FOCUS_AREA,
-    FocusAreasKey,
-    FORCE,
-    ForceKey,
-    INTENSITY_LEVEL,
-    IntensityLevelKey,
-    LanguageKey,
-    LEVEL,
-    LevelKey,
-    MUSCLE_GROUP,
-    MuscleGroupKey,
-    SCHEDULE_TYPE,
-    ScheduleTypeKey,
-    TARGET_AUDIENCE,
-    TargetAudienceKey,
-} from "@paciorekj/iron-journal-shared/constants";
+import { LanguageKey } from "@paciorekj/iron-journal-shared";
 import { data } from "@remix-run/node";
-import { z } from "zod";
-import { WORKOUT_DATA_STATUS } from "~/models/WorkoutData";
-import { handleError } from "./util.server";
+import { z } from "node_modules/zod/lib/external";
+import { handleError } from "~/utils/util.server";
 
 type AllCombinations<T> = T extends object
     ?
           | Record<string, any>
-          | ({ [K in keyof T]: T[K] } & {
+          | ({
+                [K in keyof T]: T[K];
+            } & {
                 [K in keyof T]?: AllCombinations<Omit<T, K>>;
             })
     : never;
-
 type IFieldConfigBase = {
     isArray: boolean;
     constructor: (value: string) => any;
@@ -40,205 +19,17 @@ type IFieldConfigBase = {
     schema?: z.ZodType<any>;
     getFieldPath?: (language: LanguageKey) => string;
 };
-
 type IFieldConfig = AllCombinations<IFieldConfigBase>;
-
 type IQueryField<T> =
     | T
     | { $in: T[] }
     | { $all: T[] }
     | { $regex: RegExp }
     | { $eq: T };
-
 type IQuery<T> = {
     [K in keyof T]?: IQueryField<T[K]>;
 };
-
 type IBuildQueryConfig = Record<string, IFieldConfig>;
-
-// Workout Data Query Configuration
-export const workoutDataQueryConfig = addPaginationAndSorting({
-    createdAt: {
-        isArray: false,
-        constructor: (value: string) => new Date(value),
-        schema: z.date(),
-    },
-    status: {
-        isArray: false,
-        constructor: String,
-        schema: z.enum(
-            Object.values(WORKOUT_DATA_STATUS) as [string, ...string[]],
-        ),
-    },
-    workout: {
-        isArray: false,
-        constructor: String,
-        schema: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId"),
-    },
-});
-
-// Daily Data Query Configuration
-export const dailyDataQueryConfig: IBuildQueryConfig = addPaginationAndSorting({
-    createdAt: {
-        isArray: false,
-        constructor: (value: string) => {
-            const date = new Date(value);
-            return new Date(
-                date.getFullYear(),
-                date.getMonth(),
-                date.getDate(),
-            );
-        },
-        schema: z.date(),
-    },
-});
-
-// Exercise Query Configuration
-export const exerciseQueryConfig: IBuildQueryConfig = addPaginationAndSorting({
-    name: {
-        isArray: false,
-        constructor: String,
-        regex: (value: string) => new RegExp(value, "i"),
-        schema: z.string().min(1),
-        getFieldPath: (language: LanguageKey) => `name.${language}`,
-    },
-    level: {
-        isArray: false,
-        constructor: String,
-        schema: z.enum(Object.keys(LEVEL) as [LevelKey, ...LevelKey[]]),
-    },
-    category: {
-        isArray: false,
-        constructor: String,
-        schema: z.enum(
-            Object.keys(CATEGORY) as [CategoryKey, ...CategoryKey[]],
-        ),
-    },
-    force: {
-        isArray: false,
-        constructor: String,
-        schema: z.enum(Object.keys(FORCE) as [ForceKey, ...ForceKey[]]),
-    },
-    equipment: {
-        isArray: true,
-        constructor: String,
-        schema: z.enum(
-            Object.keys(EQUIPMENT) as [EquipmentKey, ...EquipmentKey[]],
-        ),
-    },
-    primaryMuscles: {
-        isArray: true,
-        constructor: String,
-        schema: z.enum(
-            Object.keys(MUSCLE_GROUP) as [MuscleGroupKey, ...MuscleGroupKey[]],
-        ),
-    },
-    secondaryMuscles: {
-        isArray: true,
-        constructor: String,
-        schema: z.enum(
-            Object.keys(MUSCLE_GROUP) as [MuscleGroupKey, ...MuscleGroupKey[]],
-        ),
-    },
-});
-
-// Program Query Configuration
-export const programQueryConfig: IBuildQueryConfig = addPaginationAndSorting({
-    name: {
-        isArray: false,
-        constructor: String,
-        regex: (value: string) => new RegExp(value, "i"),
-        schema: z.string().min(1),
-        getFieldPath: (language: LanguageKey) => `name.${language}`,
-    },
-    userId: {
-        isArray: false,
-        constructor: String,
-        schema: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId"),
-    },
-    scheduleType: {
-        isArray: false,
-        constructor: String,
-        schema: z.enum(
-            Object.keys(SCHEDULE_TYPE) as [
-                ScheduleTypeKey,
-                ...ScheduleTypeKey[],
-            ],
-        ),
-    },
-    focusAreas: {
-        isArray: true,
-        constructor: String,
-        schema: z.enum(
-            Object.keys(FOCUS_AREA) as [FocusAreasKey, ...FocusAreasKey[]],
-        ),
-    },
-    targetAudience: {
-        isArray: false,
-        constructor: String,
-        schema: z.enum(
-            Object.keys(TARGET_AUDIENCE) as [
-                TargetAudienceKey,
-                ...TargetAudienceKey[],
-            ],
-        ),
-    },
-});
-
-// User Query Configuration
-export const userQueryConfig: IBuildQueryConfig = addPaginationAndSorting({
-    username: {
-        isArray: false,
-        constructor: String,
-        regex: (value: string) => new RegExp(value, "i"),
-        schema: z.string().min(1),
-    },
-});
-
-export const oneRepMaxQueryConfig = addPaginationAndSorting({
-    exercise: {
-        isArray: false,
-        constructor: String,
-        schema: ObjectIdSchema,
-    },
-    weight: {
-        isArray: false,
-        constructor: Number,
-        schema: z.number().min(0, "Weight must be non-negative"),
-    },
-    createdAt: {
-        isArray: false,
-        constructor: Date,
-        schema: z.date(),
-    },
-});
-
-// Workout Prototype Query Configuration
-export const workoutPrototypeQueryConfig: IBuildQueryConfig =
-    addPaginationAndSorting({
-        name: {
-            isArray: false,
-            constructor: String,
-            regex: (value: string) => new RegExp(value, "i"),
-            schema: z.string().min(1),
-            getFieldPath: (language: LanguageKey) => `name.${language}`,
-        },
-        intensityLevel: {
-            isArray: false,
-            constructor: String,
-            schema: z.enum(
-                Object.keys(INTENSITY_LEVEL) as [
-                    IntensityLevelKey,
-                    ...IntensityLevelKey[],
-                ],
-            ),
-        },
-        userId: {
-            isArray: false,
-            constructor: String,
-            schema: ObjectIdSchema,
-        },
-    });
 
 export const buildQueryFromSearchParams = <T>(
     searchParams: URLSearchParams,
@@ -403,5 +194,4 @@ export function addPaginationAndSorting<T extends IBuildQueryConfig>(
 
     return { ...config, ...paginationAndSortingConfig };
 }
-
 export type { AllCombinations, IBuildQueryConfig, IQuery, IQueryField };

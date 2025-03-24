@@ -7,11 +7,9 @@ import {
 } from "@paciorekj/iron-journal-shared";
 import { data, json } from "@remix-run/node";
 import { ServiceResult } from "~/interfaces/service-result";
+import { userQueryConfig } from "~/queryConfig/user";
+import { buildQueryFromSearchParams } from "~/queryConfig/utils";
 import { censorText } from "~/utils/profanityFilter.server";
-import {
-    buildQueryFromSearchParams,
-    userQueryConfig,
-} from "~/utils/query.server";
 import { handleError } from "~/utils/util.server";
 import { IUserCreateDTO, IUserUpdateDTO } from "~/validation/user.server";
 

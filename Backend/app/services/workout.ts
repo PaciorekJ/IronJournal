@@ -10,18 +10,18 @@ import {
 } from "@paciorekj/iron-journal-shared";
 import { data } from "@remix-run/node";
 import { ServiceResult } from "~/interfaces/service-result";
+import {
+    buildPopulateOptions,
+    buildQueryFromSearchParams,
+    IQueryField,
+} from "~/queryConfig/utils";
+import { workoutQueryConfig } from "~/queryConfig/workout";
 import { localizeDataInput } from "~/utils/localization.server";
 import {
     batchDeleteCachedCensoredText,
     censorText,
     setCensorTiers,
 } from "~/utils/profanityFilter.server";
-import {
-    buildPopulateOptions,
-    buildQueryFromSearchParams,
-    IQueryField,
-    workoutPrototypeQueryConfig,
-} from "~/utils/query.server";
 import { handleError } from "~/utils/util.server";
 import {
     IWorkoutPrototypeCreateDTO,
@@ -221,7 +221,7 @@ export const readWorkouts = async (
         const { query, limit, offset, sortBy, sortOrder } =
             buildQueryFromSearchParams<IWorkout>(
                 searchParams,
-                workoutPrototypeQueryConfig,
+                workoutQueryConfig,
                 user.languagePreference as LanguageKey,
             ) as any;
 

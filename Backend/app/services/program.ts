@@ -14,18 +14,18 @@ import {
 import { data, json } from "@remix-run/node";
 import mongoose from "mongoose";
 import { ServiceResult } from "~/interfaces/service-result";
+import { programQueryConfig } from "~/queryConfig/program";
+import {
+    buildPopulateOptions,
+    buildQueryFromSearchParams,
+    IQueryField,
+} from "~/queryConfig/utils";
 import { localizeDataInput } from "~/utils/localization.server";
 import {
     batchDeleteCachedCensoredText,
     censorText,
     setCensorTiers,
 } from "~/utils/profanityFilter.server";
-import {
-    buildPopulateOptions,
-    buildQueryFromSearchParams,
-    IQueryField,
-    programQueryConfig,
-} from "~/utils/query.server";
 import { handleError } from "~/utils/util.server";
 import {
     IProgramCreateDTO,

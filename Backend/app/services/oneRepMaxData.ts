@@ -5,16 +5,16 @@ import OneRepMaxAttemptData, {
     IOneRepMaxAttemptData,
 } from "~/models/OneRepMaxAttemptData";
 import OneRepMaxData, { IOneRepMaxData } from "~/models/OneRepMaxData";
+import { oneRepMaxQueryConfig } from "~/queryConfig/oneRepMaxData";
+import {
+    buildPopulateOptions,
+    buildQueryFromSearchParams,
+} from "~/queryConfig/utils";
 import {
     deNormalizeWeight,
     IUnitsWeight,
     normalizeWeight,
 } from "~/utils/noramlizeUnits.server";
-import {
-    buildPopulateOptions,
-    buildQueryFromSearchParams,
-    oneRepMaxQueryConfig,
-} from "~/utils/query.server";
 import { handleError } from "~/utils/util.server";
 import {
     IOneRepMaxCreateDTO,
