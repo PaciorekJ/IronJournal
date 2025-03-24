@@ -6,7 +6,11 @@
 
 - Add Statistics like average weekly volume per body part.
 - Make Sets independent from workouts, for scalability.
-- Add an admin review system for flagged content, so user can report content for programs, workouts, and users accounts can be reported for usernames for example.
+- Add Admin section for viewing reports and feedback
+- Develop routes for Notifications
+- Develop routes for reports
+- Develop routes for feedback
+- develop routes for announcements
 
 ### LOW PRIORITY
 
