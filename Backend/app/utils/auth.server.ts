@@ -62,6 +62,7 @@ export const requirePredicate = async <
         predicate?: (user: IUser) => boolean;
         firebaseToken?: F;
         user?: U;
+        isAdmin?: boolean;
     },
 ): Promise<
     (U extends true ? { user: IUser } : {}) &
@@ -69,6 +70,7 @@ export const requirePredicate = async <
 > => {
     let user: IUser | null = null;
     let firebaseToken: admin.auth.DecodedIdToken | null = null;
+    let isAdmin = false;
 
     if (process.env.NODE_ENV === "development") {
         user = await User.findOneAndUpdate(
@@ -85,6 +87,7 @@ export const requirePredicate = async <
             { upsert: true },
         );
         firebaseToken = "test" as any;
+        isAdmin = true;
     } else {
         // Get the Firebase token info
         firebaseToken = await isLoginValid(request);
@@ -107,6 +110,7 @@ export const requirePredicate = async <
     const result: Partial<{
         firebaseToken: admin.auth.DecodedIdToken;
         user: IUser;
+        isAdmin: boolean;
     }> = {};
 
     // Handle the case where user is required in the config
@@ -125,6 +129,14 @@ export const requirePredicate = async <
         result.firebaseToken = firebaseToken as admin.auth.DecodedIdToken;
     }
 
+    if (config?.isAdmin) {
+        result.isAdmin = isAdmin;
+    }
+
     return result as (U extends true ? { user: IUser } : {}) &
         (F extends true ? { firebaseToken: admin.auth.DecodedIdToken } : {});
+};
+
+export const isAdmin = () => {
+    return process.env.NODE_ENV === "development";
 };

@@ -31,7 +31,7 @@ export const createReport = async (
         const newReport = await ReportModel.create(reportData);
 
         await NotificationModel.create({
-            user: user._id,
+            userId: user._id,
             title: "We have your report!",
             message: `Thank you for your report! We will review it soon, and if we find any issues, we will take appropriate action.`,
             type: "info",
@@ -47,6 +47,7 @@ export const createReport = async (
 };
 
 export const updateReport = async (
+    _user: IUser,
     reportId: string,
     updateData: IReportUpdateDTO,
 ): Promise<ServiceResult<IReport>> => {
@@ -73,6 +74,7 @@ export const updateReport = async (
 };
 
 export const deleteReport = async (
+    _user: IUser,
     reportId: string,
 ): Promise<ServiceResult<undefined>> => {
     try {
@@ -88,6 +90,7 @@ export const deleteReport = async (
 };
 
 export const readReports = async (
+    _user: IUser,
     searchParams: URLSearchParams,
 ): Promise<ServiceResult<IReport[]>> => {
     try {
@@ -111,6 +114,7 @@ export const readReports = async (
 };
 
 export const readReportById = async (
+    _user: IUser,
     reportId: string,
 ): Promise<ServiceResult<IReport>> => {
     try {

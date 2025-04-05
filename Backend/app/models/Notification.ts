@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema, model } from "mongoose";
 
 export interface INotification extends Document {
-    user: mongoose.Types.ObjectId;
+    userId: mongoose.Types.ObjectId;
     title: string;
     message: string;
     type: "info" | "warning";
@@ -11,7 +11,7 @@ export interface INotification extends Document {
 
 const NotificationSchema: Schema<INotification> = new Schema(
     {
-        user: {
+        userId: {
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true,
@@ -37,6 +37,8 @@ const NotificationSchema: Schema<INotification> = new Schema(
     },
     { timestamps: { createdAt: true, updatedAt: false } },
 );
+
+NotificationSchema.index({ userId: 1 });
 
 const NotificationModel = model<INotification>(
     "Notification",

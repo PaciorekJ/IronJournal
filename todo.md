@@ -7,10 +7,12 @@
 - Add Statistics like average weekly volume per body part.
 - Make Sets independent from workouts, for scalability.
 - Add Admin section for viewing reports and feedback
-- Develop routes for Notifications
-- Develop routes for reports
-- Develop routes for feedback
+- Develop routes for Notifications, Good.
+- Develop routes for reports -> Send to discord
+- Send Feedback to discord and populate the entry
 - develop routes for announcements
+
+- Feedback and communication with the community can be done through discord.
 
 ### LOW PRIORITY
 

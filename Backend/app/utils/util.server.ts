@@ -109,7 +109,13 @@ export async function validateRequestBody(request: Request) {
     return requestData;
 }
 
-export function validateDatabaseId(id: string) {
+/**
+ * Checks if the provided `id` is a valid MongoDB ObjectId.
+ * If the `id` is invalid or not provided, throws a 400 error.
+ * @param id The id to validate.
+ * @returns The valid id if valid, otherwise throws an error.
+ */
+export function validateDatabaseId(id: string | undefined) {
     if (!id || !mongoose.isValidObjectId(id)) {
         throw data(
             { error: "No id provided, or an invalid Id has been provided." },

@@ -1,3 +1,4 @@
+import { IUser } from "@paciorekj/iron-journal-shared";
 import { data, json } from "@remix-run/node";
 import { ServiceResult } from "~/interfaces/service-result";
 import Announcement, { IAnnouncement } from "~/models/Announcement";
@@ -10,6 +11,7 @@ import {
 } from "~/validation/announcement";
 
 export const createAnnouncement = async (
+    _user: IUser,
     createData: IAnnouncementCreateDTO,
 ): Promise<ServiceResult<IAnnouncement>> => {
     try {
@@ -24,6 +26,7 @@ export const createAnnouncement = async (
 };
 
 export const updateAnnouncement = async (
+    _user: IUser,
     announcementId: string,
     updateData: IAnnouncementUpdateDTO,
 ): Promise<ServiceResult<IAnnouncement>> => {
@@ -46,6 +49,7 @@ export const updateAnnouncement = async (
 };
 
 export const deleteAnnouncement = async (
+    _user: IUser,
     announcementId: string,
 ): Promise<ServiceResult<undefined>> => {
     try {
@@ -61,6 +65,7 @@ export const deleteAnnouncement = async (
 };
 
 export const readAnnouncements = async (
+    _user: IUser,
     searchParams: URLSearchParams,
 ): Promise<ServiceResult<IAnnouncement[]>> => {
     try {
@@ -87,6 +92,7 @@ export const readAnnouncements = async (
 };
 
 export const readAnnouncementById = async (
+    _user: IUser,
     announcementId: string,
 ): Promise<ServiceResult<IAnnouncement>> => {
     try {

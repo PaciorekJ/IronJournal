@@ -3,7 +3,7 @@ import { z } from "zod";
 
 const createNotificationSchema = z
     .object({
-        user: ObjectIdSchema,
+        userId: ObjectIdSchema,
         title: z.string().min(1, "Title is required").trim(),
         message: z.string().min(1, "Message is required"),
         type: z.enum(["info", "warning"]),
@@ -20,7 +20,20 @@ const updateNotificationSchema = z
     })
     .strict();
 
+const markNotificationsAsRead = z
+    .object({
+        ids: z.array(ObjectIdSchema).min(1, {
+            message: "At least one notification ID is required",
+        }),
+    })
+    .strict();
+
 export type INotificationCreateDTO = z.infer<typeof createNotificationSchema>;
 export type INotificationUpdateDTO = z.infer<typeof updateNotificationSchema>;
+export type IMarkAsReadDTO = z.infer<typeof markNotificationsAsRead>;
 
-export { createNotificationSchema, updateNotificationSchema };
+export {
+    createNotificationSchema,
+    markNotificationsAsRead as markAsReadSchema,
+    updateNotificationSchema,
+};
