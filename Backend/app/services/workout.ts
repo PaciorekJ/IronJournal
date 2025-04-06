@@ -1,5 +1,6 @@
 import {
     ILocalizedWorkout,
+    ISet,
     IUser,
     IWorkout,
     LANGUAGE,
@@ -24,6 +25,9 @@ import {
 } from "~/utils/profanityFilter.server";
 import { handleError } from "~/utils/util.server";
 import {
+    IAddSetToWorkoutDTO,
+    IRemoveSetFromWorkoutDTO,
+    IReorderSetsDTO,
     IWorkoutPrototypeCreateDTO,
     IWorkoutPrototypeUpdateDTO as IWorkoutUpdateDTO,
 } from "~/validation/workout";
@@ -326,5 +330,111 @@ export const readWorkoutById = async (
         return { data: localizedWorkout, hasMoreSets };
     } catch (error) {
         throw handleError(error);
+    }
+};
+
+export const addSetToWorkout = async (
+    user: IUser,
+    workoutId: string,
+    { set, index }: IAddSetToWorkoutDTO,
+): Promise<ServiceResult<{ index: number; set: ISet }>> => {
+    try {
+        const workout = await Workout.findById(workoutId);
+        if (!workout) {
+            throw data({ error: "Workout not found" }, { status: 404 });
+        }
+        if (workout.userId.toString() !== user._id.toString()) {
+            throw data({ error: "Forbidden" }, { status: 403 });
+        }
+
+        // Determine the actual insert position
+        const insertAt =
+            typeof index === "number" &&
+            index >= 0 &&
+            index <= workout.sets.length
+                ? index
+                : workout.sets.length;
+
+        workout.sets.splice(insertAt, 0, set);
+        await workout.save();
+
+        return {
+            message: "Set added",
+            data: { index: insertAt, set },
+        };
+    } catch (err) {
+        throw handleError(err);
+    }
+};
+
+export const removeSetFromWorkout = async (
+    user: IUser,
+    workoutId: string,
+    { index }: IRemoveSetFromWorkoutDTO,
+): Promise<ServiceResult<{ index: number }>> => {
+    try {
+        const workout = await Workout.findById(workoutId);
+        if (!workout) {
+            throw data({ error: "Workout not found" }, { status: 404 });
+        }
+        if (workout.userId.toString() !== user._id.toString()) {
+            throw data({ error: "Forbidden" }, { status: 403 });
+        }
+
+        if (index < 0 || index >= workout.sets.length) {
+            throw data({ error: "Invalid set index" }, { status: 400 });
+        }
+
+        workout.sets.splice(index, 1);
+        await workout.save();
+
+        return { message: "Set removed", data: { index } };
+    } catch (err) {
+        throw handleError(err);
+    }
+};
+
+export const reorderSetsInWorkout = async (
+    user: IUser,
+    workoutId: string,
+    { fromIndex, toIndex }: IReorderSetsDTO,
+): Promise<ServiceResult<{ fromIndex: number; toIndex: number }>> => {
+    try {
+        const workout = await Workout.findById(workoutId);
+        if (!workout) {
+            throw data({ error: "Workout not found" }, { status: 404 });
+        }
+        if (workout.userId.toString() !== user._id.toString()) {
+            throw data({ error: "Forbidden" }, { status: 403 });
+        }
+
+        const len = workout.sets.length;
+        if (
+            fromIndex < 0 ||
+            fromIndex >= len ||
+            toIndex < 0 ||
+            toIndex >= len
+        ) {
+            throw data(
+                { error: "Invalid fromIndex or toIndex" },
+                { status: 400 },
+            );
+        }
+
+        // No-op if positions are the same
+        if (fromIndex === toIndex) {
+            return { message: "No change", data: { fromIndex, toIndex } };
+        }
+
+        const [moved] = workout.sets.splice(fromIndex, 1);
+        workout.sets.splice(toIndex, 0, moved);
+
+        await workout.save();
+        return {
+            message: "Sets reordered",
+            data: { fromIndex, toIndex },
+        };
+    } catch (err) {
+        throw handleError(err);
     }
 };

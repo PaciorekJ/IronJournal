@@ -27,8 +27,30 @@ export const createWorkoutPrototypeSchema = z
     })
     .strict();
 
+export const addSetToWorkoutSchema = z.object({
+    set: SetSchema,
+    index: z.number().int().min(0).optional(),
+});
+
+export const removeSetFromWorkoutSchema = z.object({
+    index: z.number().int().min(0),
+});
+
+export const reorderSetsSchema = z
+    .object({
+        fromIndex: z.number().int().min(0),
+        toIndex: z.number().int().min(0),
+    })
+    .strict();
+
 export const updateWorkoutPrototypeSchema =
     createWorkoutPrototypeSchema.partial();
+
+export type IAddSetToWorkoutDTO = z.infer<typeof addSetToWorkoutSchema>;
+export type IRemoveSetFromWorkoutDTO = z.infer<
+    typeof removeSetFromWorkoutSchema
+>;
+export type IReorderSetsDTO = z.infer<typeof reorderSetsSchema>;
 
 export type IWorkoutPrototypeCreateDTO = z.infer<
     typeof createWorkoutPrototypeSchema
