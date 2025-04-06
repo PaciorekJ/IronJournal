@@ -5,11 +5,7 @@
 ### Important Steps
 
 - Add Statistics like average weekly volume per body part.
-- add pagination for sets inside out workouts as these can be quite long.
-- Add endpoints for adding and removing sets efficiently from workouts
 - develop routes for announcements
-- Make post route for feedback
-- Make post route for reports
 
 ### LOW PRIORITY
 
