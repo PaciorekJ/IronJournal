@@ -1,6 +1,6 @@
 import { LanguageKey } from "@paciorekj/iron-journal-shared";
 import { data } from "@remix-run/node";
-import { z } from "node_modules/zod/lib/external";
+import { z } from "zod";
 import { handleError } from "~/utils/util.server";
 
 type AllCombinations<T> = T extends object

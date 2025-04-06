@@ -5,14 +5,11 @@
 ### Important Steps
 
 - Add Statistics like average weekly volume per body part.
-- Make Sets independent from workouts, for scalability.
-- Add Admin section for viewing reports and feedback
-- Develop routes for Notifications, Good.
-- Develop routes for reports -> Send to discord, populate the reported content along with the reporter and the person who got report along with with how many reports they have on there record
-- Send Feedback to discord and populate the entry
+- add pagination for sets inside out workouts as these can be quite long.
+- Add endpoints for adding and removing sets efficiently from workouts
 - develop routes for announcements
-
-- Feedback and communication with the community can be done through discord.
+- Make post route for feedback
+- Make post route for reports
 
 ### LOW PRIORITY
 

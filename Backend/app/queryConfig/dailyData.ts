@@ -1,4 +1,4 @@
-import { z } from "node_modules/zod/lib/external";
+import { z } from "zod";
 import { IBuildQueryConfig, addPaginationAndSorting } from "./utils";
 
 // Daily Data Query Configuration

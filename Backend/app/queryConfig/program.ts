@@ -7,7 +7,7 @@ import {
     TARGET_AUDIENCE,
     TargetAudienceKey,
 } from "@paciorekj/iron-journal-shared";
-import { z } from "node_modules/zod/lib/external";
+import { z } from "zod";
 import { IBuildQueryConfig, addPaginationAndSorting } from "./utils";
 
 // Program Query Configuration

@@ -227,6 +227,8 @@ export const readWorkouts = async (
 
         const mine = searchParams.get("mine") === "true";
         const userId = searchParams.get("userId");
+        const setOffset = parseInt(searchParams.get("setOffset") || "0", 10);
+        const setLimit = parseInt(searchParams.get("setLimit") || "10", 10); // Default to 10
 
         if (mine) {
             query.userId = user._id;
@@ -251,7 +253,17 @@ export const readWorkouts = async (
             queryObj = queryObj.populate(option);
         });
 
-        const workouts = (await queryObj.lean().exec()) as IWorkout[];
+        const raw = await queryObj.lean().exec();
+
+        const workouts = raw as IWorkout[];
+
+        let hasMoreSets = false;
+        workouts.forEach((workout) => {
+            if (workout.sets.length > setOffset + setLimit) {
+                hasMoreSets = true;
+            }
+            workout.sets = workout.sets.slice(setOffset, setOffset + setLimit);
+        });
 
         const censoredWorkouts = await Promise.all(
             workouts.map((workout) => censorWorkout(user, workout)),
@@ -264,7 +276,7 @@ export const readWorkouts = async (
         const totalCount = await Workout.countDocuments(query).exec();
         const hasMore = offset + workouts.length < totalCount;
 
-        return { data: localizedWorkouts, hasMore };
+        return { data: localizedWorkouts, hasMore, hasMoreSets };
     } catch (error) {
         throw handleError(error);
     }
@@ -276,6 +288,9 @@ export const readWorkoutById = async (
     searchParams: URLSearchParams,
 ): Promise<ServiceResult<ILocalizedWorkout>> => {
     try {
+        const setOffset = parseInt(searchParams.get("setOffset") || "0", 10);
+        const setLimit = parseInt(searchParams.get("setLimit") || "10", 10); // Default to 10
+
         let queryObj = Workout.findById(workoutId);
 
         const populateOptions = buildPopulateOptions(searchParams, "populate");
@@ -284,6 +299,12 @@ export const readWorkoutById = async (
         });
 
         const workout = (await queryObj.lean().exec()) as IWorkout;
+
+        let hasMoreSets = false;
+        if (workout.sets.length > setOffset + setLimit) {
+            hasMoreSets = true;
+        }
+        workout.sets = workout.sets.slice(setOffset, setOffset + setLimit);
 
         if (!workout) {
             throw data({ error: "Workout not found" }, { status: 404 });
@@ -302,7 +323,7 @@ export const readWorkoutById = async (
 
         const localizedWorkout = resolveLocalizedWorkout(censoredWorkout, user);
 
-        return { data: localizedWorkout };
+        return { data: localizedWorkout, hasMoreSets };
     } catch (error) {
         throw handleError(error);
     }

@@ -11,7 +11,7 @@ import {
     MUSCLE_GROUP,
     MuscleGroupKey,
 } from "@paciorekj/iron-journal-shared";
-import { z } from "node_modules/zod/lib/external";
+import { z } from "zod";
 import { addPaginationAndSorting, IBuildQueryConfig } from "./utils";
 
 // Exercise Query Configuration

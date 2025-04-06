@@ -1,4 +1,4 @@
-import { z } from "node_modules/zod/lib/external";
+import { z } from "zod";
 import { WORKOUT_DATA_STATUS } from "~/models/WorkoutData";
 import { addPaginationAndSorting } from "./utils";
 

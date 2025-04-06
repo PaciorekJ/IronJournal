@@ -13,6 +13,7 @@ export interface ILeveling {
 export interface ServiceResult<T = any> {
     data?: T; // Optional data for successful responses
     hasMore?: boolean; // Optional flag indicating if there are more results
+    hasMoreSets?: boolean; // Only for workouts
     error?: string; // Optional error message for error responses
     leveling?: ILeveling;
     [key: string]: any; // Additional properties (flexible to accommodate any additional fields)
