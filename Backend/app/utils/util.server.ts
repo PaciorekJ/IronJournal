@@ -3,6 +3,7 @@ import { data } from "@remix-run/node";
 import mongoose, { MongooseError } from "mongoose";
 import { z } from "zod";
 import { languagePreferenceSchema } from "~/validation/user.server";
+import { postErrorToDiscord } from "./discord";
 
 export function convertKeysToCamelCase(
     obj: Record<string, any>,
@@ -163,10 +164,15 @@ export function handleError(error: unknown) {
 
     if (error instanceof Error) {
         console.error(error);
+        await postErrorToDiscord(error);
         return data({ error: error.message }, { status: 500 });
     }
 
     if (error instanceof Response) {
+        if (error.status >= 500) {
+            console.error(error);
+            await postErrorToDiscord(error);
+        }
         return error;
     }
 

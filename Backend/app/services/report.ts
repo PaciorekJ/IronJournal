@@ -1,12 +1,11 @@
 import { IUser } from "@paciorekj/iron-journal-shared";
-import { data, json } from "@remix-run/node";
+import { data } from "@remix-run/node";
 import { ServiceResult } from "~/interfaces/service-result";
 import NotificationModel from "~/models/Notification";
 import ReportModel, { IReport } from "~/models/Report";
-import { reportQueryConfig } from "~/queryConfig/report";
-import { buildQueryFromSearchParams } from "~/queryConfig/utils";
+import { postReportToDiscord } from "~/utils/discord";
 import { handleError } from "~/utils/util.server";
-import { IReportCreateDTO, IReportUpdateDTO } from "~/validation/report";
+import { IReportCreateDTO } from "~/validation/report";
 
 export const createReport = async (
     user: IUser,
@@ -16,6 +15,7 @@ export const createReport = async (
         const reportData = { ...createData, reporter: user._id };
 
         const reportExisting = await ReportModel.findOne({
+            // This allows users not to keep reporting the same thing.
             reporter: user._id,
             reported: createData.reported,
             type: createData.type,
@@ -32,97 +32,17 @@ export const createReport = async (
 
         await NotificationModel.create({
             userId: user._id,
-            title: "We have your report!",
+            title: "We have received your report!",
             message: `Thank you for your report! We will review it soon, and if we find any issues, we will take appropriate action.`,
             type: "info",
         });
+
+        await postReportToDiscord(user, createData);
 
         return {
             message: "Report created successfully",
             data: newReport,
         };
-    } catch (error) {
-        throw handleError(error);
-    }
-};
-
-export const updateReport = async (
-    _user: IUser,
-    reportId: string,
-    updateData: IReportUpdateDTO,
-): Promise<ServiceResult<IReport>> => {
-    try {
-        const updatedReport = await ReportModel.findByIdAndUpdate(
-            reportId,
-            updateData,
-            {
-                new: true,
-                runValidators: true,
-            },
-        );
-
-        if (!updatedReport) {
-            throw data({ error: "Report not found" }, { status: 404 });
-        }
-        return {
-            message: "Report updated successfully",
-            data: updatedReport,
-        };
-    } catch (error) {
-        throw handleError(error);
-    }
-};
-
-export const deleteReport = async (
-    _user: IUser,
-    reportId: string,
-): Promise<ServiceResult<undefined>> => {
-    try {
-        const deletedReport =
-            await ReportModel.findByIdAndDelete(reportId).lean();
-        if (!deletedReport) {
-            throw data({ error: "Report not found" }, { status: 404 });
-        }
-        return { message: "Report deleted successfully" };
-    } catch (error) {
-        throw handleError(error);
-    }
-};
-
-export const readReports = async (
-    _user: IUser,
-    searchParams: URLSearchParams,
-): Promise<ServiceResult<IReport[]>> => {
-    try {
-        const { query, limit, offset, sortBy, sortOrder } =
-            buildQueryFromSearchParams(searchParams, reportQueryConfig);
-
-        const reports = await ReportModel.find(query)
-            .skip(offset)
-            .limit(limit)
-            .sort(sortBy ? { [sortBy]: sortOrder } : undefined)
-            .lean()
-            .exec();
-
-        const totalCount = await ReportModel.countDocuments(query).exec();
-        const hasMore = offset + reports.length < totalCount;
-
-        return { data: reports, hasMore };
-    } catch (error) {
-        throw handleError(error);
-    }
-};
-
-export const readReportById = async (
-    _user: IUser,
-    reportId: string,
-): Promise<ServiceResult<IReport>> => {
-    try {
-        const report = await ReportModel.findById(reportId).lean().exec();
-        if (!report) {
-            throw json({ error: "Report not found" }, { status: 404 });
-        }
-        return { data: report };
     } catch (error) {
         throw handleError(error);
     }

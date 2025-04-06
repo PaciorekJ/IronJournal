@@ -8,7 +8,7 @@
 - Make Sets independent from workouts, for scalability.
 - Add Admin section for viewing reports and feedback
 - Develop routes for Notifications, Good.
-- Develop routes for reports -> Send to discord
+- Develop routes for reports -> Send to discord, populate the reported content along with the reporter and the person who got report along with with how many reports they have on there record
 - Send Feedback to discord and populate the entry
 - develop routes for announcements
 
