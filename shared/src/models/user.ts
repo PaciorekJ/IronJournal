@@ -10,7 +10,8 @@ interface IUser extends Document {
     acceptedProfanityTiers: (1 | 2 | 3 | 4 | 5)[];
     timezone: string;
 
-    activeProgram: mongoose.Schema.Types.ObjectId;
+    activeProgram?: mongoose.Schema.Types.ObjectId;
+    activeWorkout?: mongoose.Schema.Types.ObjectId;
     favoritePrograms: mongoose.Schema.Types.ObjectId[];
     favoriteWorkouts: mongoose.Schema.Types.ObjectId[];
 
@@ -34,7 +35,8 @@ const UserSchema: Schema<IUser> = new Schema(
             enum: Object.keys(LANGUAGE),
             required: true,
         },
-        activeProgram: { type: Schema.Types.ObjectId, required: true },
+        activeProgram: { type: Schema.Types.ObjectId },
+        activeWorkout: { type: Schema.Types.ObjectId },
         timezone: { type: String, required: true },
         measurementSystemPreference: {
             type: String,

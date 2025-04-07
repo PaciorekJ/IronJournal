@@ -8,9 +8,10 @@ export const AwardXpActions = {
     completeDailyDataField: { xp: 5, limit: 5 },
     completeOneRepMax: { xp: 30, limit: 1 },
     completeOneRepMaxAttempt: { xp: 10, limit: 5 },
-    completeWorkout: { xp: 10, limit: 3 },
-    completeSet: { xp: 5, limit: 50 },
-    createWorkoutSchedule: { xp: 20, limit: 5 },
+    completeWorkout: { xp: 10, limit: 2 },
+    completeSet: { xp: 5, limit: 20 },
+    createWorkoutSet: { xp: 5, limit: 10 },
+    createWorkoutSchedule: { xp: 20, limit: 1 },
     createProgramSchedule: { xp: 30, limit: 1 },
 } as const;
 

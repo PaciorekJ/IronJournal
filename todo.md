@@ -5,7 +5,7 @@
 ### Important Steps
 
 - Add Statistics like average weekly volume per body part.
-- develop routes for announcements
+- Make adding sets to workout templates award XP
 
 ### LOW PRIORITY
 

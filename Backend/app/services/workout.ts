@@ -173,6 +173,16 @@ export const updateWorkout = async (
         // Await the queueTranslationTask
         await queueTranslationTask(updatedWorkout._id);
 
+        const numberOfNewSets =
+            updatedWorkout.sets.length - workout.sets.length;
+        if (numberOfNewSets > 0) {
+            await awardXp(
+                user._id.toString(),
+                "createWorkoutScheduleSet",
+                numberOfNewSets,
+            );
+        }
+
         return {
             message: "Workout updated successfully",
             data: updatedWorkout,
@@ -357,6 +367,8 @@ export const addSetToWorkout = async (
 
         workout.sets.splice(insertAt, 0, set);
         await workout.save();
+
+        await awardXp(user._id.toString(), "createWorkoutScheduleSet", 1);
 
         return {
             message: "Set added",
