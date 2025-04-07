@@ -1,0 +1,21 @@
+{
+    "name": "discord-bot",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node build/index.js",
+        "build": "npx tsc src/index.ts --outDir build --esModuleInterop --module commonjs --target es2020"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "devDependencies": {
+        "dotenv": "^16.4.7",
+        "typescript": "^5.8.3"
+    },
+    "dependencies": {
+        "discord.js": "^14.18.0"
+    }
+}

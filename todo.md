@@ -17,6 +17,11 @@
 - Challenges (Weekly/Monthly)
 - Add Achievement
 
+- Client ID - 1358557882177687746
+- GUILD ID - 1358474904332140806
+- https://discord.com/oauth2/authorize?client_id=1358557882177687746&scope=bot%20applications.commands&permissions=0&guild_id=1358474904332140806
+
+
 ## NOTES
 
 ### Gamification inside of application

@@ -101,7 +101,7 @@ export async function validateRequestBody(request: Request) {
     if (Object.keys(requestData).length === 0) {
         throw data(
             {
-                error: "Request body is empty. Request body is required to update a program.",
+                error: "Request body is empty.",
             },
             { status: 400 },
         );
@@ -164,14 +164,14 @@ export function handleError(error: unknown) {
 
     if (error instanceof Error) {
         console.error(error);
-        await postErrorToDiscord(error);
+        postErrorToDiscord(error);
         return data({ error: error.message }, { status: 500 });
     }
 
     if (error instanceof Response) {
         if (error.status >= 500) {
             console.error(error);
-            await postErrorToDiscord(error);
+            postErrorToDiscord(error);
         }
         return error;
     }

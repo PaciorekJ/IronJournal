@@ -16,9 +16,21 @@ services:
       - MONGODB_URI=mongodb://mongodb:27017/iron-journal
       - RABBITMQ_URI=amqp://guest:guest@rabbitmq:5672
       - REDIS_URL=redis://root:password@redis:6379
+      - SERVER_AUTH_TOKEN=iron-journal-server-auth-token
       - DISCORD_WEBHOOK_URL_REPORTER=https://discordapp.com/api/webhooks/1358479392401264732/7JluM_XEcx_wzXQraN4WiEOC6pnl6hnkaM0TmecNQOTD01Wwi_fX0TXW309ZUS3tPtGf
       - DISCORD_WEBHOOK_URL_FEEDBACK=https://discordapp.com/api/webhooks/1358479227720044576/ETC_EVjsi4u1GRzwA7e2j7nQShrVUTfpCWPP-PsMjms_zP9TaYKntT3mKxzOXCIiB6Hl
       - DISCORD_WEBHOOK_URL_ERROR=https://discordapp.com/api/webhooks/1358499230129455288/H2om3B9pT1CNNAY1I4WsGBgvNOJ5V-s9sgWEzF-VZ7gvqJDtAVonkllj2PxP0TdMBAFh
+    networks:
+      - app-network
+
+  discord-bot:
+    build: ./Discord-Bot
+    container_name: discord-bot
+    env_file: ./Discord-Bot/.env
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_started
     networks:
       - app-network
 

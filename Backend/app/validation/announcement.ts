@@ -4,6 +4,8 @@ const createAnnouncementSchema = z
     .object({
         title: z.string().min(1, "Title is required").trim(),
         message: z.string().min(1, "Message is required").trim(),
+        start_time: z.string().optional(),
+        end_time: z.string().optional(),
     })
     .strict();
 
@@ -11,6 +13,8 @@ const updateAnnouncementSchema = z
     .object({
         title: z.string().min(1, "Title cannot be empty").trim().optional(),
         message: z.string().min(1, "Message cannot be empty").trim().optional(),
+        start_time: z.string().optional(),
+        end_time: z.string().optional(),
     })
     .strict();
 

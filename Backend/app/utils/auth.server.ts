@@ -140,3 +140,16 @@ export const requirePredicate = async <
 export const isAdmin = () => {
     return process.env.NODE_ENV === "development";
 };
+/**
+ * Ensures that the incoming request is from your Discord bot,
+ * by validating the Authorization: Bearer <SERVER_AUTH_TOKEN> header.
+ */
+
+export async function authenticateDiscordBot(request: Request) {
+    const auth = request.headers.get("Authorization") || "";
+    const [scheme, token] = auth.split(" ");
+
+    if (scheme !== "Bearer" || token !== process.env.SERVER_AUTH_TOKEN) {
+        throw json({ error: "Unauthorized" }, { status: 401 });
+    }
+}
