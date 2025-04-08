@@ -53,7 +53,6 @@ export const createNotification = async (
 export const updateNotification = async (
     notificationId: string,
     updateData: INotificationUpdateDTO,
-    user: IUser,
 ): Promise<ServiceResult<ILocalizedNotification>> => {
     try {
         const { data: localizedUpdateData, queueTranslationTask } =
@@ -65,7 +64,7 @@ export const updateNotification = async (
             );
 
         const updatedNotification = await NotificationModel.findOneAndUpdate(
-            { _id: notificationId, userId: user._id },
+            { _id: notificationId },
             localizedUpdateData,
             {
                 new: true,
@@ -92,10 +91,7 @@ export const updateNotification = async (
 
         return {
             message: "Notification updated successfully",
-            data: resolveLocalizedNotification(
-                updatedNotification,
-                user.languagePreference as LanguageKey,
-            ),
+            data: resolveLocalizedNotification(updatedNotification, "en"),
         };
     } catch (error) {
         throw handleError(error);
@@ -103,14 +99,23 @@ export const updateNotification = async (
 };
 
 export const deleteNotification = async (
-    user: IUser,
+    user: IUser | null,
     notificationId: string,
 ): Promise<ServiceResult<undefined>> => {
     try {
-        const deletedNotification = await NotificationModel.findOneAndDelete({
-            _id: notificationId,
-            userId: user._id,
-        }).lean();
+        let deletedNotification = null;
+
+        if (user) {
+            deletedNotification = await NotificationModel.findOneAndDelete({
+                _id: notificationId,
+                userId: user._id,
+            }).lean();
+        } else {
+            // Allows bot to remove notifications
+            deletedNotification = await NotificationModel.findOneAndDelete({
+                _id: notificationId,
+            }).lean();
+        }
         if (!deletedNotification) {
             throw data({ error: "Notification not found" }, { status: 404 });
         }

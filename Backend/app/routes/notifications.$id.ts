@@ -4,7 +4,7 @@ import {
     readNotificationById,
     updateNotification,
 } from "~/services/notification";
-import { requirePredicate } from "~/utils/auth.server";
+import { authenticateDiscordBot, requirePredicate } from "~/utils/auth.server";
 import {
     handleError,
     validateDatabaseId,
@@ -30,9 +30,17 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
-    const { user } = await requirePredicate(request, {
-        user: true,
-    });
+    let user = null;
+
+    try {
+        const { user: tempUser } = await requirePredicate(request, {
+            user: true,
+        });
+        user = tempUser;
+    } catch (err) {
+        await authenticateDiscordBot(request); // will throw
+    }
+
     const method = request.method.toUpperCase();
 
     const { notificationId: rawNotificationId } = params;
@@ -41,8 +49,14 @@ export const action: ActionFunction = async ({ request, params }) => {
     try {
         switch (method) {
             case "PUT": {
+                if (user !== null) { // only the bot can update notifications
+                    throw json({ error: "Forbidden" }, { status: 403 });
+                }
+
                 const body = await validateRequestBody(request);
                 const validatedData = updateNotificationSchema.parse(body);
+
+                const userId = 
 
                 const result = await updateNotification(
                     notificationId,
