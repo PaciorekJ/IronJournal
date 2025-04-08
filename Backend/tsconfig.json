@@ -7,7 +7,9 @@
         "**/.client/**/*.ts",
         "**/.client/**/*.tsx",
         "../shared/src/localization/localizeDate.ts",
-        "app/validation/workout"
+        "app/validation/workout",
+        "../shared/src/models/Notification.ts",
+        "../shared/src/models/Announcement.ts"
     ],
     "compilerOptions": {
         "noUnusedLocals": true,

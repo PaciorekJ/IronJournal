@@ -12,7 +12,7 @@ import { IWorkoutData } from "~/models/WorkoutData";
  * @param locale - The locale to localize for.
  * @returns A localized WorkoutData object with the 'status' field translated.
  */
-export const localizeWorkoutData = (
+export const resolveLocalizedWorkoutData = (
     data: IWorkoutData,
     locale: LanguageKey,
 ) => {

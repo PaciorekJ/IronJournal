@@ -1,7 +1,7 @@
 import { IUser } from "@paciorekj/iron-journal-shared";
 import mongoose from "mongoose";
 import { ServiceResult } from "~/interfaces/service-result";
-import { localizeWorkoutData } from "~/localization/WorkoutData";
+import { resolveLocalizedWorkoutData } from "~/localization/WorkoutData";
 import SetData, { ISetData } from "~/models/SetData";
 import {
     IWorkoutData,
@@ -40,7 +40,10 @@ export const createWorkoutData = async (
 
         return {
             message: "WorkoutData created successfully",
-            data: newWorkout as IWorkoutData,
+            data: resolveLocalizedWorkoutData(
+                newWorkout,
+                user.languagePreference,
+            ) as IWorkoutData,
         };
     } catch (error) {
         throw handleError(error);
@@ -84,7 +87,7 @@ export const getAllWorkoutData = async (
         const workouts = await queryObj.lean().exec();
 
         const localizedWorkoutData = workouts.map((workout) =>
-            localizeWorkoutData(
+            resolveLocalizedWorkoutData(
                 workout as IWorkoutData,
                 user.languagePreference,
             ),
@@ -142,7 +145,7 @@ export const getWorkoutDataById = async (
             throw new Error("WorkoutData not found");
         }
 
-        const localizedWorkoutData = localizeWorkoutData(
+        const localizedWorkoutData = resolveLocalizedWorkoutData(
             workout as IWorkoutData,
             user.languagePreference,
         );
@@ -196,14 +199,20 @@ export const updateWorkoutData = async (
 
             return {
                 message: "WorkoutData updated successfully",
-                data: updatedWorkout as IWorkoutData,
+                data: resolveLocalizedWorkoutData(
+                    updatedWorkout as IWorkoutData,
+                    user.languagePreference,
+                ) as IWorkoutData,
                 leveling,
             };
         }
 
         return {
             message: "WorkoutData updated successfully",
-            data: updatedWorkout as IWorkoutData,
+            data: resolveLocalizedWorkoutData(
+                updatedWorkout as IWorkoutData,
+                user.languagePreference,
+            ) as IWorkoutData,
         };
     } catch (error) {
         throw handleError(error);

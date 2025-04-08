@@ -45,9 +45,9 @@ export const action: ActionFunction = async ({ request, params }) => {
                 const validatedData = updateNotificationSchema.parse(body);
 
                 const result = await updateNotification(
-                    user,
                     notificationId,
                     validatedData,
+                    user,
                 );
                 return data(result, { status: 200 });
             }

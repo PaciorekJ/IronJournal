@@ -1,7 +1,12 @@
 import mongoose, { Document, Schema } from "mongoose";
 import { LanguageKey } from "../constants/language";
 
-export type DocumentType = "PROGRAM" | "EXERCISE" | "WORKOUT-PROTOTYPE";
+export type DocumentType =
+    | "PROGRAM"
+    | "EXERCISE"
+    | "WORKOUT-PROTOTYPE"
+    | "ANNOUNCEMENT"
+    | "NOTIFICATION";
 
 interface ITranslationTask extends Document {
     taskId: string;

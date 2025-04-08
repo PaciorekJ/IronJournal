@@ -1,11 +1,11 @@
 import { IUser } from "@paciorekj/iron-journal-shared";
 import { data } from "@remix-run/node";
 import { ServiceResult } from "~/interfaces/service-result";
-import NotificationModel from "~/models/Notification";
 import ReportModel, { IReport } from "~/models/Report";
 import { postReportToDiscord } from "~/utils/discord";
 import { handleError } from "~/utils/util.server";
 import { IReportCreateDTO } from "~/validation/report";
+import { createNotification } from "./notification";
 
 export const createReport = async (
     user: IUser,
@@ -30,11 +30,11 @@ export const createReport = async (
 
         const newReport = await ReportModel.create(reportData);
 
-        await NotificationModel.create({
-            userId: user._id,
+        await createNotification({
             title: "We have received your report!",
             message: `Thank you for your report! We will review it soon, and if we find any issues, we will take appropriate action.`,
-            type: "info",
+            userId: user._id.toString(),
+            read: false,
         });
 
         await postReportToDiscord(user, createData);

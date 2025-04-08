@@ -10,7 +10,7 @@ export const AwardXpActions = {
     completeOneRepMaxAttempt: { xp: 10, limit: 5 },
     completeWorkout: { xp: 10, limit: 2 },
     completeSet: { xp: 5, limit: 20 },
-    createWorkoutSet: { xp: 5, limit: 10 },
+    createWorkoutScheduleSet: { xp: 5, limit: 10 },
     createWorkoutSchedule: { xp: 20, limit: 1 },
     createProgramSchedule: { xp: 30, limit: 1 },
 } as const;

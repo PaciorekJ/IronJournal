@@ -1,10 +1,10 @@
 import mongoose, { Document, Schema, model } from "mongoose";
+import { localizedField, validateLocalizedField } from "../localization";
 
 export interface INotification extends Document {
     userId: mongoose.Types.ObjectId;
-    title: string;
-    message: string;
-    type: "info" | "warning";
+    title: localizedField<string>;
+    message: localizedField<string>;
     read: boolean;
     createdAt?: Date;
 }
@@ -17,18 +17,24 @@ const NotificationSchema: Schema<INotification> = new Schema(
             required: true,
         },
         title: {
-            type: String,
+            type: Map,
+            of: String,
             required: true,
             trim: true,
+            validate: {
+                validator: validateLocalizedField,
+                message: 'Invalid language key in "title" field.',
+            },
         },
         message: {
-            type: String,
+            type: Map,
+            of: String,
             required: true,
-        },
-        type: {
-            type: String,
-            required: true,
-            enum: ["info", "warning"],
+            trim: true,
+            validate: {
+                validator: validateLocalizedField,
+                message: 'Invalid language key in "message" field.',
+            },
         },
         read: {
             type: Boolean,

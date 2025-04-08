@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import Database from "@paciorekj/iron-journal-shared/database";
+import Announcement from "@paciorekj/iron-journal-shared/models/Announcement";
 import { Exercise } from "@paciorekj/iron-journal-shared/models/exercise";
 import { Program } from "@paciorekj/iron-journal-shared/models/program";
 import { TranslationTask } from "@paciorekj/iron-journal-shared/models/translationTask";
@@ -73,6 +74,12 @@ async function startTranslationWorker() {
                         break;
                     case "WORKOUT-PROTOTYPE":
                         Model = Workout;
+                        break;
+                    case "ANNOUNCEMENT":
+                        Model = Announcement;
+                        break;
+                    case "NOTIFICATION":
+                        Model = Notification;
                         break;
                     default:
                         throw new Error("Invalid document type");

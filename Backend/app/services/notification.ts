@@ -1,9 +1,21 @@
-import { IUser } from "@paciorekj/iron-journal-shared";
+import {
+    IUser,
+    LanguageKey,
+    TranslationTask,
+} from "@paciorekj/iron-journal-shared";
+import NotificationModel, {
+    INotification,
+} from "@paciorekj/iron-journal-shared/models/Notification";
 import { data, json } from "@remix-run/node";
+import { Schema } from "mongoose";
 import { ServiceResult } from "~/interfaces/service-result";
-import NotificationModel, { INotification } from "~/models/Notification";
+import {
+    ILocalizedNotification,
+    resolveLocalizedNotification,
+} from "~/localization/Notifications";
 import { notificationQueryConfig } from "~/queryConfig/notification";
 import { buildQueryFromSearchParams } from "~/queryConfig/utils";
+import { localizeDataInput } from "~/utils/localization.server";
 import { handleError } from "~/utils/util.server";
 import {
     INotificationCreateDTO,
@@ -11,14 +23,27 @@ import {
 } from "~/validation/notifications";
 
 export const createNotification = async (
-    _user: IUser,
     createData: INotificationCreateDTO,
 ): Promise<ServiceResult<INotification>> => {
     try {
-        const newNotification = await NotificationModel.create(createData);
+        const { data: localizedCreateData, queueTranslationTask } =
+            localizeDataInput(
+                createData,
+                "en",
+                ["title", "message"],
+                "NOTIFICATION" as any,
+            );
+
+        const newNotification =
+            await NotificationModel.create(localizedCreateData);
+
+        await queueTranslationTask(
+            newNotification._id as Schema.Types.ObjectId,
+        );
+
         return {
             message: "Notification created successfully",
-            data: newNotification.toJSON(),
+            data: newNotification,
         };
     } catch (error) {
         throw handleError(error);
@@ -26,25 +51,51 @@ export const createNotification = async (
 };
 
 export const updateNotification = async (
-    user: IUser,
     notificationId: string,
     updateData: INotificationUpdateDTO,
-): Promise<ServiceResult<INotification>> => {
+    user: IUser,
+): Promise<ServiceResult<ILocalizedNotification>> => {
     try {
+        const { data: localizedUpdateData, queueTranslationTask } =
+            localizeDataInput(
+                updateData,
+                "en",
+                ["title", "message"],
+                "NOTIFICATION" as any,
+            );
+
         const updatedNotification = await NotificationModel.findOneAndUpdate(
             { _id: notificationId, userId: user._id },
-            updateData,
+            localizedUpdateData,
             {
                 new: true,
                 runValidators: true,
             },
         ).lean();
+
         if (!updatedNotification) {
             throw data({ error: "Notification not found" }, { status: 404 });
         }
+
+        await TranslationTask.updateMany(
+            {
+                documentId: updatedNotification._id,
+                documentType: "NOTIFICATION",
+                status: { $in: ["PENDING", "IN_PROGRESS"] },
+            },
+            { $set: { status: "CANCELED" } },
+        );
+
+        await queueTranslationTask(
+            updatedNotification._id as Schema.Types.ObjectId,
+        );
+
         return {
             message: "Notification updated successfully",
-            data: updatedNotification,
+            data: resolveLocalizedNotification(
+                updatedNotification,
+                user.languagePreference as LanguageKey,
+            ),
         };
     } catch (error) {
         throw handleError(error);
@@ -72,7 +123,7 @@ export const deleteNotification = async (
 export const readNotifications = async (
     user: IUser,
     searchParams: URLSearchParams,
-): Promise<ServiceResult<INotification[]>> => {
+): Promise<ServiceResult<ILocalizedNotification[]>> => {
     try {
         const { query, limit, offset } = buildQueryFromSearchParams(
             searchParams,
@@ -92,20 +143,27 @@ export const readNotifications = async (
             .lean()
             .exec();
 
+        const localizedNotifications = notifications.map((notification) => {
+            return resolveLocalizedNotification(
+                notification,
+                user.languagePreference as LanguageKey,
+            );
+        });
+
         const totalCount =
             await NotificationModel.countDocuments(newQuery).exec();
         const hasMore = offset + notifications.length < totalCount;
 
-        return { data: notifications, hasMore };
+        return { data: localizedNotifications, hasMore };
     } catch (error) {
         throw handleError(error);
     }
 };
 
 export const readNotificationById = async (
-    _user: IUser,
+    user: IUser,
     notificationId: string,
-): Promise<ServiceResult<INotification>> => {
+): Promise<ServiceResult<ILocalizedNotification>> => {
     try {
         const notification = await NotificationModel.findById(notificationId)
             .lean()
@@ -115,7 +173,7 @@ export const readNotificationById = async (
             throw json({ error: "Notification not found" }, { status: 404 });
         }
 
-        if (notification.userId.toString() !== _user._id.toString()) {
+        if (notification.userId.toString() !== user._id.toString()) {
             throw json(
                 {
                     error: "You are not authorized to read this notification",
@@ -124,7 +182,12 @@ export const readNotificationById = async (
             );
         }
 
-        return { data: notification };
+        return {
+            data: resolveLocalizedNotification(
+                notification,
+                user.languagePreference as LanguageKey,
+            ),
+        };
     } catch (error) {
         throw handleError(error);
     }
