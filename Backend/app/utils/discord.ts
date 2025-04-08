@@ -14,13 +14,21 @@ export async function postReportToDiscord(
 
     let previewTitle = "";
     let previewDescription = "";
+    let offenderPreview = "";
+    const reporterPreview = `User ID: ${userId} - Language: ${user.languagePreference}`;
+
+    let offenderID = "";
 
     switch (reportedData.type) {
         case "Program":
             const program = await Program.findById(reportedData.reported)
                 .select("name description userId")
-                .populate("userId", "username")
+                .populate("userId")
                 .lean();
+            offenderID = program
+                ? program.userId.toString()
+                : "No ID (Program Not Found)";
+            offenderPreview = `User ID: ${offenderID} - Language: ${(program?.userId as unknown as IUser).languagePreference ?? "N/A"}`;
             previewTitle = `Program: ${program?.name[program.originalLanguage] ?? "—"}`;
             previewDescription =
                 program?.description?.[program.originalLanguage] ||
@@ -29,8 +37,12 @@ export async function postReportToDiscord(
         case "Workout":
             const workout = await Workout.findById(reportedData.reported)
                 .select("name description userId")
-                .populate("userId", "username")
+                .populate("userId")
                 .lean();
+            offenderID = workout
+                ? workout.userId.toString()
+                : "No ID (Workout Not Found)";
+            offenderPreview = `User ID: ${offenderID} - Language: ${(workout?.userId as unknown as IUser).languagePreference ?? "N/A"}`;
             previewTitle = `Workout: ${workout?.name[workout.originalLanguage] ?? "—"}`;
             previewDescription =
                 workout?.description?.[workout.originalLanguage].slice(
@@ -40,8 +52,12 @@ export async function postReportToDiscord(
             break;
         case "User":
             const reportedUser = await User.findById(reportedData.reported)
-                .select("username")
+                .select("username _id")
                 .lean();
+            offenderID = reportedUser
+                ? reportedUser._id.toString()
+                : "No ID (User Not Found)";
+            offenderPreview = `User ID: ${offenderID} - Language: ${reportedUser?.languagePreference ?? "N/A"}`;
             previewTitle = `User: ${reportedUser?.username ?? "—"}`;
             previewDescription = "User profile report.";
             break;
@@ -53,14 +69,13 @@ export async function postReportToDiscord(
         fields: [
             {
                 name: "Reporter",
-                value: user?.username ?? userId.toString(),
+                value: `${reporterPreview}`,
+            },
+            {
+                name: "Offender",
+                value: `${offenderPreview}`,
             },
             { name: "Type", value: reportedData.type, inline: true },
-            {
-                name: "ID",
-                value: reportedData.reported.toString(),
-                inline: true,
-            },
             { name: "Reason", value: reportedData.reason },
             { name: "Details", value: reportedData.details ?? "—" },
             {
@@ -219,7 +234,7 @@ export function postErrorToDiscord(
         color: 0x991b1b, // Tailwind red-700
         fields,
         timestamp: new Date().toISOString(),
-        footer: { text: "Iron Journal Error Logger" },
+        footer: { text: "Routine - Error Logger" },
     };
 
     // Fire-and-forget
